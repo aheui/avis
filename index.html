@@ -21,10 +21,19 @@
         </div>
     </div>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript" src="one-color/one-color.js"></script>
     <script type="text/javascript" src="naheui/aheui.js"></script>
     <script type="text/javascript">
         var codeSpace = [];
         var Machine = new Aheui.Machine(codeSpace);
+        var pastData = [];
+        var pastDepth = 10;
+        var futureDepth = 5;
+        var previewDepth = 5;
+        var defaultColor = one.color('#fff');
+        var pastColor = one.color('#00f');
+        var futureColor = one.color('#0f0');
+        var previewColor = one.color('#f00');
         $('#mode-edit').click(function () {
             $('#mode-edit').attr('disabled', true);
             $('#mode-exec').removeAttr('disabled');
@@ -70,40 +79,45 @@
                 var x = $this.index();
                 var y = $this.parent().index();
                 clearColor();
-                highlightFuture(x, y, 5);
+                highlightFuture(x, y, 0, 0, previewDepth, previewColor);
             });
         }
-        var pastColor = rgb(0, 0, 0xff);
-        var futureColor = rgb(0xff, 0, 0);
-        function rgb(r, g, b) {
-            return {r: r, g: g, b: b};
-        }
         function clearColor() {
-            $('#code-area .cell').css('background-color', 'transparent');
+            $('#code-area .cell').css('background-color', defaultColor.cssa());
         }
-        function highlightCell(x, y, rgb, a) {
-            a = typeof a !== 'undefined'? +a : 1;
+        function alphaBlend(src, dst, alpha) { // foreground, background
+            var oneMinusAlpha = 1 - alpha;
+            return new one.color.RGB(
+                (dst.red() * oneMinusAlpha) + (src.red() * alpha),
+                (dst.green() * oneMinusAlpha) + (src.green() * alpha),
+                (dst.blue() * oneMinusAlpha) + (src.blue() * alpha)
+            );
+        }
+        function highlightCell(x, y, color, alpha) {
+            alpha = typeof alpha !== 'undefined'? +alpha : 1;
             var line = $('#code-area .line').eq(y);
             var cell = $('.cell', line).eq(x);
-            cell.css('background-color', 'rgba(' + [rgb.r | 0, rgb.g | 0, rgb.b | 0, a].join(',') + ')');
+            var originalColor = one.color(cell.css('background-color'));
+            var blendedColor = alphaBlend(color, originalColor, alpha);
+            cell.css('background-color', blendedColor.cssa());
         }
-        function highlightFuture(x, y, depth) {
+        function highlightFuture(x, y, dx, dy, depth, color) {
             if (depth < 1)
                 return;
-            function trace(currentX, currentY, dx, dy, currentDepth) {
+            function trace(x, y, dx, dy, currentDepth) {
                 if (currentDepth >= depth)
                     return;
-                var future = seekNext(currentX, currentY, dx, dy);
+                var future = seekNext(x, y, dx, dy);
                 future.forEach(function (next) {
                     var x = next.x;
                     var y = next.y;
                     var dx = next.dx;
                     var dy = next.dy;
-                    highlightCell(x, y, futureColor, 1 - (currentDepth / depth));
+                    highlightCell(x, y, color, 1 - (currentDepth / depth));
                     trace(x, y, dx, dy, currentDepth + 1);
                 });
             }
-            trace(x, y, 0, 0, 0);
+            trace(x, y, dx, dy, 0);
         }
         function getVector(code) {
             var index = Aheui.jung(code);
