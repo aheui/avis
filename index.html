@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>AVIS</title>
+</head>
+<body>
+    <h1>AVIS - 아희 시각화</h1>
+    <div>
+        <button id="mode-edit">편집모드</button>
+        <button id="mode-exec">실행모드</button>
+        <div id="editor">
+            <textarea cols="50" rows="20"></textarea>
+        </div>
+        <div id="visualizer">
+            <div id="code-area"></div>
+        </div>
+    </div>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript" src="naheui/aheui.js"></script>
+    <script type="text/javascript">
+        var codeSpace = [];
+        var Machine = new Aheui.Machine(codeSpace);
+        $('#mode-edit').click(function () {
+            $('#mode-edit').attr('disabled', true);
+            $('#mode-exec').removeAttr('disabled');
+            $('#editor').show();
+            $('#visualizer').hide();
+        });
+        $('#mode-exec').click(function () {
+            $('#mode-exec').attr('disabled', true);
+            $('#mode-edit').removeAttr('disabled');
+            $('#editor').hide();
+            $('#visualizer').show();
+            var source = $('#editor textarea').val();
+            codeSpace = Aheui.codeSpace(source);
+            Machine = new Aheui.Machine(codeSpace);
+            render();
+        });
+        $(function () { // init
+            $('#mode-edit').click();
+        });
+        function render() {
+            $('#code-area').html(codeSpace.map(function (line) {
+                return [
+                    '<div class="line">',
+                    line.map(function (code) {
+                        return [
+                            '<div class="block">', code.char, '</div>'
+                        ].join('');
+                    }).join(''),
+                    '</div>'
+                ].join('');
+            }).join(''));
+        }
+    </script>
+    <style type="text/css">
+        @import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
+        #code-area {
+            display: table;
+            font-size: 10px;
+            font-family: 'Nanum Gothic';
+            border-collapse: collapse;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            cursor: default;
+        }
+        #code-area .line {
+            display: table-row;
+        }
+        #code-area .line .block {
+            display: table-cell;
+            width: 15px;
+            height: 15px;
+            text-align: center;
+            line-height: 15px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</body>
+</html>

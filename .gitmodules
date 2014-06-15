@@ -1,0 +1,3 @@
+[submodule "naheui"]
+	path = naheui
+	url = https://github.com/aheui/naheui.git
