@@ -13,11 +13,18 @@
             <textarea cols="50" rows="20"></textarea>
         </div>
         <div id="visualizer">
-            <button>초기화</button>
-            <button>실행</button>
-            <button>멈춤</button>
-            <button>한 단계만</button>
+            <button id="init-machine">초기화</button>
+            <button id="run-machine">실행</button>
+            <button id="stop-machine">멈춤</button>
+            <button id="one-step">한 단계만</button>
+            <br>
+            <label>과거추적 깊이: <input name="past-depth" type="number" value="20"></label><br>
+            <label>미래탐색 깊이: <input name="future-depth" type="number" value="5"></label><br>
+            <label>임의탐색 깊이: <input name="preview-depth" type="number" value="3"></label><br>
             <div id="code-area"></div>
+            <span>출력:</span> <textarea id="output" cols="100" rows="5"></textarea>
+            <p>머신 상태</p>
+            <textarea id="machine-status" cols="30" rows="10"></textarea>
         </div>
     </div>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
@@ -25,15 +32,31 @@
     <script type="text/javascript" src="naheui/aheui.js"></script>
     <script type="text/javascript">
         var codeSpace = [];
-        var Machine = new Aheui.Machine(codeSpace);
+        var machine = new Aheui.Machine(codeSpace);
         var pastData = [];
-        var pastDepth = 10;
-        var futureDepth = 5;
-        var previewDepth = 5;
+        var pastDepth = $('input[name="past-depth"]').val();
+        var futureDepth = $('input[name="future-depth"]').val();
+        var previewDepth = $('input[name="preview-depth"]').val();
         var defaultColor = one.color('#fff');
         var pastColor = one.color('#00f');
+        var currentColor = one.color('#f00');
         var futureColor = one.color('#0f0');
         var previewColor = one.color('#f00');
+        $('#init-machine').click(initMachine);
+        $('#run-machine').click(runMachine);
+        $('#stop-machine').click(stopMachine);
+        $('#one-step').click(oneStep);
+        $('input[name="past-depth"]').on('keyup change', function () {
+            pastDepth = $('input[name="past-depth"]').val();
+            highlightPast();
+        });
+        $('input[name="future-depth"]').on('keyup change', function () {
+            futureDepth = $('input[name="future-depth"]').val();
+            highlightFuture();
+        });
+        $('input[name="preview-depth"]').on('keyup change', function () {
+            previewDepth = $('input[name="preview-depth"]').val();
+        });
         $('#mode-edit').click(function () {
             $('#mode-edit').attr('disabled', true);
             $('#mode-exec').removeAttr('disabled');
@@ -56,12 +79,73 @@
                 return width;
             })();
             codeSpace.height = codeSpace.length;
-            Machine = new Aheui.Machine(codeSpace);
             render();
+            initMachine();
+        });
+        $('#code-area').mouseleave(function () {
+            clearColor();
+            highlightPast();
+            highlightFuture();
+            highlightCurrent();
         });
         $(function () { // init
             $('#mode-edit').click();
         });
+        function initMachine() {
+            pastData = [];
+            machine = new Aheui.Machine(codeSpace);
+            machine.output = function (value) {
+                $('#output').val($('#output').val() + value);
+            };
+            dumpMachine();
+            clearColor();
+            highlightFuture();
+            highlightCurrent();
+            $('#output').val(''); // clear output
+        }
+        function runMachine() {
+            if (machine.interval === undefined) {
+                machine.terminateFlag = false;
+                machine.interval = setInterval(oneStep, 1);
+            }
+        }
+        function stopMachine() {
+            clearInterval(machine.interval);
+            machine.interval = undefined;
+        }
+        function dumpMachine() {
+            $('#machine-status').val(machine.dump());
+        }
+        function oneStep() {
+            var cursor = machine.cursor;
+            var storage = machine.storage;
+            pastData.push({x: cursor.x, y: cursor.y});
+            if (pastData.length > pastDepth) {
+                pastData.reverse();
+                pastData.length = pastDepth;
+                pastData.reverse();
+            }
+            var code = cursor.point(codeSpace);
+            if (typeof code !== 'undefined') {
+                var operation = Aheui.operationMap[Aheui.choTable[code.cho]];
+                cursor.turn(code.jung);
+                if (typeof operation !== 'undefined') {
+                    if (storage.count() < Aheui.parameterCounts[code.cho])
+                        cursor.reflect();
+                    else
+                        machine.terminateFlag = operation(machine, code.jong);
+                }
+            }
+            cursor.move(codeSpace);
+            dumpMachine();
+            clearColor();
+            highlightPast();
+            highlightFuture();
+            highlightCurrent();
+            if (machine.terminateFlag) {
+                stopMachine();
+            }
+        }
         function render() {
             $('#code-area').html(codeSpace.map(function (line) {
                 return [
@@ -79,7 +163,7 @@
                 var x = $this.index();
                 var y = $this.parent().index();
                 clearColor();
-                highlightFuture(x, y, 0, 0, previewDepth, previewColor);
+                highlightPreview(x, y, 0, 0, previewDepth, previewColor);
             });
         }
         function clearColor() {
@@ -101,7 +185,23 @@
             var blendedColor = alphaBlend(color, originalColor, alpha);
             cell.css('background-color', blendedColor.cssa());
         }
-        function highlightFuture(x, y, dx, dy, depth, color) {
+        function highlightPast() {
+            if (pastDepth < 1)
+                return;
+            for (var i = 0; i < pastData.length; ++i) {
+                var pos = pastData[i];
+                highlightCell(pos.x, pos.y, pastColor, i / pastDepth);
+            }
+        }
+        function highlightCurrent() {
+            var cursor = machine.cursor;
+            highlightCell(cursor.x, cursor.y, currentColor);
+        }
+        function highlightFuture() {
+            var cursor = machine.cursor;
+            highlightPreview(cursor.x, cursor.y, cursor.xSpeed, cursor.ySpeed, futureDepth, futureColor);
+        }
+        function highlightPreview(x, y, dx, dy, depth, color) {
             if (depth < 1)
                 return;
             function trace(x, y, dx, dy, currentDepth) {
