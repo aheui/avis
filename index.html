@@ -92,6 +92,7 @@
             $('#mode-edit').click();
         });
         function initMachine() {
+            stopMachine();
             pastData = [];
             machine = new Aheui.Machine(codeSpace);
             machine.output = function (value) {
@@ -110,7 +111,8 @@
             }
         }
         function stopMachine() {
-            clearInterval(machine.interval);
+            if (machine.interval !== undefined)
+                clearInterval(machine.interval);
             machine.interval = undefined;
         }
         function dumpMachine() {
