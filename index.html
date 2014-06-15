@@ -70,21 +70,40 @@
                 var x = $this.index();
                 var y = $this.parent().index();
                 clearColor();
-                renderFuture(x, y);
+                highlightFuture(x, y, 5);
             });
+        }
+        var pastColor = rgb(0, 0, 0xff);
+        var futureColor = rgb(0xff, 0, 0);
+        function rgb(r, g, b) {
+            return {r: r, g: g, b: b};
         }
         function clearColor() {
             $('#code-area .cell').css('background-color', 'transparent');
         }
-        function renderFuture(x, y) {
-            console.log(codeSpace);
-            var future = seekNext(x, y, 0, 0);
-            console.log(future);
-            future.forEach(function (next) {
-                var line = $('#code-area .line').eq(next.y);
-                var cell = $('.cell', line).eq(next.x);
-                cell.css('background-color', '#f00');
-            });
+        function highlightCell(x, y, rgb, a) {
+            a = typeof a !== 'undefined'? +a : 1;
+            var line = $('#code-area .line').eq(y);
+            var cell = $('.cell', line).eq(x);
+            cell.css('background-color', 'rgba(' + [rgb.r | 0, rgb.g | 0, rgb.b | 0, a].join(',') + ')');
+        }
+        function highlightFuture(x, y, depth) {
+            if (depth < 1)
+                return;
+            function trace(currentX, currentY, dx, dy, currentDepth) {
+                if (currentDepth >= depth)
+                    return;
+                var future = seekNext(currentX, currentY, dx, dy);
+                future.forEach(function (next) {
+                    var x = next.x;
+                    var y = next.y;
+                    var dx = next.dx;
+                    var dy = next.dy;
+                    highlightCell(x, y, futureColor, 1 - (currentDepth / depth));
+                    trace(x, y, dx, dy, currentDepth + 1);
+                });
+            }
+            trace(x, y, 0, 0, 0);
         }
         function getVector(code) {
             var index = Aheui.jung(code);
