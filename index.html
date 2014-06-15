@@ -13,6 +13,10 @@
             <textarea cols="50" rows="20"></textarea>
         </div>
         <div id="visualizer">
+            <button>초기화</button>
+            <button>실행</button>
+            <button>멈춤</button>
+            <button>한 단계만</button>
             <div id="code-area"></div>
         </div>
     </div>
@@ -34,6 +38,15 @@
             $('#visualizer').show();
             var source = $('#editor textarea').val();
             codeSpace = Aheui.codeSpace(source);
+            codeSpace.width = (function () {
+                var width = 0;
+                codeSpace.forEach(function (line) {
+                    if (width < line.length)
+                        width = line.length;
+                });
+                return width;
+            })();
+            codeSpace.height = codeSpace.length;
             Machine = new Aheui.Machine(codeSpace);
             render();
         });
@@ -46,12 +59,101 @@
                     '<div class="line">',
                     line.map(function (code) {
                         return [
-                            '<div class="block">', code.char, '</div>'
+                            '<div class="cell">', code.char, '</div>'
                         ].join('');
                     }).join(''),
                     '</div>'
                 ].join('');
             }).join(''));
+            $('#code-area .cell').mouseover(function () {
+                var $this = $(this);
+                var x = $this.index();
+                var y = $this.parent().index();
+                clearColor();
+                renderFuture(x, y);
+            });
+        }
+        function clearColor() {
+            $('#code-area .cell').css('background-color', 'transparent');
+        }
+        function renderFuture(x, y) {
+            console.log(codeSpace);
+            var future = seekNext(x, y, 0, 0);
+            console.log(future);
+            future.forEach(function (next) {
+                var line = $('#code-area .line').eq(next.y);
+                var cell = $('.cell', line).eq(next.x);
+                cell.css('background-color', '#f00');
+            });
+        }
+        function getVector(code) {
+            var index = Aheui.jung(code);
+            return {
+                x: Aheui.xSpeedTable[index],
+                y: Aheui.ySpeedTable[index],
+            };
+        }
+        function seekNext(x, y, dx, dy) {
+            var result = [];
+            var width = codeSpace.width;
+            var height = codeSpace.height;
+            var code = codeSpace[y][x];
+            if (!code)
+                return result;
+            var vector = getVector(code);
+            if (vector.x === undefined)
+                vector.x = dx;
+            else if (vector.x === 'reflect')
+                vector.x = -dx;
+            if (vector.y === undefined)
+                vector.y = dy;
+            else if (vector.y === 'reflect')
+                vector.y = -dy;
+            if (vector.x === 0 && vector.y === 0)
+                return result;
+            function seek(x, y, dx, dy) {
+                var wrap = false;
+                while (true) {
+                    if (x >= width)
+                        x = 0;
+                    else if (x < 0)
+                        x = width - 1;
+                    if (y >= height)
+                        y = 0;
+                    else if (y < 0)
+                        y = height - 1;
+                    var line = codeSpace[y];
+                    if (!line)
+                        return;
+                    var code = line[x];
+                    if (code && code.jung !== -1) {
+                        result.push({x: x, y: y, dx: dx, dy: dy});
+                        return;
+                    }
+                    x += dx;
+                    y += dy;
+                    if (x >= width || x < 0 || y >= height || y < 0) {
+                        if (wrap)
+                            return;
+                        else
+                            wrap = true;
+                    }
+                }
+            }
+            switch (code.cho) {
+            case 2: case 3: case 4: case 5: case 6:
+            case 8: case 10: case 12: case 14: case 16:
+            case 17:
+                seek(x + vector.x, y + vector.y, vector.x, vector.y);
+                seek(x - vector.x, y - vector.y, -vector.x, -vector.y);
+                break;
+            case 18:
+                break;
+            default:
+                seek(x + vector.x, y + vector.y, vector.x, vector.y);
+                break;
+            }
+            return result;
         }
     </script>
     <style type="text/css">
@@ -70,7 +172,7 @@
         #code-area .line {
             display: table-row;
         }
-        #code-area .line .block {
+        #code-area .line .cell {
             display: table-cell;
             width: 15px;
             height: 15px;
