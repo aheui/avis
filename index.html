@@ -20,7 +20,11 @@
             <br>
             <label>과거추적 깊이: <input name="past-depth" type="number" value="20"></label><br>
             <label>미래탐색 깊이: <input name="future-depth" type="number" value="5"></label><br>
-            <label>임의탐색 깊이: <input name="preview-depth" type="number" value="3"></label><br>
+            <label>
+                임의탐색 깊이: <input name="preview-depth" type="number" value="3">
+                마우스 커서를 명령어 위에 올리면 앞으로 실행될 수 있는 명령어들을 강조해줍니다.
+            </label><br>
+            <span>중간에 실행을 멈추고 싶은 위치의 명령어를 클릭해서 Break Point를 지정할 수 있습니다.</span><br>
             <div id="code-area"></div>
             <span>출력:</span> <textarea id="output" cols="100" rows="5"></textarea>
             <p>머신 상태</p>
@@ -42,6 +46,7 @@
         var currentColor = one.color('#f00');
         var futureColor = one.color('#0f0');
         var previewColor = one.color('#f00');
+        var breakPointColor = one.color('#ff0');
         $('#init-machine').click(initMachine);
         $('#run-machine').click(runMachine);
         $('#stop-machine').click(stopMachine);
@@ -82,12 +87,7 @@
             render();
             initMachine();
         });
-        $('#code-area').mouseleave(function () {
-            clearColor();
-            highlightPast();
-            highlightFuture();
-            highlightCurrent();
-        });
+        $('#code-area').mouseleave(highlightCurrentMachineState);
         $(function () { // init
             $('#mode-edit').click();
         });
@@ -99,9 +99,7 @@
                 $('#output').val($('#output').val() + value);
             };
             dumpMachine();
-            clearColor();
-            highlightFuture();
-            highlightCurrent();
+            highlightCurrentMachineState();
             $('#output').val(''); // clear output
         }
         function runMachine() {
@@ -143,10 +141,22 @@
             else
                 cursor.move(codeSpace);
             dumpMachine();
-            clearColor();
-            highlightPast();
-            highlightFuture();
-            highlightCurrent();
+            highlightCurrentMachineState();
+            if (breakPoint(cursor.x, cursor.y))
+                stopMachine();
+        }
+        function breakPoint(x, y) {
+            var line = codeSpace[y];
+            if (line)
+                var cell = line[x];
+            return !!cell && !!cell.breakPoint;
+        }
+        function toggleBreakPoint(x, y) {
+            var line = codeSpace[y];
+            if (line)
+                var cell = line[x];
+            if (cell)
+                cell.breakPoint = !cell.breakPoint;
         }
         function render() {
             $('#code-area').html(codeSpace.map(function (line) {
@@ -163,13 +173,32 @@
                     '</div>'
                 ].join('');
             }).join(''));
-            $('#code-area .cell').mouseover(function () {
+            var $allCell = $('#code-area .cell');
+            $allCell.mouseover(function () {
                 var $this = $(this);
                 var x = $this.index();
                 var y = $this.parent().index();
-                clearColor();
-                highlightPreview(x, y, 0, 0, previewDepth, previewColor);
+                highlightPointedCell(x, y);
             });
+            $allCell.click(function () {
+                var $this = $(this);
+                var x = $this.index();
+                var y = $this.parent().index();
+                toggleBreakPoint(x, y);
+                highlightPointedCell(x, y);
+            });
+        }
+        function highlightCurrentMachineState() {
+            clearColor();
+            highlightPast();
+            highlightFuture();
+            highlightCurrent();
+            highlightBreakPoints();
+        }
+        function highlightPointedCell(x, y) {
+            clearColor();
+            highlightPreview(x, y, 0, 0, previewDepth, previewColor);
+            highlightBreakPoints();
         }
         function clearColor() {
             $('#code-area .cell').css('background-color', defaultColor.cssa());
@@ -225,6 +254,14 @@
                 });
             }
             trace(x, y, dx, dy, 0);
+        }
+        function highlightBreakPoints() {
+            codeSpace.forEach(function (line, y) {
+                line.forEach(function (cell, x) {
+                    if (cell.breakPoint)
+                        highlightCell(x, y, breakPointColor);
+                });
+            });
         }
         function getVector(code) {
             var index = Aheui.jung(code);
