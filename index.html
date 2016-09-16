@@ -103,7 +103,13 @@
         });
         $('#code-area').mouseleave(highlightCurrentMachineState);
         $(function () { // init
-            $('#mode-edit').click();
+            if (urlParam('content')) {
+                $('#editor textarea').text(decodeURI(urlParam('content')));
+                $('#mode-exec').click();
+                runMachine();
+            }
+            else
+                $('#mode-edit').click();
         });
         function initMachine() {
             stopMachine();
@@ -344,6 +350,16 @@
             }
             return result;
         }
+        function urlParam(name){
+            var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+            if (results == null){
+               return null;
+            }
+            else{
+               return results[1] || 0;
+            }
+        }
+
     </script>
     <style type="text/css">
         @import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
