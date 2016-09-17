@@ -14,6 +14,15 @@
     <div>
         <button id="mode-edit">편집모드</button>
         <button id="mode-exec">실행모드</button>
+        <button id="share-content">공유</button>
+        <div class="share-input-group" style="display:none">
+            <input id="share-input-link" type="text" value="">
+            <span class="input-group-button">
+                <button class="share-btn" type="button" data-clipboard-demo="" data-clipboard-target="#share-input-link">
+                복사
+                </button>
+            </span>
+        </div>
         <div id="editor">
 <textarea cols="50" rows="20">
 아밣밞따맣밫밗따붒
@@ -45,7 +54,8 @@
             <textarea id="machine-status" cols="30" rows="10"></textarea>
         </div>
     </div>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/clipboard.js/1.5.12/clipboard.min.js"></script>
     <script type="text/javascript" src="one-color/one-color.js"></script>
     <script type="text/javascript" src="naheui/aheui.js"></script>
     <script type="text/javascript">
@@ -101,9 +111,22 @@
             render();
             initMachine();
         });
+        $('#share-content').click(function () {
+            $('.share-input-group').show();
+            var url = [location.protocol, '//', location.host, location.pathname].join('');
+            url += '?' + $.param({ content : b64EncodeUnicode($('#editor textarea').val()) });
+            $('#share-input-link').val(url);
+        });
         $('#code-area').mouseleave(highlightCurrentMachineState);
         $(function () { // init
-            $('#mode-edit').click();
+            new Clipboard('.share-btn');
+            if (urlParam('content')) {
+                $('#editor textarea').val(b64DecodeUnicode(urlParam('content')));
+                $('#mode-exec').click();
+                runMachine();
+            }
+            else
+                $('#mode-edit').click();
         });
         function initMachine() {
             stopMachine();
@@ -344,6 +367,27 @@
             }
             return result;
         }
+        function urlParam(name){
+            var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+            if (results == null){
+               return null;
+            }
+            else{
+               return results[1] || 0;
+            }
+        }
+        function b64EncodeUnicode(str) {
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                return String.fromCharCode('0x' + p1);
+            }));
+        }
+        function b64DecodeUnicode(str) {
+            str = decodeURIComponent(str);
+            return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+        }
+
     </script>
     <style type="text/css">
         @import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
