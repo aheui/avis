@@ -2,64 +2,120 @@
 <html>
 <head>
     <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>AVIS</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/clipboard.js/1.5.12/clipboard.min.js"></script>
+    <script type="text/javascript" src="one-color/one-color.js"></script>
+    <script type="text/javascript" src="naheui/aheui.js"></script>
+	<link rel="stylesheet" href="./bootstrap/bootstrap.min.css">
+	<script src="./bootstrap/bootstrap.min.js"></script>
 </head>
 <body>
-    <h1>AVIS - 아희 시각화</h1>
-    <a href="https://github.com/aheui/avis">
-      <img style="position: absolute; top: 0; right: 0; border: 0;"
-           src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"
-           alt="Fork me on GitHub">
-    </a>
-    <div>
-        <button id="mode-edit">편집모드</button>
-        <button id="mode-exec">실행모드</button>
-        <button id="share-content">공유</button>
-        <div class="share-input-group" style="display:none">
-            <input id="share-input-link" type="text" value="">
-            <span class="input-group-button">
-                <button class="share-btn" type="button" data-clipboard-demo="" data-clipboard-target="#share-input-link">
-                복사
-                </button>
-            </span>
-        </div>
-        <div id="editor">
-<textarea cols="50" rows="20">
-아밣밞따맣밫밗따붒
+<div class="container">
+
+	<a class="text-muted" href="./index.html"><h3 class="display-4">AVIS - 아희 시각화</h3></a>
+	<a href="https://github.com/aheui/avis" class="github-corner" aria-label="View source on Github"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+	
+	<div class="navbar navbar-inverse navbar-collapse">
+		<ul class="nav navbar-nav">
+			<li class="active"><a id="mode-edit" href="#">편집모드</a></li>
+			<li><a id="mode-exec" href="#">실행모드</a></li>
+			<li><a id="share-content" href="#">공유</a></li>
+		</ul>
+		<ul class="nav navbar-nav" style="float: right">
+		</ul>
+			
+	</div>
+	<div class="share-input-group">
+		<div class="input-group col-xs-10 col-md-8 col-lg-6">
+			<input id="share-input-link" class="form-control" type="text" value="">
+			<span class="input-group-btn">
+				<button class="btn btn-default share-btn" type="button" data-clipboard-demo="" data-clipboard-target="#share-input-link">
+				복사
+				</button>
+			</span>
+		</div>
+		<br>
+	</div>
+	<div>
+
+        <div id="editor" class="hidden">
+			<textarea class="form-control" rows="10">아밣밞따맣밫밗따붒
 뚜번떠벏벖멓더벉떠
 맣밦밞따박따맣밪붅
 두벓벜멓더벖떠벍떠
 밨따맣밣밨따맣밢붋
 불멓더번떠벍벒뻐떠
 다맣밣빠따밢다맣북
-희멓더벋떠벌벖멓더
-</textarea>
+희멓더벋떠벌벖멓더</textarea>
+			<br>
+            <button id="add-param" class="btn btn-default">입력추가</button>
+			<div id="param-container" class="row">
+				<div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 hidden param-template"> <div class="input-group">
+					<input type="text" class="form-control" />
+					<span class="input-group-btn">
+						<button class="btn btn-default" type="button">×</button>
+					</span>
+				</div></div>
+
+			</div>
+			<br>
+			<br>
         </div>
-        <div id="visualizer">
-            <button id="init-machine">초기화</button>
-            <button id="run-machine">실행</button>
-            <button id="stop-machine">멈춤</button>
-            <button id="one-step">한 단계만</button>
+		
+        <div id="visualizer" class="hidden">
+            <button id="init-machine" class="btn btn-default">초기화</button>
+            <button id="run-machine" class="btn btn-default">실행</button>
+            <button id="stop-machine" class="btn btn-default">멈춤</button>
+            <button id="one-step" class="btn btn-default">한 단계만</button>
             <br>
-            <label>과거추적 깊이: <input name="past-depth" type="number" value="20"></label><br>
-            <label>미래탐색 깊이: <input name="future-depth" type="number" value="5"></label><br>
-            <label>
-                임의탐색 깊이: <input name="preview-depth" type="number" value="3">
-                마우스 커서를 명령어 위에 올리면 앞으로 실행될 수 있는 명령어들을 강조해줍니다.
-            </label><br>
-            <span>중간에 실행을 멈추고 싶은 위치의 명령어를 클릭해서 Break Point를 지정할 수 있습니다.</span><br>
-            <div id="code-area"></div>
-            <span>출력:</span> <textarea id="output" cols="100" rows="5"></textarea>
-            <p>머신 상태</p>
-            <textarea id="machine-status" cols="30" rows="10"></textarea>
+			<br>
+			<div id="code-area"></div>
+			<br>
+			<div class="row">
+				<div class="col-lg-6">
+					<div id="input-area" class="hidden">
+						<p>입력</p>
+						<input id="input" type="text" class="form-control" readonly/>
+						<br>
+					</div>
+					<p>출력</p>
+					<textarea id="output" class="form-control" rows="5" readonly></textarea>
+					<br>
+				</div>
+				<div class="col-lg-6">
+					<p>머신 상태</p>
+					<textarea id="machine-status" class="form-control" rows="11"></textarea>
+				</div>
+			</div>
+			<br><br>
+			<a href="#detailed-setting" data-toggle="collapse">세부설정</a>
+			<br><br>
+			<div id="detailed-setting" class="collapse">
+				<div class="row">
+					<label for="past-depth" class="col-xs-6 col-sm-2 control-label ellipis">과거추적 깊이</label>
+					<div class="col-xs-6 col-sm-2">
+						<input type="number" class="form-control" id="past-depth" name="past-depth" value="20">
+					</div>
+					<label for="future-depth" class="col-xs-6 col-sm-2 control-label ellipis">미래탐색 깊이</label>
+					<div class="col-xs-6 col-sm-2">
+						<input type="number" class="form-control" id="future-depth" name="future-depth" value="5">
+					</div>
+					<label for="preview-depth" class="col-xs-6 col-sm-2 control-label ellipis">임의탐색 깊이</label>
+					<div class="col-xs-6 col-sm-2">
+						<input type="number" class="form-control" id="preview-depth" name="preview-depth" value="3">
+					</div>
+				</div>
+			</div>
+			<br><br>
         </div>
     </div>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/clipboard.js/1.5.12/clipboard.min.js"></script>
-    <script type="text/javascript" src="one-color/one-color.js"></script>
-    <script type="text/javascript" src="naheui/aheui.js"></script>
+	
     <script type="text/javascript">
         var codeSpace = [];
+		var paramList = [];
+		var initialParamList = [];
         var machine = new Aheui.Machine(codeSpace);
         var pastData = [];
         var pastDepth = $('input[name="past-depth"]').val();
@@ -86,42 +142,36 @@
         $('input[name="preview-depth"]').on('keyup change', function () {
             previewDepth = $('input[name="preview-depth"]').val();
         });
-        $('#mode-edit').click(function () {
-            $('#mode-edit').attr('disabled', true);
-            $('#mode-exec').removeAttr('disabled');
-            $('#editor').show();
-            $('#visualizer').hide();
-        });
-        $('#mode-exec').click(function () {
-            $('#mode-exec').attr('disabled', true);
-            $('#mode-edit').removeAttr('disabled');
-            $('#editor').hide();
-            $('#visualizer').show();
-            var source = $('#editor textarea').val();
-            codeSpace = Aheui.codeSpace(source);
-            codeSpace.width = (function () {
-                var width = 0;
-                codeSpace.forEach(function (line) {
-                    if (width < line.length)
-                        width = line.length;
-                });
-                return width;
-            })();
-            codeSpace.height = codeSpace.length;
-            render();
-            initMachine();
-        });
+        $('#mode-edit').click(enterEditMode);
+        $('#mode-exec').click(enterExecMode);
         $('#share-content').click(function () {
-            $('.share-input-group').show();
+			initialParamList = getParamListFromInput();
+			
             var url = [location.protocol, '//', location.host, location.pathname].join('');
-            url += '?' + $.param({ content : b64EncodeUnicode($('#editor textarea').val()) });
+			var urlParamMap = { content : b64EncodeUnicode($('#editor textarea').val()) };
+			
+			for (i in initialParamList) {
+				urlParamMap['param' + (+i+1)] = initialParamList[i];
+			}
+
+            url += '?' + $.param(urlParamMap);
+			
             $('#share-input-link').val(url);
+            $('.share-input-group').toggleClass('hidden');
         });
+		$('#add-param').click(addParam);
         $('#code-area').mouseleave(highlightCurrentMachineState);
         $(function () { // init
             new Clipboard('.share-btn');
-            if (urlParam('content')) {
-                $('#editor textarea').val(b64DecodeUnicode(urlParam('content')));
+			var urlParam = getUrlParam();
+            if ('content' in urlParam) {
+				var newParamList = [];
+                $('#editor textarea').val(b64DecodeUnicode(urlParam['content']));
+				for (key in urlParam) {
+					if (key.startsWith('param'))
+						newParamList.push(urlParam[key]);
+				}
+				makeParamTextBoxes(newParamList);
                 $('#mode-exec').click();
                 runMachine();
             }
@@ -131,10 +181,33 @@
         function initMachine() {
             stopMachine();
             pastData = [];
+			paramList = initialParamList.slice(0);
             machine = new Aheui.Machine(codeSpace);
             machine.output = function (value) {
                 $('#output').val($('#output').val() + value);
             };
+			machine.input = function (type) {
+				if (paramList.length == 0)
+					return 0; // TODO : show error
+				if (type == 'number')
+					return parseInt(paramList.shift());
+				else // if (type == 'character')
+				{
+					var result = '';
+					do {
+						if (paramList.length == 0)
+							return 0; // TODO : show error
+						if (paramList[0].length == 0)
+						{
+							paramList.shift();
+							continue;
+						}
+						result = paramList[0][0];
+						paramList[0] = paramList[0].substr(1)
+					} while (false);
+					return result.charCodeAt();
+				}
+			}
             dumpMachine();
             highlightCurrentMachineState();
             $('#output').val(''); // clear output
@@ -300,6 +373,72 @@
                 });
             });
         }
+		
+		function enterEditMode() {
+            $('#mode-edit').parent().addClass('active');
+            $('#mode-exec').parent().removeClass('active');
+            $('#editor').removeClass('hidden');
+            $('#visualizer').addClass('hidden');
+            $('.share-input-group').addClass('hidden');
+		}
+		function enterExecMode() {
+            $('#mode-edit').parent().removeClass('active');
+            $('#mode-exec').parent().addClass('active');
+            $('#editor').addClass('hidden');
+            $('#visualizer').removeClass('hidden');
+            var source = $('#editor textarea').val();
+            codeSpace = Aheui.codeSpace(source);
+            codeSpace.width = (function () {
+                var width = 0;
+                codeSpace.forEach(function (line) {
+                    if (width < line.length)
+                        width = line.length;
+                });
+                return width;
+            })();
+            codeSpace.height = codeSpace.length;
+			
+			initialParamList = getParamListFromInput();
+			paramList = initialParamList.slice(0);
+				
+			$("#input-area").toggleClass('hidden', paramList.length == 0);
+			$("#input").val(paramList.join(', '));
+            render();
+            initMachine();
+            $('.share-input-group').addClass('hidden');
+		}
+		
+		function getParamListFromInput() {
+			return $('.param')
+				.find('input')
+				.filter(function(i, obj) { return obj.value; })
+				.map(function(i, obj) { return obj.value; })
+				.get();
+		}
+
+		function addParam() {
+			var paramContainer = $('#param-container');
+			var newParam = $('.param-template').clone();
+			newParam.removeClass('hidden');
+			newParam.removeClass('param-template');
+			newParam.addClass('param');
+			$('button', newParam).click(function () {
+				newParam.remove();
+			});
+			paramContainer.append(newParam);
+			return newParam;
+		}
+		
+		function makeParamTextBoxes(paramList) {
+			$('.param').each(function(i, obj) {
+				obj.remove();
+			});
+			for (i in paramList) {
+				var newParam = addParam();
+				$('input', newParam).val(paramList[i])
+			}
+		}
+		
         function getVector(code) {
             var index = Aheui.jung(code);
             return {
@@ -367,14 +506,15 @@
             }
             return result;
         }
-        function urlParam(name){
-            var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-            if (results == null){
-               return null;
-            }
-            else{
-               return results[1] || 0;
-            }
+        function getUrlParam(name){
+			var regex = /[?&]([^=#]+)=([^&#]*)/g,
+				url = window.location.href,
+				params = {},
+				match;
+			while(match = regex.exec(url)) {
+				params[match[1]] = match[2];
+			}
+			return params;
         }
         function b64EncodeUnicode(str) {
             return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
@@ -393,7 +533,7 @@
         @import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
         #code-area {
             display: table;
-            font-size: 10px;
+            font-size: 14px;
             font-family: 'Nanum Gothic';
             border-collapse: collapse;
             -webkit-user-select: none;
@@ -407,15 +547,64 @@
         }
         #code-area .line .cell {
             display: table-cell;
-            width: 15px;
-            height: 15px;
+            width: 20px;
+            height: 20px;
             text-align: center;
-            line-height: 15px;
+            line-height: 20px;
             border: 1px solid #ddd;
         }
         #code-area .line .blank.cell {
             border: 1px dashed #888;
         }
+		
+		.ellipis {
+			overflow: hidden;
+			-ms-text-overflow: ellipsis;
+			-o-text-overflow: ellipsis;
+			text-overflow: ellipsis;
+			display: block;
+			white-space: nowrap;
+		}
+		
+		textarea {
+			box-sizing: border-box;
+		}
+				
+		/* Sticky footer styles
+		-------------------------------------------------- */
+		html {
+		  position: relative;
+		  min-height: 100%;
+		}
+
+		body {
+		  /* Margin bottom by footer height */
+		  margin-bottom: 80px;
+		}
+
+		.footer {
+		  position: absolute;
+		  bottom: 0;
+		  width: 100%;
+		  height: 80px;
+		  /* Set the fixed height of the footer here */
+		  line-height: 20px; /* Vertically center the text there */
+		  background-color: #f5f5f5;
+		  padding-top: 20px;
+		}
+
+		body > .container {
+		  padding: 60px 15px 0;
+		}
+
     </style>
+</div>
+
+<footer class="footer">
+	<div class="container">
+		<p class="text-muted">Originally developed by <a href="https://github.com/disjukr">JongChan Choi</a><br>
+		Edited by <a href="https://twitter.com/harunene">@harunene</a></p>
+	</div>
+</footer>
 </body>
 </html>
