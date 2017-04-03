@@ -1,11 +1,12 @@
 import React from 'react';
 
 import { connect } from '../appState';
+import Board from './Board';
 
 
 class App extends React.Component {
     render() {
-        return <div>Hello, AVIS!</div>
+        return <Board/>;
     }
 }
 

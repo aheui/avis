@@ -96,6 +96,7 @@ class Cell {
         return this._char;
     }
     set char(value) {
+        this._char = value;
         this._cho = Aheui.cho(value);
         this._jung = Aheui.jung(value);
         this._jong = Aheui.jong(value);
@@ -105,6 +106,19 @@ class Cell {
     get jong() { return this._jong; }
     toString() {
         return this.char;
+    }
+}
+
+class CodeLine extends Array {
+    static fromText(text) {
+        const result = new CodeLine(text.length);
+        for (let i = 0; i < text.length; ++i) {
+            result[i] = new Cell(text[i], false);
+        }
+        return result;
+    }
+    toString() {
+        return this.map(cell => cell.toString()).join('');
     }
 }
 
@@ -118,15 +132,15 @@ class CodeSpace extends Array {
         return null;
     }
     toString() {
-        return this.map(line => line.join('')).join('\n');
+        return this.map(line => line.toString()).join('\n');
     }
     static fromText(text) {
-        const result = new CodeSpace();
-        for (let line of text.split(/\r?\n/g)) {
-            result.push(line.split('').map(
-                char => new Cell(char, false)
-            ));
+        const lines = text.split(/\r?\n/g);
+        const result = new CodeSpace(lines.length);
+        for (let i = 0; i < lines.length; ++i) {
+            result[i] = CodeLine.fromText(lines[i]);
         }
+        return result;
     }
 }
 
