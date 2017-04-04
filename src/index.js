@@ -1,5 +1,6 @@
 import qs from 'qs';
 
+import App from './containers/App';
 import { AppState } from './appState';
 import { render } from './app';
 
@@ -16,10 +17,15 @@ new Promise(resolve => {
     }
 }).then(() => {
     const query = qs.parse(window.location.search.slice(1));
-    render(
-        new AppState({
-            content: query.content,
-        }),
-        window.document.getElementById('app'),
-    );
+    const appState = new AppState({
+        content: query.content,
+    });
+    const appElement = window.document.getElementById('app');
+    render(App, appState, appElement);
+    if (module.hot) {
+        module.hot.accept('./containers/App', () => {
+            const App = require('./containers/App').default;
+            render(App, appState, appElement);
+        });
+    }
 });

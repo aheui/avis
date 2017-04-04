@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
-import App from './containers/App';
+import { AppContainer } from 'react-hot-loader';
 
 
 class Provider extends React.Component {
@@ -20,9 +19,13 @@ class Provider extends React.Component {
     };
 }
 
-export function render(appState, target) {
+export function render(App, appState, target) {
     ReactDOM.render(
-        <Provider appState={appState}><App/></Provider>,
+        <AppContainer>
+            <Provider appState={appState}>
+                <App/>
+            </Provider>
+        </AppContainer>,
         target,
     );
 }

@@ -1,9 +1,20 @@
 const path = require('path');
 
+const webpack = require('webpack');
+
+
 module.exports = {
-    entry: '.',
+    entry: [
+        'react-hot-loader/patch',
+        '.',
+    ],
     context: path.resolve(__dirname, 'src'),
     devtool: 'source-map',
+    devServer: {
+        host: '0.0.0.0',
+        port: 4715,
+        hot: true,
+    },
     output: {
         filename: 'avis.js',
         path: path.resolve(__dirname, 'dist'),
@@ -12,6 +23,9 @@ module.exports = {
     resolve: {
         extensions: ['.js', '.jsx', '.json'],
     },
+    plugins: [
+        new webpack.HotModuleReplacementPlugin(),
+    ],
     module: {
         loaders: [
             {
@@ -23,6 +37,7 @@ module.exports = {
                         'transform-runtime',
                         'transform-object-rest-spread',
                         'transform-class-properties',
+                        'react-hot-loader/babel',
                     ],
                     presets: [
                         ['env', {
