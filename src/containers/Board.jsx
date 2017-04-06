@@ -6,13 +6,15 @@ import style from './Board.css';
 
 class Board extends React.Component {
     render() {
-        const { appState } = this.props;
+        const { code } = this.props;
         return <div className={style.board}>
-            {
-                appState.codeSpace.toString()
-            }
+            { code }
         </div>;
     }
 }
 
-export default connect(Board);
+export default connect(appState => {
+    return {
+        code: appState.codeSpace.toString(),
+    };
+})(Board);

@@ -177,8 +177,8 @@ class PathTrace {
     }
 }
 
-export function connect(Container) {
-    return class Connect extends React.Component {
+export function connect(mapStateToProps) {
+    return Container => class Connect extends React.Component {
         constructor(props, context) {
             super(props, context);
             this.state = {};
@@ -193,12 +193,12 @@ export function connect(Container) {
         }
         render() {
             return React.createElement(Container, {
-                appState: this.appState,
                 ...this.props,
+                ...mapStateToProps(this.appState),
             }, null);
         }
         static contextTypes = {
             appState: React.PropTypes.object.isRequired,
         };
-    }
+    };
 }
