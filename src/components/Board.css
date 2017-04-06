@@ -1,0 +1,17 @@
+.board {
+    color: blue;
+}
+
+.codeLine:nth-child(2n) {
+    background: lightgrey;
+}
+
+.cell {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    border: 1px solid black;
+}
+

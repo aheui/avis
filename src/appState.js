@@ -13,8 +13,8 @@ export class AppState {
     }
     get cursorOnBreakPoint() {
         const { cursor } = this._machine;
-        const cell = this._codeSpace.get(cursor.x, cursor.y);
-        return !!cell && cell.breakPoint;
+        const code = this._codeSpace.get(cursor.x, cursor.y);
+        return !!code && code.breakPoint;
     }
     get codeSpace() {
         return this._codeSpace;
@@ -77,14 +77,14 @@ export class AppState {
     }
     toggleBreakPoint(x, y) {
         const { cursor } = this._machine;
-        const cell = this._codeSpace.get(cursor.x, cursor.y);
-        if (cell) {
-            cell.breakPoint != cell.breakPoint;
+        const code = this._codeSpace.get(cursor.x, cursor.y);
+        if (code) {
+            code.breakPoint != code.breakPoint;
         }
     }
 }
 
-class Cell {
+class Code {
     constructor(char, breakPoint = false) {
         this._cho = -1;
         this._jung = -1;
@@ -113,12 +113,12 @@ class CodeLine extends Array {
     static fromText(text) {
         const result = new CodeLine(text.length);
         for (let i = 0; i < text.length; ++i) {
-            result[i] = new Cell(text[i], false);
+            result[i] = new Code(text[i], false);
         }
         return result;
     }
     toString() {
-        return this.map(cell => cell.toString()).join('');
+        return this.map(code => code.toString()).join('');
     }
 }
 
@@ -126,8 +126,8 @@ class CodeSpace extends Array {
     get(x, y) {
         const line = this[y];
         if (line) {
-            const cell = line[x];
-            return cell || null;
+            const code = line[x];
+            return code || null;
         }
         return null;
     }
