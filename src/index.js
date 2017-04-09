@@ -18,7 +18,7 @@ new Promise(resolve => {
     }
 }).then(() => {
     const query = qs.parse(window.location.search.slice(1));
-    const content = decode(query.content);
+    const content = query.content ? decode(query.content) : '';
     const appState = new AppState({
         content,
     });

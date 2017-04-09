@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
 
+import './app.css';
+
 
 class Provider extends React.Component {
     constructor(props, context) {
