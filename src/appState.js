@@ -1,6 +1,7 @@
 import React from 'react';
 import Aheui from 'naheui';
 
+const defaultSpaceChar = '\u3000';
 
 export class AppState {
     constructor({ content }) {
@@ -123,6 +124,10 @@ class CodeLine extends Array {
 }
 
 class CodeSpace extends Array {
+    constructor(...args) {
+        super(...args);
+        this._width = 0;
+    }
     get(x, y) {
         const line = this[y];
         if (line) {
@@ -131,6 +136,12 @@ class CodeSpace extends Array {
         }
         return null;
     }
+    get width() {
+        return this._width;
+    }
+    get height() {
+        return this.length;
+    }
     toString() {
         return this.map(line => line.toString()).join('\n');
     }
@@ -138,7 +149,14 @@ class CodeSpace extends Array {
         const lines = text.split(/\r?\n/g);
         const result = new CodeSpace(lines.length);
         for (let i = 0; i < lines.length; ++i) {
-            result[i] = CodeLine.fromText(lines[i]);
+            const codeLine = CodeLine.fromText(lines[i]);
+            result[i] = codeLine;
+            if (codeLine.length > result._width) {
+                result._width = codeLine.length;
+            }
+        }
+        if (result.length === 0) {
+            result.push(new CodeLine());
         }
         return result;
     }
