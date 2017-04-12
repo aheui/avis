@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 
 import { connect } from '../appState';
+import { base26 } from '../misc/base';
 import style from './Board.css';
 
 
@@ -43,7 +44,7 @@ class Board extends React.Component {
             <div
                 className={style.lineNumbers}
                 style={{
-                    top: -this.state.scrollTop,
+                    top: 30 - this.state.scrollTop,
                     height: codeSpace.height * 30,
                 }}
             >
@@ -60,6 +61,29 @@ class Board extends React.Component {
             <div className={classNames(style.lineNumbersShadow, {
                 [style.on]: this.state.scrollLeft > 0,
             })}/>
+            <div
+                className={style.columnNumbers}
+                style={{
+                    left: 70 - this.state.scrollLeft,
+                    width: codeSpace.width * 30,
+                }}
+            >
+                {
+                    (new Array(codeSpace.width)).fill(0).map((_, index) => <div
+                        className={style.columnNumber}
+                        key={index}
+                        style={{
+                            left: index * 30,
+                        }}
+                    >{ base26(index) }</div>)
+                }
+            </div>
+            <div className={classNames(style.columnNumbersShadow, {
+                [style.on]: this.state.scrollTop > 0,
+            })}/>
+            <div className={style.square}>{
+                `${ codeSpace.width } \xd7 ${ codeSpace.height }`
+            }</div>
         </div>;
     }
 }

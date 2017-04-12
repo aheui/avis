@@ -11,9 +11,10 @@
 
 .scroll-pane {
     position: absolute;
+    top: 30px;
     left: 70px;
     width: calc(100% - 70px);
-    height: 100%;
+    height: calc(100% - 30px);
     overflow: scroll;
 }
 
@@ -68,4 +69,47 @@
 
 .line-numbers-shadow.on {
     display: block;
+}
+
+.column-numbers {
+    position: absolute;
+    left: 0;
+    height: 30px;
+    width: 100%;
+}
+
+.column-numbers > .column-number {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 14px;
+    text-align: center;
+    color: rgba(90, 90, 90, 1);
+}
+
+.column-numbers-shadow {
+    display: none;
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.column-numbers-shadow.on {
+    display: block;
+}
+
+.square {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 70px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 12px;
+    text-align: center;
+    color: rgba(90, 90, 90, 1);
+    background-color: rgb(30, 30, 30);
 }
