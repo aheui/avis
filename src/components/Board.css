@@ -9,7 +9,7 @@
     cursor: default;
 }
 
-.scroll-pane {
+.code-space-scroll {
     position: absolute;
     top: 30px;
     left: 70px;
@@ -41,14 +41,41 @@
     outline-style: dashed;
 }
 
-.line-numbers {
+.line-numbers-scroll {
     position: absolute;
     top: 0;
     width: 70px;
     height: 100%;
 }
 
-.line-numbers > .line-number {
+.line-numbers-scroll.shadow {
+    box-shadow: 5px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.column-numbers-scroll {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 30px;
+}
+
+.column-numbers-scroll.shadow {
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.scroll {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.numbers {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.numbers > .line-number {
     position: absolute;
     width: 50px;
     height: 30px;
@@ -58,27 +85,7 @@
     color: rgba(90, 90, 90, 1);
 }
 
-.line-numbers-shadow {
-    display: none;
-    position: absolute;
-    top: 0;
-    width: 70px;
-    height: 100%;
-    box-shadow: 5px 0 10px rgba(0, 0, 0, 0.2);
-}
-
-.line-numbers-shadow.on {
-    display: block;
-}
-
-.column-numbers {
-    position: absolute;
-    left: 0;
-    height: 30px;
-    width: 100%;
-}
-
-.column-numbers > .column-number {
+.numbers > .column-number {
     position: absolute;
     width: 30px;
     height: 30px;
@@ -86,19 +93,6 @@
     font-size: 14px;
     text-align: center;
     color: rgba(90, 90, 90, 1);
-}
-
-.column-numbers-shadow {
-    display: none;
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 30px;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-}
-
-.column-numbers-shadow.on {
-    display: block;
 }
 
 .square {

@@ -13,19 +13,123 @@ class Board extends React.Component {
             scrollTop: 0,
             scrollLeft: 0,
         };
-        this.scrollPane = null;
     }
     render() {
         const { codeSpace } = this.props;
+        const { scrollTop, scrollLeft } = this.state;
         return <div className={style.board}>
-            <div
-                ref={element => this.scrollPane = element}
-                className={style.scrollPane}
-                onScroll={() => this.setState({
-                    scrollTop: this.scrollPane.scrollTop,
-                    scrollLeft: this.scrollPane.scrollLeft,
-                })}
-            >
+            <CodeSpace
+                codeSpace={codeSpace}
+                onScroll={
+                    ({ scrollTop, scrollLeft }) => this.setState({ scrollTop, scrollLeft })
+                }
+            />
+            <LineNumbersScroll
+                codeSpace={codeSpace}
+                scrollTop={scrollTop}
+                scrollLeft={scrollLeft}
+            />
+            <ColumnNumbersScroll
+                codeSpace={codeSpace}
+                scrollTop={scrollTop}
+                scrollLeft={scrollLeft}
+            />
+            <div className={style.square}>{
+                `${ codeSpace.width } \xd7 ${ codeSpace.height }`
+            }</div>
+        </div>;
+    }
+}
+
+const CodeSpaceStateViewer = connect(
+    appState => ({
+        codeSpace: appState.codeSpace,
+    }),
+)(class CodeSpaceStateViewer extends React.Component {
+    constructor(props) {
+        super(props);
+        this.stateId = this.props.codeSpace.stateId;
+    }
+    shouldComponentUpdate({ codeSpace }) {
+        return this.stateId !== codeSpace.stateId;
+    }
+    render() {
+        const { codeSpace, children } = this.props;
+        this.stateId = codeSpace.stateId;
+        return React.Children.only(children);
+    }
+});
+
+const LineNumbersScroll = ({ codeSpace, scrollTop, scrollLeft }) => <div
+    className={classNames(style.lineNumbersScroll, {
+        [style.shadow]: scrollLeft > 0,
+    })}>
+    <div
+        className={style.scroll}
+        style={{
+            top: 30 - scrollTop,
+            height: codeSpace.height * 30,
+        }}
+    >
+        <CodeSpaceStateViewer>
+            <div className={style.numbers}>
+                {
+                    codeSpace.map((_, index) => <div
+                        className={style.lineNumber}
+                        key={index}
+                        style={{
+                            top: index * 30,
+                        }}
+                    >{ index + 1 }</div>)
+                }
+            </div>
+        </CodeSpaceStateViewer>
+    </div>
+</div>;
+
+const ColumnNumbersScroll = ({ codeSpace, scrollTop, scrollLeft }) => <div
+    className={classNames(style.columnNumbersScroll, {
+        [style.shadow]: scrollTop > 0,
+    })}>
+    <div
+        className={style.scroll}
+        style={{
+            left: 70 - scrollLeft,
+            width: codeSpace.width * 30,
+        }}
+    >
+        <CodeSpaceStateViewer>
+            <div className={style.numbers}>
+                {
+                    (new Array(codeSpace.width)).fill(0).map((_, index) => <div
+                        className={style.columnNumber}
+                        key={index}
+                        style={{
+                            left: index * 30,
+                        }}
+                    >{ base26(index) }</div>)
+                }
+            </div>
+        </CodeSpaceStateViewer>
+    </div>
+</div>;
+
+class CodeSpace extends React.Component {
+    constructor(props) {
+        super(props);
+        this.element = null;
+    }
+    render() {
+        const { codeSpace } = this.props;
+        return <div
+            ref={element => this.element = element}
+            className={style.codeSpaceScroll}
+            onScroll={() => this.props.onScroll({
+                scrollTop: this.element.scrollTop,
+                scrollLeft: this.element.scrollLeft,
+            })}
+        >
+            <CodeSpaceStateViewer>
                 <div
                     className={style.codeSpace}
                     style={{
@@ -40,50 +144,7 @@ class Board extends React.Component {
                         )
                     }
                 </div>
-            </div>
-            <div
-                className={style.lineNumbers}
-                style={{
-                    top: 30 - this.state.scrollTop,
-                    height: codeSpace.height * 30,
-                }}
-            >
-                {
-                    codeSpace.map((_, index) => <div
-                        className={style.lineNumber}
-                        key={index}
-                        style={{
-                            top: index * 30,
-                        }}
-                    >{ index + 1 }</div>)
-                }
-            </div>
-            <div className={classNames(style.lineNumbersShadow, {
-                [style.on]: this.state.scrollLeft > 0,
-            })}/>
-            <div
-                className={style.columnNumbers}
-                style={{
-                    left: 70 - this.state.scrollLeft,
-                    width: codeSpace.width * 30,
-                }}
-            >
-                {
-                    (new Array(codeSpace.width)).fill(0).map((_, index) => <div
-                        className={style.columnNumber}
-                        key={index}
-                        style={{
-                            left: index * 30,
-                        }}
-                    >{ base26(index) }</div>)
-                }
-            </div>
-            <div className={classNames(style.columnNumbersShadow, {
-                [style.on]: this.state.scrollTop > 0,
-            })}/>
-            <div className={style.square}>{
-                `${ codeSpace.width } \xd7 ${ codeSpace.height }`
-            }</div>
+            </CodeSpaceStateViewer>
         </div>;
     }
 }

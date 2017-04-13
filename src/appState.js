@@ -5,6 +5,7 @@ const defaultSpaceChar = '\u3000';
 
 export class AppState {
     constructor({ content }) {
+        this._stateId = 0;
         this._listeners = [];
         this._codeSpace = CodeSpace.fromText(content || '');
         this._machine = new Aheui.Machine(this._codeSpace);
@@ -34,7 +35,9 @@ export class AppState {
         this._interval = value;
         this.dispatch();
     }
+    get stateId() { return this._stateId; }
     dispatch() {
+        ++this._stateId;
         for (let listener of this._listeners) listener();
     }
     listen(listener) {
@@ -213,7 +216,7 @@ export function connect(mapStateToProps) {
             return React.createElement(Container, {
                 ...this.props,
                 ...mapStateToProps(this.appState),
-            }, null);
+            }, this.props.children);
         }
         static contextTypes = {
             appState: React.PropTypes.object.isRequired,
