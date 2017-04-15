@@ -117,20 +117,64 @@ const ColumnNumbersScroll = ({ codeSpace, scrollTop, scrollLeft }) => <div
 class CodeSpace extends React.Component {
     constructor(props) {
         super(props);
-        this.element = null;
+        this.state = {
+            mouseOn: false,
+            mouseX: 0,
+            mouseY: 0,
+            ghostCaretX: 0,
+            ghostCaretY: 0,
+            codeSpaceX: 0,
+            codeSpaceY: 0,
+        };
+        this.scrollElement = null;
+        this.codeSpaceElement = null;
+    }
+    componentDidMount() {
+        this.updateCodeSpacePosition();
+    }
+    updateCodeSpacePosition() {
+        const { left, top } = this.codeSpaceElement.getBoundingClientRect();
+        this.setState({
+            codeSpaceX: left,
+            codeSpaceY: top,
+        });
+    }
+    updateGhostCaret(mouseX, mouseY, mouseOn) {
+        this.setState(({ codeSpaceX, codeSpaceY }) => ({
+            mouseX, mouseY, mouseOn,
+            ghostCaretX: ((mouseX - codeSpaceX) / 30) | 0,
+            ghostCaretY: ((mouseY - codeSpaceY) / 30) | 0,
+        }));
     }
     render() {
         const { codeSpace } = this.props;
+        const { mouseOn, ghostCaretX, ghostCaretY } = this.state;
         return <div
-            ref={element => this.element = element}
+            ref={scrollElement => this.scrollElement = scrollElement}
             className={style.codeSpaceScroll}
-            onScroll={() => this.props.onScroll({
-                scrollTop: this.element.scrollTop,
-                scrollLeft: this.element.scrollLeft,
-            })}
+            onScroll={() => {
+                this.updateCodeSpacePosition();
+                this.updateGhostCaret(
+                    this.state.mouseX,
+                    this.state.mouseY,
+                    this.state.mouseOn,
+                );
+                this.props.onScroll({
+                    scrollTop: this.scrollElement.scrollTop,
+                    scrollLeft: this.scrollElement.scrollLeft,
+                });
+            }}
+            onMouseOverCapture={e => this.updateGhostCaret(e.clientX, e.clientY, true)}
+            onMouseOutCapture={e => this.updateGhostCaret(e.clientX, e.clientY, false)}
+            onMouseMoveCapture={e => this.updateGhostCaret(
+                e.clientX,
+                e.clientY,
+                this.state.mouseOn,
+            )}
         >
             <CodeSpaceStateViewer>
                 <div
+                    ref={codeSpaceElement => this.codeSpaceElement = codeSpaceElement}
                     className={style.codeSpace}
                     style={{
                         width: `calc(100% + ${ (codeSpace.width - 1) * 30 }px)`,
@@ -145,6 +189,13 @@ class CodeSpace extends React.Component {
                     }
                 </div>
             </CodeSpaceStateViewer>
+            <div
+                className={classNames(style.ghostCaret, { [style.on]: mouseOn })}
+                style={{
+                    top: ghostCaretY * 30,
+                    left: ghostCaretX * 30,
+                }}
+            />
         </div>;
     }
 }
