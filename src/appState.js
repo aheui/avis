@@ -6,17 +6,33 @@ const defaultSpaceChar = '\u3000';
 export class AppState {
     constructor({ content }) {
         this._stateId = 0;
-        this._listeners = [];
+        this._changDispatcher = new ChangeDispatcher();
+        this._selection = new Selection();
         this._codeSpace = CodeSpace.fromText(content || '');
         this._machine = new Aheui.Machine(this._codeSpace);
         this._pathTrace = new PathTrace();
         this._intervalId = null;
         this._interval = 1;
     }
+    get changeDispatcher() { return this._changDispatcher; }
     get cursorOnBreakPoint() {
         const { cursor } = this._machine;
         const code = this._codeSpace.get(cursor.x, cursor.y);
         return !!code && code.breakPoint;
+    }
+    get selection() {
+        return this._selection;
+    }
+    set selection({ anchor, focus }) {
+        if (anchor) {
+            this._selection.anchor.x = anchor.x | 0;
+            this._selection.anchor.y = anchor.y | 0;
+        }
+        if (focus) {
+            this._selection.focus.x = focus.x | 0;
+            this._selection.focus.y = focus.y | 0;
+        }
+        this.dispatch();
     }
     get codeSpace() {
         return this._codeSpace;
@@ -38,15 +54,7 @@ export class AppState {
     get stateId() { return this._stateId; }
     dispatch() {
         ++this._stateId;
-        for (let listener of this._listeners) listener();
-    }
-    listen(listener) {
-        this._listeners.push(listener);
-    }
-    unlisten(listener) {
-        const index = this._listeners.indexOf(listener);
-        if (index === -1) return;
-        this._listeners.splice(index, 1);
+        this._changDispatcher.dispatch();
     }
     init() {
         this.stop();
@@ -86,6 +94,18 @@ export class AppState {
             code.breakPoint != code.breakPoint;
         }
     }
+}
+
+class Selection {
+    constructor(anchor = { x: 0, y: 0 }, focus = { x: 0, y: 0 }) {
+        this.anchor = anchor;
+        this.focus = focus;
+    }
+    get isCaret() { return (this.width === 1) && (this.height === 1); }
+    get x() { return Math.min(this.anchor.x, this.focus.x); }
+    get y() { return Math.min(this.anchor.y, this.focus.y); }
+    get width() { return Math.abs(this.anchor.x - this.focus.x) + 1; }
+    get height() { return Math.abs(this.anchor.y - this.focus.y) + 1; }
 }
 
 class Code {
@@ -198,28 +218,72 @@ class PathTrace {
     }
 }
 
+class ChangeDispatcher {
+    constructor(parent = null) {
+        this.parent = parent;
+        this._listeners = [];
+        this.__listeners = this._listeners;
+    }
+    dispatch() {
+        this._listeners = this.__listeners;
+        for (let listener of this._listeners) listener.call();
+    }
+    addListener(listener) {
+        if (this.__listeners === this._listeners) {
+            this.__listeners = [...this._listeners];
+        }
+        this.__listeners.push(listener);
+    }
+    removeListener(listener) {
+        if (this.__listeners === this._listeners) {
+            this.__listeners = [...this._listeners];
+        }
+        const index = this.__listeners.indexOf(listener);
+        if (index === -1) return;
+        this.__listeners.splice(index, 1);
+    }
+}
+
 export function connect(mapStateToProps) {
     return Container => class Connect extends React.Component {
         constructor(props, context) {
             super(props, context);
             this.state = {};
-            this.appState = context.appState;
-            this.listener = () => this.setState({});
+            this.changeDispatcher = new ChangeDispatcher(
+                context.changeDispatcher ||
+                context.appState.changeDispatcher
+            );
         }
         componentDidMount() {
-            this.appState.listen(this.listener);
+            this.changeDispatcher.call = () => {
+                this.setState({});
+                this.changeDispatcher.dispatch();
+            }
+            this.changeDispatcher.parent.addListener(this.changeDispatcher);
         }
         componentWillUnmount() {
-            this.appState.unlisten(this.listener);
+            this.changeDispatcher.call = null;
+            this.changeDispatcher.parent.removeListener(this.changeDispatcher);
+        }
+        getChildContext() {
+            return {
+                appState: this.context.appState,
+                changeDispatcher: this.changeDispatcher,
+            };
         }
         render() {
             return React.createElement(Container, {
                 ...this.props,
-                ...mapStateToProps(this.appState),
-            }, this.props.children);
+                ...mapStateToProps(this.context.appState),
+            });
         }
         static contextTypes = {
             appState: React.PropTypes.object.isRequired,
+            changeDispatcher: React.PropTypes.object,
+        };
+        static childContextTypes = {
+            appState: React.PropTypes.object.isRequired,
+            changeDispatcher: React.PropTypes.object.isRequired,
         };
     };
 }

@@ -118,3 +118,38 @@
 .ghost-caret.on {
     display: block;
 }
+
+.selection {
+    position: absolute;
+}
+
+.selection .dash {
+    fill: transparent;
+    stroke: rgba(174, 175, 173, 1);
+    stroke-width: 1;
+    stroke-linejoin: miter;
+    stroke-dasharray: 3, 3;
+    animation-duration: 0.5s;
+    animation-name: dash-rotate;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.selection.caret {
+    outline: 1px solid rgba(174, 175, 173, 1);
+    outline-offset: -2px;
+    animation-duration: 1s;
+    animation-name: caret-blink;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@keyframes caret-blink {
+    0%, 15%, 85%, 100% { opacity: 1; }
+    35%, 65% { opacity: 0; }
+}
+
+@keyframes dash-rotate {
+    0% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -6; }
+}

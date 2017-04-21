@@ -6,7 +6,9 @@ import { base26 } from '../misc/base';
 import style from './Board.css';
 
 
-class Board extends React.Component {
+export default connect(
+    appState => ({ codeSpace: appState.codeSpace }),
+)(class Board extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -39,7 +41,7 @@ class Board extends React.Component {
             }</div>
         </div>;
     }
-}
+});
 
 const CodeSpaceStateViewer = connect(
     appState => ({
@@ -114,11 +116,14 @@ const ColumnNumbersScroll = ({ codeSpace, scrollTop, scrollLeft }) => <div
     </div>
 </div>;
 
-class CodeSpace extends React.Component {
+const CodeSpace = connect(
+    appState => ({ appState }),
+)(class CodeSpace extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             mouseOn: false,
+            mouseDown: false,
             mouseX: 0,
             mouseY: 0,
             ghostCaretX: 0,
@@ -128,9 +133,16 @@ class CodeSpace extends React.Component {
         };
         this.scrollElement = null;
         this.codeSpaceElement = null;
+        this.mouseUpHandler = e => {
+            this.setState({ mouseDown: false });
+        };
     }
     componentDidMount() {
         this.updateCodeSpacePosition();
+        window.addEventListener('mouseup', this.mouseUpHandler, true);
+    }
+    componentWillUnmount() {
+        window.removeEventListener('mouseup', this.mouseUpHandler, true);
     }
     updateCodeSpacePosition() {
         const { left, top } = this.codeSpaceElement.getBoundingClientRect();
@@ -139,16 +151,43 @@ class CodeSpace extends React.Component {
             codeSpaceY: top,
         });
     }
+    getCellPosFromMousePos(
+        mouseX,
+        mouseY,
+        codeSpaceX = this.state.codeSpaceX,
+        codeSpaceY = this.state.codeSpaceY,
+    ) {
+        return {
+            x: ((mouseX - codeSpaceX) / 30) | 0,
+            y: ((mouseY - codeSpaceY) / 30) | 0,
+        };
+    }
     updateGhostCaret(mouseX, mouseY, mouseOn) {
-        this.setState(({ codeSpaceX, codeSpaceY }) => ({
-            mouseX, mouseY, mouseOn,
-            ghostCaretX: ((mouseX - codeSpaceX) / 30) | 0,
-            ghostCaretY: ((mouseY - codeSpaceY) / 30) | 0,
-        }));
+        this.setState(({ codeSpaceX, codeSpaceY }) => {
+            const cellPos = this.getCellPosFromMousePos(
+                mouseX,
+                mouseY,
+                codeSpaceX,
+                codeSpaceY,
+            );
+            return {
+                mouseX, mouseY, mouseOn,
+                ghostCaretX: cellPos.x,
+                ghostCaretY: cellPos.y,
+            };
+        });
     }
     render() {
-        const { codeSpace } = this.props;
+        const { codeSpace, appState } = this.props;
+        const { selection } = appState;
+        const { isCaret } = selection;
         const { mouseOn, ghostCaretX, ghostCaretY } = this.state;
+        const selectionBox = {
+            top: selection.y * 30,
+            left: selection.x * 30,
+            width: selection.width * 30,
+            height: selection.height * 30,
+        };
         return <div
             ref={scrollElement => this.scrollElement = scrollElement}
             className={style.codeSpaceScroll}
@@ -166,11 +205,20 @@ class CodeSpace extends React.Component {
             }}
             onMouseOverCapture={e => this.updateGhostCaret(e.clientX, e.clientY, true)}
             onMouseOutCapture={e => this.updateGhostCaret(e.clientX, e.clientY, false)}
-            onMouseMoveCapture={e => this.updateGhostCaret(
-                e.clientX,
-                e.clientY,
-                this.state.mouseOn,
-            )}
+            onMouseDownCapture={e => {
+                const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
+                const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
+                appState.selection = { anchor: cellPos, focus: cellPos };
+                this.setState({ mouseDown: true });
+            }}
+            onMouseMoveCapture={e => {
+                const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
+                if (this.state.mouseDown) {
+                    const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
+                    appState.selection = { focus: cellPos };
+                }
+                this.updateGhostCaret(mouseX, mouseY, this.state.mouseOn);
+            }}
         >
             <CodeSpaceStateViewer>
                 <div
@@ -196,9 +244,28 @@ class CodeSpace extends React.Component {
                     left: ghostCaretX * 30,
                 }}
             />
+            {
+                isCaret ?
+                <div
+                    className={classNames(style.selection, style.caret)}
+                    style={selectionBox}
+                /> :
+                <svg
+                    className={style.selection}
+                    style={selectionBox}
+                    viewBox={`0 0 ${ selectionBox.width } ${ selectionBox.height }`}
+                >
+                    <rect
+                        className={style.dash}
+                        x="1.5" y="1.5"
+                        width={ selectionBox.width - 3 }
+                        height={ selectionBox.height - 3 }
+                    />
+                </svg>
+            }
         </div>;
     }
-}
+});
 
 const CodeLine = props => <div
     className={style.codeLine}
@@ -229,9 +296,3 @@ const GhostCell = props => <div
         left: props.index * 30,
     }}
 />;
-
-export default connect(appState => {
-    return {
-        codeSpace: appState.codeSpace,
-    };
-})(Board);
