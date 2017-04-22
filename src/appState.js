@@ -1,18 +1,20 @@
 import React from 'react';
 import Aheui from 'naheui';
 
-const defaultSpaceChar = '\u3000';
+const defaultSpaceFillChar = '\u3000';
 
 export class AppState {
     constructor({ content }) {
+        this._mutating;
         this._stateId = 0;
         this._changDispatcher = new ChangeDispatcher();
         this._selection = new Selection();
         this._codeSpace = CodeSpace.fromText(content || '');
         this._machine = new Aheui.Machine(this._codeSpace);
+        this._spaceFillChar = defaultSpaceFillChar;
         this._pathTrace = new PathTrace();
         this._intervalId = null;
-        this._interval = 1;
+        this._interval = 1; // 코드 실행 속도
     }
     get changeDispatcher() { return this._changDispatcher; }
     get cursorOnBreakPoint() {
@@ -24,15 +26,25 @@ export class AppState {
         return this._selection;
     }
     set selection({ anchor, focus }) {
-        if (anchor) {
-            this._selection.anchor.x = anchor.x | 0;
-            this._selection.anchor.y = anchor.y | 0;
-        }
-        if (focus) {
-            this._selection.focus.x = focus.x | 0;
-            this._selection.focus.y = focus.y | 0;
-        }
-        this.dispatch();
+        if (!anchor && !focus) return;
+        this.mutate(() => {
+            if (anchor) {
+                this._selection.anchor.x = anchor.x | 0;
+                this._selection.anchor.y = anchor.y | 0;
+            }
+            if (focus) {
+                this._selection.focus.x = focus.x | 0;
+                this._selection.focus.y = focus.y | 0;
+            }
+        });
+    }
+    get spaceFillChar() {
+        return this._spaceFillChar;
+    }
+    set spaceFillChar(value) {
+        this.mutate(() => {
+            this._spaceFillChar = value;
+        });
     }
     get codeSpace() {
         return this._codeSpace;
@@ -44,55 +56,76 @@ export class AppState {
         return this._interval;
     }
     set interval(value) {
-        if (this.isRunning) {
-            window.clearInterval(this._intervalId);
-            this._intervalId = window.setInterval(() => this.step(), value);
-        }
-        this._interval = value;
-        this.dispatch();
+        this.mutate(() => {
+            if (this.isRunning) {
+                window.clearInterval(this._intervalId);
+                this._intervalId = window.setInterval(() => this.step(), value);
+            }
+            this._interval = value;
+        });
     }
     get stateId() { return this._stateId; }
-    dispatch() {
-        ++this._stateId;
-        this._changDispatcher.dispatch();
+    mutate(executor) {
+        if (!this._mutating) {
+            try {
+                this._mutating = true;
+                executor();
+            } finally {
+                this._mutating = false;
+                ++this._stateId;
+                this._changDispatcher.dispatch();
+            }
+        } else {
+            executor();
+        }
+    }
+    overwriteCode(rowIndex, colIndex, text) {
+        this.mutate(() => {
+            this._codeSpace.overwrite(rowIndex, colIndex, text, this._spaceFillChar);
+        })
     }
     init() {
-        this.stop();
-        this.dispatch();
+        this.mutate(() => {
+            this.stop();
+            // TODO
+            // clear machine state
+            // init machine with appState's codeSpace
+        });
     }
     run() {
         if (this.isRunning) return;
-        this._machine.terminateFlag = false;
-        this._intervalId = window.setInterval(() => this.step(), this._interval);
-        this.dispatch();
+        this.mutate(() => {
+            this._machine.terminateFlag = false;
+            this._intervalId = window.setInterval(() => this.step(), this._interval);
+        });
     }
     stop() {
-        if (this.isRunning) {
+        if (!this.isRunning) return;
+        this.mutate(() => {
             window.clearInterval(this._intervalId);
-        }
-        this._intervalId = null;
-        this.dispatch();
+            this._intervalId = null;
+        });
     }
     dump() {
         return this._machine.dump();
     }
     step() {
-        const machine = this._machine;
-        const pathTrace = this._pathTrace;
-        const { cursor, storage } = machine;
-        pathTrace.push(cursor.x, cursor.y);
-        machine.step();
-        if (machine.terminated || this.cursorOnBreakPoint) {
-            this.stop();
-        }
-        this.dispatch();
+        this.mutate(() => {
+            const machine = this._machine;
+            const pathTrace = this._pathTrace;
+            const { cursor, storage } = machine;
+            pathTrace.push(cursor.x, cursor.y);
+            machine.step();
+            if (machine.terminated || this.cursorOnBreakPoint) {
+                this.stop();
+            }
+        });
     }
     toggleBreakPoint(x, y) {
-        const { cursor } = this._machine;
-        const code = this._codeSpace.get(cursor.x, cursor.y);
-        if (code) {
-            code.breakPoint != code.breakPoint;
-        }
+        this.mutate(() => {
+            const { cursor } = this._machine;
+            this._codeSpace.toggleBreakPoint(cursor.x, cursor.y);
+        });
     }
 }
 
@@ -141,6 +174,15 @@ class CodeLine extends Array {
         }
         return result;
     }
+    overwrite(index, text, spaceFillChar = defaultSpaceFillChar) {
+        if (text.length === 0) return;
+        if (/\r|\n/.test(text)) {
+            throw new Error('CodeLine 안에 개행문자가 들어오면 안됨');
+        }
+        while (this.length <= index) this.push(new Code(spaceFillChar, false));
+        const codes = text.split('').map(char => new Code(char, false));
+        this.splice(index, codes.length, ...codes);
+    }
     toString() {
         return this.map(code => code.toString()).join('');
     }
@@ -149,7 +191,23 @@ class CodeLine extends Array {
 class CodeSpace extends Array {
     constructor(...args) {
         super(...args);
+        this._mutating = false;
+        this._stateId = 0;
         this._width = 0;
+    }
+    get stateId() { return this._stateId; }
+    mutate(executor) {
+        if (!this._mutating) {
+            try {
+                this._mutating = true;
+                executor();
+            } finally {
+                this._mutating = false;
+                ++this._stateId;
+            }
+        } else {
+            executor();
+        }
     }
     get(x, y) {
         const line = this[y];
@@ -164,6 +222,25 @@ class CodeSpace extends Array {
     }
     get height() {
         return this.length;
+    }
+    overwrite(rowIndex, colIndex, text, spaceFillChar = defaultSpaceFillChar) {
+        if (text.length === 0) return;
+        this.mutate(() => {
+            const textLines = text.split(/\r?\n/);
+            const height = rowIndex + textLines.length;
+            while (this.length < height) this.push(new CodeLine());
+            for (let i = 0; i < textLines.length; ++i) {
+                const textLine = textLines[i];
+                const codeLine = this[rowIndex + i];
+                codeLine.overwrite(colIndex, textLine, spaceFillChar);
+                if (codeLine.length > this._width) {
+                    this._width = codeLine.length;
+                }
+            }
+        });
+    }
+    toggleBreakPoint(x, y) {
+        // TODO
     }
     toString() {
         return this.map(line => line.toString()).join('\n');
