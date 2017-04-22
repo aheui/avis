@@ -181,7 +181,7 @@ const CodeSpace = connect(
         const { codeSpace, appState } = this.props;
         const { selection } = appState;
         const { isCaret } = selection;
-        const { mouseOn, ghostCaretX, ghostCaretY } = this.state;
+        const { mouseOn, mouseDown, ghostCaretX, ghostCaretY } = this.state;
         const selectionBox = {
             top: selection.y * 30,
             left: selection.x * 30,
@@ -213,11 +213,12 @@ const CodeSpace = connect(
             }}
             onMouseMoveCapture={e => {
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
-                if (this.state.mouseDown) {
+                const { mouseOn, mouseDown } = this.state;
+                if (mouseDown) {
                     const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
                     appState.selection = { focus: cellPos };
                 }
-                this.updateGhostCaret(mouseX, mouseY, this.state.mouseOn);
+                this.updateGhostCaret(mouseX, mouseY, mouseOn);
             }}
         >
             <CodeSpaceStateViewer>
@@ -238,7 +239,7 @@ const CodeSpace = connect(
                 </div>
             </CodeSpaceStateViewer>
             <div
-                className={classNames(style.ghostCaret, { [style.on]: mouseOn })}
+                className={classNames(style.ghostCaret, { [style.on]: mouseOn && !mouseDown })}
                 style={{
                     top: ghostCaretY * 30,
                     left: ghostCaretX * 30,
