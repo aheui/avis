@@ -141,11 +141,17 @@ class Selection {
     get height() { return Math.abs(this.anchor.y - this.focus.y) + 1; }
 }
 
+// ㄴㄷㄸㄹㅁㅂㅃㅅㅆㅈㅊㅌㅍㅎ
+const significantChoIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18];
+// ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅢㅣ
+const significantJungIndices = [0, 2, 4, 6, 8, 12, 13, 17, 18, 19, 20];
+
 class Code {
     constructor(char, breakPoint = false) {
         this._cho = -1;
         this._jung = -1;
         this._jong = -1;
+        this._isComment = true;
         this.char = char;
         this.breakPoint = breakPoint;
     }
@@ -157,12 +163,20 @@ class Code {
         this._cho = Aheui.cho(value);
         this._jung = Aheui.jung(value);
         this._jong = Aheui.jong(value);
+        this._isComment = Code.isComment(this._cho, this._jung);
     }
     get cho() { return this._cho; }
     get jung() { return this._jung; }
     get jong() { return this._jong; }
+    get isComment() { return this._isComment; }
     toString() {
         return this.char;
+    }
+    static isComment(cho, jung) {
+        return (
+            significantChoIndices.indexOf(cho) === -1 &&
+            significantJungIndices.indexOf(jung) === -1
+        );
     }
 }
 

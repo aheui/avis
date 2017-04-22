@@ -35,6 +35,10 @@
     outline-offset: -2px;
 }
 
+.cell.comment {
+    color: rgba(90, 90, 90, 1);
+}
+
 .cell.ghost {
     outline-style: dashed;
 }

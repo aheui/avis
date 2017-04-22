@@ -299,7 +299,7 @@ const CodeLine = props => <div
 </div>;
 
 const Cell = props => <div
-    className={style.cell}
+    className={classNames(style.cell, { [style.comment]: props.code.isComment })}
     style={{
         left: props.index * 30,
     }}
