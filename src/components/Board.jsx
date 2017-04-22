@@ -255,15 +255,11 @@ const CodeSpace = connect(
                     left: ghostCaretX * 30,
                 }}
             />
-            {
-                isCaret ?
-                <div
-                    className={classNames(style.selection, style.caret)}
-                    style={selectionBox}
-                /> :
-                <svg
-                    className={style.selection}
-                    style={selectionBox}
+            <div
+                className={classNames(style.selection, { [style.caret]: isCaret })}
+                style={selectionBox}
+            >
+                { !isCaret && <svg
                     viewBox={`0 0 ${ selectionBox.width } ${ selectionBox.height }`}
                 >
                     <rect
@@ -272,8 +268,8 @@ const CodeSpace = connect(
                         width={ selectionBox.width - 3 }
                         height={ selectionBox.height - 3 }
                     />
-                </svg>
-            }
+                </svg> }
+            </div>
         </div>;
     }
 });
