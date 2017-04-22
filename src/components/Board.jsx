@@ -133,16 +133,30 @@ const CodeSpace = connect(
         };
         this.scrollElement = null;
         this.codeSpaceElement = null;
-        this.mouseUpHandler = e => {
-            this.setState({ mouseDown: false });
-        };
+    }
+    onMouseUp(e) {
+        this.setState({ mouseDown: false });
+        this.removeMouseEventListeners();
+    }
+    onMouseMove(e) {
+        const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
+        const { appState } = this.props;
+        const { mouseOn, mouseDown } = this.state;
+        if (mouseDown) {
+            const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
+            appState.selection = { focus: cellPos };
+        }
+        this.updateGhostCaret(mouseX, mouseY, mouseOn);
+    }
+    removeMouseEventListeners() {
+        window.removeEventListener('mouseup', this.mouseUpHandler, true);
+        window.removeEventListener('mousemove', this.mouseMoveHandler, true);
     }
     componentDidMount() {
         this.updateCodeSpacePosition();
-        window.addEventListener('mouseup', this.mouseUpHandler, true);
     }
     componentWillUnmount() {
-        window.removeEventListener('mouseup', this.mouseUpHandler, true);
+        this.removeMouseEventListeners();
     }
     updateCodeSpacePosition() {
         const { left, top } = this.codeSpaceElement.getBoundingClientRect();
@@ -210,15 +224,10 @@ const CodeSpace = connect(
                 const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
                 appState.selection = { anchor: cellPos, focus: cellPos };
                 this.setState({ mouseDown: true });
-            }}
-            onMouseMoveCapture={e => {
-                const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
-                const { mouseOn, mouseDown } = this.state;
-                if (mouseDown) {
-                    const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
-                    appState.selection = { focus: cellPos };
-                }
-                this.updateGhostCaret(mouseX, mouseY, mouseOn);
+                this.mouseUpHandler = e => this.onMouseUp(e);
+                this.mouseMoveHandler = e => this.onMouseMove(e);
+                window.addEventListener('mouseup', this.mouseUpHandler, true);
+                window.addEventListener('mousemove', this.mouseMoveHandler, true);
             }}
         >
             <CodeSpaceStateViewer>

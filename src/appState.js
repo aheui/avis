@@ -29,12 +29,12 @@ export class AppState {
         if (!anchor && !focus) return;
         this.mutate(() => {
             if (anchor) {
-                this._selection.anchor.x = anchor.x | 0;
-                this._selection.anchor.y = anchor.y | 0;
+                this._selection.anchor.x = Math.max(anchor.x | 0, 0);
+                this._selection.anchor.y = Math.max(anchor.y | 0, 0);
             }
             if (focus) {
-                this._selection.focus.x = focus.x | 0;
-                this._selection.focus.y = focus.y | 0;
+                this._selection.focus.x = Math.max(focus.x | 0, 0);
+                this._selection.focus.y = Math.max(focus.y | 0, 0);
             }
         });
     }
