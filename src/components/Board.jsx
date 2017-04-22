@@ -133,6 +133,7 @@ const CodeSpace = connect(
         };
         this.scrollElement = null;
         this.codeSpaceElement = null;
+        this.caretElement = null;
     }
     onMouseDragUp(e) {
         this.setState({ mouseDown: false });
@@ -224,6 +225,11 @@ const CodeSpace = connect(
                 this.mouseDragMoveHandler = e => this.onMouseDragMove(e);
                 window.addEventListener('mouseup', this.mouseDragUpHandler, true);
                 window.addEventListener('mousemove', this.mouseDragMoveHandler, true);
+                { // 캐럿 깜빡임 애니메이션 리셋
+                    this.caretElement.classList.remove(style.caret);
+                    this.caretElement.offsetHeight; // 강제 리플로우 트리거
+                    this.caretElement.classList.add(style.caret);
+                }
             }}
             onMouseMoveCapture={e => {
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
@@ -258,6 +264,7 @@ const CodeSpace = connect(
             <div
                 className={classNames(style.selection, { [style.caret]: isCaret })}
                 style={selectionBox}
+                ref={caretElement => this.caretElement = caretElement}
             >
                 { !isCaret && <svg
                     viewBox={`0 0 ${ selectionBox.width } ${ selectionBox.height }`}
