@@ -218,13 +218,16 @@ const CodeSpace = connect(
             onMouseOutCapture={e => this.updateGhostCaret(e.clientX, e.clientY, false)}
             onMouseDownCapture={e => {
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
+                const { mouseDown } = this.state;
                 const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
                 appState.selection = { anchor: cellPos, focus: cellPos };
-                this.setState({ mouseDown: true });
-                this.mouseDragUpHandler = e => this.onMouseDragUp(e);
-                this.mouseDragMoveHandler = e => this.onMouseDragMove(e);
-                window.addEventListener('mouseup', this.mouseDragUpHandler, true);
-                window.addEventListener('mousemove', this.mouseDragMoveHandler, true);
+                if (!mouseDown) {
+                    this.setState({ mouseDown: true });
+                    this.mouseDragUpHandler = e => this.onMouseDragUp(e);
+                    this.mouseDragMoveHandler = e => this.onMouseDragMove(e);
+                    window.addEventListener('mouseup', this.mouseDragUpHandler, true);
+                    window.addEventListener('mousemove', this.mouseDragMoveHandler, true);
+                }
                 { // 캐럿 깜빡임 애니메이션 리셋
                     this.caretElement.classList.remove(style.caret);
                     this.caretElement.offsetHeight; // 강제 리플로우 트리거
