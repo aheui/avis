@@ -7,7 +7,7 @@ export class AppState {
     constructor({ content }) {
         this._mutating;
         this._stateId = 0;
-        this._changDispatcher = new ChangeDispatcher();
+        this._changeDispatcher = new ChangeDispatcher();
         this._selection = new Selection();
         this._codeSpace = CodeSpace.fromText(content || '');
         this._machine = new Aheui.Machine(this._codeSpace);
@@ -16,7 +16,7 @@ export class AppState {
         this._intervalId = null;
         this._interval = 1; // 코드 실행 속도
     }
-    get changeDispatcher() { return this._changDispatcher; }
+    get changeDispatcher() { return this._changeDispatcher; }
     get cursorOnBreakPoint() {
         const { cursor } = this._machine;
         const code = this._codeSpace.get(cursor.x, cursor.y);
@@ -73,7 +73,7 @@ export class AppState {
             } finally {
                 this._mutating = false;
                 ++this._stateId;
-                this._changDispatcher.dispatch();
+                this._changeDispatcher.dispatch();
             }
         } else {
             executor();
