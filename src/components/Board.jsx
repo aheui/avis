@@ -134,6 +134,10 @@ const CodeSpace = connect(
         this.scrollElement = null;
         this.codeSpaceElement = null;
         this.caretElement = null;
+        { // mousemove 이벤트 쓰로틀을 위한 속성
+            this.raf = null;
+            this.throttled = null;
+        }
     }
     onMouseDragUp(e) {
         this.setState({ mouseDown: false });
@@ -150,9 +154,24 @@ const CodeSpace = connect(
         window.removeEventListener('mousemove', this.mouseDragMoveHandler, true);
     }
     componentDidMount() {
+        this.throttled = new Map();
+        this.raf = () => {
+            try {
+                for (let [handler, args] of this.throttled.entries()) {
+                    if (args) {
+                        handler.apply(this, args);
+                        this.throttled.set(handler, null);
+                    }
+                }
+            } finally {
+                this.raf && window.requestAnimationFrame(this.raf);
+            }
+        };
+        window.requestAnimationFrame(this.raf);
         this.updateCodeSpacePosition();
     }
     componentWillUnmount() {
+        this.raf = null;
         this.removeMouseDragEventListeners();
     }
     updateCodeSpacePosition() {
@@ -224,7 +243,8 @@ const CodeSpace = connect(
                 if (!mouseDown) {
                     this.setState({ mouseDown: true });
                     this.mouseDragUpHandler = e => this.onMouseDragUp(e);
-                    this.mouseDragMoveHandler = e => this.onMouseDragMove(e);
+                    this.mouseDragMoveHandler =
+                        (...args) => this.throttled.set(this.onMouseDragMove, args);
                     window.addEventListener('mouseup', this.mouseDragUpHandler, true);
                     window.addEventListener('mousemove', this.mouseDragMoveHandler, true);
                 }
@@ -237,7 +257,10 @@ const CodeSpace = connect(
             onMouseMoveCapture={e => {
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
                 const { mouseOn } = this.state;
-                this.updateGhostCaret(mouseX, mouseY, mouseOn);
+                this.throttled.set(
+                    this.updateGhostCaret,
+                    [mouseX, mouseY, mouseOn]
+                );
             }}
         >
             <CodeSpaceStateViewer>
