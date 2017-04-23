@@ -1,4 +1,18 @@
 .shelf {
     flex-basis: 37px;
+    display: flex;
+    align-items: center;
     background-color: rgb(45, 45, 45);
+}
+
+.logo {
+    margin-left: 5px;
+    width: 25px;
+    filter: saturate(0) brightness(6);
+}
+
+.label {
+    margin-left: 5px;
+    font-size: 10px;
+    color: rgb(212, 212, 212);
 }
