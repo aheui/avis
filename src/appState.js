@@ -79,6 +79,12 @@ export class AppState {
             executor();
         }
     }
+    collapseSelection() {
+        if (this._selection.isCaret) return;
+        const { x, y } = this._selection;
+        const caret = { x, y };
+        this.selection = { anchor: caret, focus: caret };
+    }
     overwriteCode(rowIndex, colIndex, text) {
         this.mutate(() => {
             this._codeSpace.overwrite(rowIndex, colIndex, text, this._spaceFillChar);

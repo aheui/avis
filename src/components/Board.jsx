@@ -130,13 +130,18 @@ const CodeSpace = connect(
             ghostCaretY: 0,
             codeSpaceX: 0,
             codeSpaceY: 0,
+            compositing: false,
         };
         this.scrollElement = null;
         this.codeSpaceElement = null;
         this.caretElement = null;
+        this.inputElement = null;
         { // mousemove 이벤트 쓰로틀을 위한 속성
             this.raf = null;
             this.throttled = null;
+        }
+        { // ime hack을 위한 속성
+            this.startComposition = false;
         }
     }
     onMouseDragUp(e) {
@@ -207,14 +212,25 @@ const CodeSpace = connect(
             };
         });
     }
+    resetCaretAnimation() {
+        this.caretElement.classList.remove(style.caret);
+        this.caretElement.offsetHeight; // 강제 리플로우 트리거
+        this.caretElement.classList.add(style.caret);
+    }
     render() {
         const { codeSpace, appState } = this.props;
         const { selection } = appState;
         const { isCaret } = selection;
-        const { mouseOn, mouseDown, ghostCaretX, ghostCaretY } = this.state;
+        const {
+            mouseOn, mouseDown,
+            ghostCaretX, ghostCaretY,
+            compositing,
+        } = this.state;
+        const inputText = this.inputElement ? this.inputElement.value : '';
+        const caretX = selection.x + inputText.length - (compositing ? 1 : 0);
         const selectionBox = {
             top: selection.y * 30,
-            left: selection.x * 30,
+            left: caretX * 30,
             width: selection.width * 30,
             height: selection.height * 30,
         };
@@ -239,7 +255,6 @@ const CodeSpace = connect(
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
                 const { mouseDown } = this.state;
                 const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
-                appState.selection = { anchor: cellPos, focus: cellPos };
                 if (!mouseDown) {
                     this.setState({ mouseDown: true });
                     this.mouseDragUpHandler = e => this.onMouseDragUp(e);
@@ -248,11 +263,12 @@ const CodeSpace = connect(
                     window.addEventListener('mouseup', this.mouseDragUpHandler, true);
                     window.addEventListener('mousemove', this.mouseDragMoveHandler, true);
                 }
-                { // 캐럿 깜빡임 애니메이션 리셋
-                    this.caretElement.classList.remove(style.caret);
-                    this.caretElement.offsetHeight; // 강제 리플로우 트리거
-                    this.caretElement.classList.add(style.caret);
-                }
+                appState.selection = { anchor: cellPos, focus: cellPos };
+                this.inputElement.value = '';
+                this.resetCaretAnimation();
+            }}
+            onMouseUpCapture={e => {
+                this.inputElement.focus();
             }}
             onMouseMoveCapture={e => {
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
@@ -303,6 +319,36 @@ const CodeSpace = connect(
                     />
                 </svg> }
             </div>
+            <input
+                type="text"
+                className={style.input}
+                style={{
+                    top: selectionBox.top,
+                    left: selectionBox.left,
+                }}
+                ref={inputElement => this.inputElement = inputElement}
+                onChange={() => {
+                    // compositionstart로부터 위임받은 상태 변경 처리
+                    if (this.startComposition) {
+                        this.setState({ compositing: true });
+                        this.startComposition = false;
+                    }
+                    appState.collapseSelection();
+                    appState.overwriteCode(
+                        appState.selection.y,
+                        appState.selection.x,
+                        this.inputElement.value,
+                    );
+                    this.resetCaretAnimation();
+                }}
+                // compositionstart 후에 change 이벤트가 발생함.
+                // compositionstart 시점은 아직 inputElement.value가 변하지 않은 시점.
+                // inputElement.value에 변화가 온 다음에 렌더가 일어나야하기 때문에
+                // compositionstart에서는 state를 바로 변경하지 않고
+                // change 이벤트로 상태 변경을 위임
+                onCompositionStart={() => this.startComposition = true}
+                onCompositionEnd={() => this.setState({ compositing: false })}
+            />
         </div>;
     }
 });

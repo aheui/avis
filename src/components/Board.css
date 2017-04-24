@@ -20,6 +20,17 @@
     overflow: scroll;
 }
 
+.input {
+    position: absolute;
+    padding: 0;
+    opacity: 0;
+    height: 30px;
+    line-height: 30px;
+    font-size: 16px;
+    border: none;
+    pointer-events: none;
+}
+
 .code-line {
     position: absolute;
     height: 30px;
