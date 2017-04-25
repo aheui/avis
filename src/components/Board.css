@@ -24,9 +24,10 @@
     position: absolute;
     padding: 0;
     opacity: 0;
-    height: 30px;
-    line-height: 30px;
-    font-size: 16px;
+    height: 0;
+    line-height: 0;
+    transform: scale(0.0001);
+    transform-origin: 2px 2px;
     border: none;
     pointer-events: none;
 }

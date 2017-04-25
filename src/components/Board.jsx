@@ -348,6 +348,10 @@ const CodeSpace = connect(
                 // change 이벤트로 상태 변경을 위임
                 onCompositionStart={() => this.startComposition = true}
                 onCompositionEnd={() => this.setState({ compositing: false })}
+                // edge에서는 composition 중에 blur되면 compositionend가 호출되지 않음.
+                // 어차피 blur 되었으면 무조건 composition 상태가 아니므로
+                // compositionend의 처리를 blur에서도 처리하는 식으로 우회
+                onBlur={() => this.setState({ compositing: false })}
             />
         </div>;
     }
