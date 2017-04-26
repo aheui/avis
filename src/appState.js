@@ -85,9 +85,14 @@ export class AppState {
         const caret = { x, y };
         this.selection = { anchor: caret, focus: caret };
     }
-    overwriteCode(rowIndex, colIndex, text) {
+    insertCode(rowIndex, colIndex, text, overwrite) {
         this.mutate(() => {
-            this._codeSpace.overwrite(rowIndex, colIndex, text, this._spaceFillChar);
+            this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar);
+        })
+    }
+    shrinkCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => {
+            this._codeSpace.shrink(rowIndex, colIndex, width, height);
         })
     }
     init() {
@@ -194,14 +199,18 @@ class CodeLine extends Array {
         }
         return result;
     }
-    overwrite(index, text, spaceFillChar = defaultSpaceFillChar) {
+    insert(index, text, spaceFillChar, overwrite) {
         if (text.length === 0) return;
         if (/\r|\n/.test(text)) {
             throw new Error('CodeLine 안에 개행문자가 들어오면 안됨');
         }
         while (this.length <= index) this.push(new Code(spaceFillChar, false));
         const codes = text.split('').map(char => new Code(char, false));
-        this.splice(index, codes.length, ...codes);
+        this.splice(index, overwrite ? codes.length : 0, ...codes);
+    }
+    shrink(index, length) {
+        if (length < 1) return;
+        this.splice(index, length);
     }
     toString() {
         return this.map(code => code.toString()).join('');
@@ -237,13 +246,21 @@ class CodeSpace extends Array {
         }
         return null;
     }
+    _recalculateWidth() {
+        this._width = 0;
+        for (let codeLine of this) {
+            if (codeLine.length > this._width) {
+                this._width = codeLine.length;
+            }
+        }
+    }
     get width() {
         return this._width;
     }
     get height() {
         return this.length;
     }
-    overwrite(rowIndex, colIndex, text, spaceFillChar = defaultSpaceFillChar) {
+    insert(rowIndex, colIndex, text, spaceFillChar, overwrite) {
         if (text.length === 0) return;
         this.mutate(() => {
             const textLines = text.split(/\r?\n/);
@@ -252,11 +269,23 @@ class CodeSpace extends Array {
             for (let i = 0; i < textLines.length; ++i) {
                 const textLine = textLines[i];
                 const codeLine = this[rowIndex + i];
-                codeLine.overwrite(colIndex, textLine, spaceFillChar);
+                codeLine.insert(colIndex, textLine, spaceFillChar, overwrite);
                 if (codeLine.length > this._width) {
                     this._width = codeLine.length;
                 }
             }
+        });
+    }
+    shrink(rowIndex, colIndex, width, height) {
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this._height <= rowIndex) return;
+        this.mutate(() => {
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) return;
+                codeLine.shrink(colIndex, width);
+            }
+            this._recalculateWidth();
         });
     }
     toggleBreakPoint(x, y) {

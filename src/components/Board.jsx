@@ -136,6 +136,7 @@ const CodeSpace = connect(
         this.codeSpaceElement = null;
         this.caretElement = null;
         this.inputElement = null;
+        this.lastInputValue = '';
         { // mousemove 이벤트 쓰로틀을 위한 속성
             this.raf = null;
             this.throttled = null;
@@ -265,6 +266,7 @@ const CodeSpace = connect(
                 }
                 appState.selection = { anchor: cellPos, focus: cellPos };
                 this.inputElement.value = '';
+                this.lastInputValue = '';
                 this.resetCaretAnimation();
             }}
             onMouseUpCapture={e => {
@@ -333,13 +335,42 @@ const CodeSpace = connect(
                         this.setState({ compositing: true });
                         this.startComposition = false;
                     }
+                    const inputValue = this.inputElement.value;
+                    const lastInputValue = this.lastInputValue;
+                    const inputLength = inputValue.length;
+                    const lastInputLength = lastInputValue.length;
+                    if (!appState.selection.isCaret) {
+                        appState.shrinkCode(
+                            appState.selection.y,
+                            appState.selection.x,
+                            appState.selection.width,
+                            appState.selection.height,
+                        );
+                    }
                     appState.collapseSelection();
-                    appState.overwriteCode(
-                        appState.selection.y,
-                        appState.selection.x,
-                        this.inputElement.value,
-                    );
+                    if (inputLength < lastInputLength) {
+                        appState.shrinkCode(
+                            appState.selection.y,
+                            appState.selection.x + inputLength,
+                            lastInputLength - inputLength,
+                            1,
+                        );
+                    } else {
+                        appState.shrinkCode(
+                            appState.selection.y,
+                            appState.selection.x,
+                            lastInputLength,
+                            1,
+                        );
+                        appState.insertCode(
+                            appState.selection.y,
+                            appState.selection.x,
+                            inputValue,
+                            false,
+                        );
+                    }
                     this.resetCaretAnimation();
+                    this.lastInputValue = inputValue;
                 }}
                 // compositionstart 후에 change 이벤트가 발생함.
                 // compositionstart 시점은 아직 inputElement.value가 변하지 않은 시점.
