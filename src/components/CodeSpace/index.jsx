@@ -102,6 +102,10 @@ export default connect(
             };
         });
     }
+    clearInputValue() {
+        this.inputElement.value = '';
+        this.lastInputValue = '';
+    }
     resetCaretAnimation() {
         this.caretElement.classList.remove(style.caret);
         this.caretElement.offsetHeight; // 강제 리플로우 트리거
@@ -154,8 +158,7 @@ export default connect(
                     window.addEventListener('mousemove', this.mouseDragMoveHandler, true);
                 }
                 appState.selection = { anchor: cellPos, focus: cellPos };
-                this.inputElement.value = '';
-                this.lastInputValue = '';
+                this.clearInputValue();
                 this.resetCaretAnimation();
             }}
             onMouseUpCapture={e => {
@@ -223,6 +226,7 @@ export default connect(
                         e.key,
                         this.inputElement.value,
                         appState,
+                        () => this.clearInputValue(),
                         () => this.resetCaretAnimation(),
                     );
                 }}
@@ -260,6 +264,7 @@ function handleInputKeyDown(
     key,
     inputValue,
     appState,
+    clearInputValue,
     resetCaretAnimation,
 ) {
     const inputLength = inputValue.length;
@@ -268,16 +273,15 @@ function handleInputKeyDown(
         if (!inputValue.length) {
             const { selection } = appState;
             if (selection.isCaret) {
-                if (selection.x > 0) {
-                    appState.shrinkCode(
-                        selection.y,
-                        selection.x - 1,
-                        1,
-                        1,
-                    );
-                    appState.translateSelection(-1, 0);
-                    resetCaretAnimation();
-                }
+                if (selection.x === 0) return;
+                appState.shrinkCode(
+                    selection.y,
+                    selection.x - 1,
+                    1,
+                    1,
+                );
+                appState.translateSelection(-1, 0);
+                resetCaretAnimation();
             } else {
                 appState.shrinkCode(
                     appState.selection.y,
@@ -288,31 +292,18 @@ function handleInputKeyDown(
                 appState.collapseSelection();
             }
         }
-        break;
-    case 'ArrowUp':
+        return;
+    case 'ArrowUp': arrowKey(0, -1); return;
+    case 'ArrowDown': arrowKey(0, 1); return;
+    case 'ArrowLeft': arrowKey(-1, 0); return;
+    case 'ArrowRight': arrowKey(1, 0); return;
+    }
+    function arrowKey(dx, dy) {
         appState.translateSelection(inputLength, 0);
-        appState.translateSelection(0, -1);
+        appState.translateSelection(dx, dy);
         appState.collapseSelection();
+        clearInputValue();
         resetCaretAnimation();
-        break;
-    case 'ArrowDown':
-        appState.translateSelection(inputLength, 0);
-        appState.translateSelection(0, 1);
-        appState.collapseSelection();
-        resetCaretAnimation();
-        break;
-    case 'ArrowLeft':
-        appState.translateSelection(inputLength, 0);
-        appState.translateSelection(-1, 0);
-        appState.collapseSelection();
-        resetCaretAnimation();
-        break;
-    case 'ArrowRight':
-        appState.translateSelection(inputLength, 0);
-        appState.translateSelection(1, 0);
-        appState.collapseSelection();
-        resetCaretAnimation();
-        break;
     }
 }
 
