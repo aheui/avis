@@ -28,14 +28,8 @@ export class AppState {
     set selection({ anchor, focus }) {
         if (!anchor && !focus) return;
         this.mutate(() => {
-            if (anchor) {
-                this._selection.anchor.x = Math.max(anchor.x | 0, 0);
-                this._selection.anchor.y = Math.max(anchor.y | 0, 0);
-            }
-            if (focus) {
-                this._selection.focus.x = Math.max(focus.x | 0, 0);
-                this._selection.focus.y = Math.max(focus.y | 0, 0);
-            }
+            if (anchor) this._selection.anchor = anchor;
+            if (focus) this._selection.focus = focus;
         });
     }
     get spaceFillChar() {
@@ -79,21 +73,29 @@ export class AppState {
             executor();
         }
     }
+    translateSelection(x, y) {
+        if (x === 0 && y === 0) return;
+        this.mutate(() => {
+            this.selection.translate(x, y);
+        });
+    }
     collapseSelection() {
         if (this._selection.isCaret) return;
-        const { x, y } = this._selection;
-        const caret = { x, y };
-        this.selection = { anchor: caret, focus: caret };
+        this.mutate(() => {
+            const { x, y } = this._selection;
+            const caret = { x, y };
+            this.selection = { anchor: caret, focus: caret };
+        });
     }
     insertCode(rowIndex, colIndex, text, overwrite) {
         this.mutate(() => {
             this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar);
-        })
+        });
     }
     shrinkCode(rowIndex, colIndex, width, height) {
         this.mutate(() => {
             this._codeSpace.shrink(rowIndex, colIndex, width, height);
-        })
+        });
     }
     init() {
         this.mutate(() => {
@@ -146,10 +148,18 @@ class Selection {
         this.focus = focus;
     }
     get isCaret() { return (this.width === 1) && (this.height === 1); }
-    get x() { return Math.min(this.anchor.x, this.focus.x); }
-    get y() { return Math.min(this.anchor.y, this.focus.y); }
-    get width() { return Math.abs(this.anchor.x - this.focus.x) + 1; }
-    get height() { return Math.abs(this.anchor.y - this.focus.y) + 1; }
+    get x() { return Math.min(this._anchor.x, this._focus.x); }
+    get y() { return Math.min(this._anchor.y, this._focus.y); }
+    get width() { return Math.abs(this._anchor.x - this._focus.x) + 1; }
+    get height() { return Math.abs(this._anchor.y - this._focus.y) + 1; }
+    get anchor() { return this._anchor; }
+    set anchor(value) { this._anchor = { x: Math.max(value.x | 0, 0), y: Math.max(value.y | 0, 0) }; }
+    get focus() { return this._focus; }
+    set focus(value) { this._focus = { x: Math.max(value.x | 0, 0), y: Math.max(value.y | 0, 0) }; }
+    translate(x, y) {
+        this.anchor = { x: this.anchor.x + x, y: this.anchor.y + y };
+        this.focus = { x: this.focus.x + x, y: this.focus.y + y };
+    }
 }
 
 // ㄴㄷㄸㄹㅁㅂㅃㅅㅆㅈㅊㅌㅍㅎ
@@ -204,7 +214,7 @@ class CodeLine extends Array {
         if (/\r|\n/.test(text)) {
             throw new Error('CodeLine 안에 개행문자가 들어오면 안됨');
         }
-        while (this.length <= index) this.push(new Code(spaceFillChar, false));
+        while (this.length < index) this.push(new Code(spaceFillChar, false));
         const codes = text.split('').map(char => new Code(char, false));
         this.splice(index, overwrite ? codes.length : 0, ...codes);
     }

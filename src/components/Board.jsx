@@ -329,6 +329,61 @@ const CodeSpace = connect(
                     left: selectionBox.left,
                 }}
                 ref={inputElement => this.inputElement = inputElement}
+                onKeyDown={e => {
+                    const inputValue = this.inputElement.value;
+                    const inputLength = inputValue.length;
+                    switch (e.key) {
+                    case 'Backspace':
+                        if (!inputValue.length) {
+                            const { selection } = appState;
+                            if (selection.isCaret) {
+                                if (selection.x > 0) {
+                                    appState.shrinkCode(
+                                        selection.y,
+                                        selection.x - 1,
+                                        1,
+                                        1,
+                                    );
+                                    appState.translateSelection(-1, 0);
+                                    this.resetCaretAnimation();
+                                }
+                            } else {
+                                appState.shrinkCode(
+                                    appState.selection.y,
+                                    appState.selection.x,
+                                    appState.selection.width,
+                                    appState.selection.height,
+                                );
+                                appState.collapseSelection();
+                            }
+                        }
+                        break;
+                    case 'ArrowUp':
+                        appState.translateSelection(inputLength, 0);
+                        appState.translateSelection(0, -1);
+                        appState.collapseSelection();
+                        this.resetCaretAnimation();
+                        break;
+                    case 'ArrowDown':
+                        appState.translateSelection(inputLength, 0);
+                        appState.translateSelection(0, 1);
+                        appState.collapseSelection();
+                        this.resetCaretAnimation();
+                        break;
+                    case 'ArrowLeft':
+                        appState.translateSelection(inputLength, 0);
+                        appState.translateSelection(-1, 0);
+                        appState.collapseSelection();
+                        this.resetCaretAnimation();
+                        break;
+                    case 'ArrowRight':
+                        appState.translateSelection(inputLength, 0);
+                        appState.translateSelection(1, 0);
+                        appState.collapseSelection();
+                        this.resetCaretAnimation();
+                        break;
+                    }
+                }}
                 onChange={() => {
                     // compositionstart로부터 위임받은 상태 변경 처리
                     if (this.startComposition) {
