@@ -222,15 +222,26 @@ export default connect(
                 }}
                 ref={inputElement => this.inputElement = inputElement}
                 onKeyDown={e => {
+                    let key = e.key;
+                    // 맥 크롬57에서 방향키 입력시 캐럿이 이동한 위치에 코드가 입력되고 캐럿이 추가이동되는 문제 우회용.
+                    // composition 중에 방향키(composition 상태를 빠져나오는 키) 입력시 keydown이 두 번 호출되는데, (참고로 change 이벤트도 이 사이에 한 번 더 호출된다)
+                    // 처음 이벤트의 `e.isComposing` 속성값은 `true`이고, 두번째 이벤트의 `e.isComposing` 속성값은 `false`다.
+                    // 윈도 크롬57에서는 `e.isComposing`이 `true`일 때 `e.key`가 `"Process"`로 들어있어서 문제가 발생하지 않았고,
+                    // 맥 크롬57에서는 `e.key`에 해당 키의 값(예: `"ArrowRight"`)가 그대로 들어있어서 선술한 문제가 발생하였다.
+                    // 따라서 아래의 조건문과 같이 우회한다. `e.isComposing`을 바로 접근하지 않고 `e.nativeEvent.isComposing`을 바라보는 이유는
+                    // react 15에서 이벤트의 `isComposing` 속성을 감춰버리기 때문에 네이티브 이벤트에 직접 접근할 필요가 있기 때문이다.
+                    if (e.nativeEvent.isComposing) {
+                        key = 'Process';
+                    }
                     handleInputKeyDown(
-                        e.key,
+                        key,
                         this.inputElement.value,
                         appState,
                         () => this.clearInputValue(),
                         () => this.resetCaretAnimation(),
                     );
                 }}
-                onChange={() => {
+                onChange={e => {
                     // compositionstart로부터 위임받은 상태 변경 처리
                     if (this.startComposition) {
                         this.setState({ compositing: true });
