@@ -107,9 +107,12 @@ export default connect(
         this.lastInputValue = '';
     }
     resetCaretAnimation() {
-        this.caretElement.classList.remove(style.caret);
-        this.caretElement.offsetHeight; // 강제 리플로우 트리거
-        this.caretElement.classList.add(style.caret);
+        const { classList } = this.caretElement;
+        if (classList.contains(style.caret)) {
+            classList.remove(style.caret);
+            this.caretElement.offsetHeight; // 강제 리플로우 트리거
+            classList.add(style.caret);
+        }
     }
     render() {
         const { codeSpace, appState } = this.props;
@@ -281,7 +284,7 @@ function handleInputKeyDown(
     const inputLength = inputValue.length;
     switch (key) {
     case 'Backspace':
-        if (!inputValue.length) {
+        if (!inputLength) {
             const { selection } = appState;
             if (selection.isCaret) {
                 if (selection.x === 0) return;
@@ -300,19 +303,29 @@ function handleInputKeyDown(
                     appState.selection.width,
                     appState.selection.height,
                 );
-                appState.collapseSelection();
+                appState.caret = {};
             }
         }
         return;
+    case 'Enter':
+        {
+            const { x, y, height } = appState.selection;
+            appState.divideAndCarryCode(y, x + inputLength, height);
+            appState.translateSelection(-x, height);
+            clearInputValue();
+            resetCaretAnimation();
+            return;
+        }
     case 'ArrowUp': arrowKey(0, -1); return;
     case 'ArrowDown': arrowKey(0, 1); return;
     case 'ArrowLeft': arrowKey(-1, 0); return;
     case 'ArrowRight': arrowKey(1, 0); return;
     }
     function arrowKey(dx, dy) {
-        appState.translateSelection(inputLength, 0);
-        appState.translateSelection(dx, dy);
-        appState.collapseSelection();
+        appState.caret = {
+            x: appState.selection.x + inputLength + dx,
+            y: appState.selection.y + dy,
+        };
         clearInputValue();
         resetCaretAnimation();
     }
@@ -334,7 +347,7 @@ function handleInputChange(
             appState.selection.height,
         );
     }
-    appState.collapseSelection();
+    appState.caret = {};
     if (inputLength < lastInputLength) {
         appState.shrinkCode(
             appState.selection.y,

@@ -32,6 +32,14 @@ export class AppState {
             if (focus) this._selection.focus = focus;
         });
     }
+    set caret({ x, y }) {
+        this.mutate(() => {
+            const _x = (x === undefined) ? this._selection.x : x;
+            const _y = (y === undefined) ? this._selection.y : y;
+            const caret = { x: _x, y: _y };
+            this.selection = { anchor: caret, focus: caret };
+        });
+    }
     get spaceFillChar() {
         return this._spaceFillChar;
     }
@@ -88,14 +96,13 @@ export class AppState {
         });
     }
     insertCode(rowIndex, colIndex, text, overwrite) {
-        this.mutate(() => {
-            this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar);
-        });
+        this.mutate(() => { this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar); });
     }
     shrinkCode(rowIndex, colIndex, width, height) {
-        this.mutate(() => {
-            this._codeSpace.shrink(rowIndex, colIndex, width, height);
-        });
+        this.mutate(() => { this._codeSpace.shrink(rowIndex, colIndex, width, height); });
+    }
+    divideAndCarryCode(rowIndex, colIndex, height) {
+        this.mutate(() => { this._codeSpace.divideAndCarryLines(rowIndex, colIndex, height); });
     }
     init() {
         this.mutate(() => {
@@ -150,8 +157,13 @@ class Selection {
     get isCaret() { return (this.width === 1) && (this.height === 1); }
     get x() { return Math.min(this._anchor.x, this._focus.x); }
     get y() { return Math.min(this._anchor.y, this._focus.y); }
+    get top() { return this.y; }
+    get left() { return this.x; }
+    get right() { return this.x + this.width - 1; }
+    get bottom() { return this.y + this.height - 1; }
     get width() { return Math.abs(this._anchor.x - this._focus.x) + 1; }
     get height() { return Math.abs(this._anchor.y - this._focus.y) + 1; }
+    get area() { return this.width * this.height; }
     get anchor() { return this._anchor; }
     set anchor(value) { this._anchor = { x: Math.max(value.x | 0, 0), y: Math.max(value.y | 0, 0) }; }
     get focus() { return this._focus; }
@@ -218,6 +230,12 @@ class CodeLine extends Array {
         const codes = text.split('').map(char => new Code(char, false));
         this.splice(index, overwrite ? codes.length : 0, ...codes);
     }
+    divide(index) {
+        const tail = this.slice(index);
+        this.length = Math.min(this.length, index);
+        console.assert(tail instanceof CodeLine);
+        return tail;
+    }
     shrink(index, length) {
         if (length < 1) return;
         this.splice(index, length);
@@ -256,6 +274,9 @@ class CodeSpace extends Array {
         }
         return null;
     }
+    _ensureHeight(height) {
+        while (this.length < height) this.push(new CodeLine());
+    }
     _recalculateWidth() {
         this._width = 0;
         for (let codeLine of this) {
@@ -274,8 +295,7 @@ class CodeSpace extends Array {
         if (text.length === 0) return;
         this.mutate(() => {
             const textLines = text.split(/\r?\n/);
-            const height = rowIndex + textLines.length;
-            while (this.length < height) this.push(new CodeLine());
+            this._ensureHeight(rowIndex + textLines.length);
             for (let i = 0; i < textLines.length; ++i) {
                 const textLine = textLines[i];
                 const codeLine = this[rowIndex + i];
@@ -295,6 +315,16 @@ class CodeSpace extends Array {
                 if (!codeLine) return;
                 codeLine.shrink(colIndex, width);
             }
+            this._recalculateWidth();
+        });
+    }
+    divideAndCarryLines(rowIndex, colIndex, height) {
+        this.mutate(() => {
+            this._ensureHeight(rowIndex + height);
+            const tails = this.slice(rowIndex, rowIndex + height).map(
+                codeLine => codeLine.divide(colIndex)
+            );
+            this.splice(rowIndex + height, 0, ...tails);
             this._recalculateWidth();
         });
     }
