@@ -1,4 +1,7 @@
+/* 기본 폰트 */
 @import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
+/* 조판부호 표시용 폰트 */
+@import url('http://mozilla.github.io/Fira/fira.css');
 
 html, body {
     width: 100%;
@@ -6,7 +9,7 @@ html, body {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    font-family: 'Nanum Gothic';
+    font-family: 'Nanum Gothic', 'Fira Sans';
 }
 
 :global(#app) {

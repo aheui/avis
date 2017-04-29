@@ -42,6 +42,11 @@
     outline-style: dashed;
 }
 
+.code-line:not(:last-child) .cell.ghost:after {
+    content: '\23ce';
+    color: rgba(60, 60, 60, 1);
+}
+
 .ghost-caret {
     display: none;
     position: absolute;
