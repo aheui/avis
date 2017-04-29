@@ -101,6 +101,8 @@ export class AppState {
     shrinkCode(rowIndex, colIndex, width, height) {
         this.mutate(() => { this._codeSpace.shrink(rowIndex, colIndex, width, height); });
     }
+    joinCodeRows(rowIndex, height) { this.mutate(() => { this._codeSpace.joinRows(rowIndex, height); }); }
+    deleteCodeRows(rowIndex, height) { this.mutate(() => { this._codeSpace.deleteRows(rowIndex, height); }); }
     divideAndCarryCode(rowIndex, colIndex, height) {
         this.mutate(() => { this._codeSpace.divideAndCarryLines(rowIndex, colIndex, height); });
     }
@@ -308,13 +310,32 @@ class CodeSpace extends Array {
     }
     shrink(rowIndex, colIndex, width, height) {
         if (width < 1 || height < 1) return;
-        if (this._width <= colIndex || this._height <= rowIndex) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
         this.mutate(() => {
             for (let i = 0; i < height; ++i) {
                 const codeLine = this[rowIndex + i];
                 if (!codeLine) return;
                 codeLine.shrink(colIndex, width);
             }
+            this._recalculateWidth();
+        });
+    }
+    joinRows(rowIndex, height) { // TODO: 테스트 짜야겠다
+        if (this.length <= rowIndex) return;
+        const _height = Math.min(height, this.length - rowIndex);
+        if (_height < 2) return;
+        this.mutate(() => {
+            this[rowIndex] = this[rowIndex].concat(
+                ...this.slice(rowIndex + 1, rowIndex + _height)
+            );
+            this.deleteRows(rowIndex + 1, _height - 1);
+            // width 계산은 deleteRows에서 일어남
+        });
+    }
+    deleteRows(rowIndex, height = 1) {
+        if (height < 1) return;
+        this.mutate(() => {
+            this.splice(rowIndex, height);
             this._recalculateWidth();
         });
     }

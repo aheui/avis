@@ -286,15 +286,17 @@ function handleInputKeyDown(
     case 'Backspace':
         if (!inputLength) {
             const { selection } = appState;
+            const { x, y } = selection;
             if (selection.isCaret) {
-                if (selection.x === 0) return;
-                appState.shrinkCode(
-                    selection.y,
-                    selection.x - 1,
-                    1,
-                    1,
-                );
-                appState.translateSelection(-1, 0);
+                if (x !== 0) {
+                    appState.shrinkCode(y, x - 1, 1, 1);
+                    appState.translateSelection(-1, 0);
+                } else if (y !== 0) {
+                    appState.translateSelection(0, -1);
+                    const { y } = appState.selection;
+                    appState.caret = { x: appState.codeSpace[y].length };
+                    appState.joinCodeRows(y, 2);
+                }
                 resetCaretAnimation();
             } else {
                 appState.shrinkCode(
