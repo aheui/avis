@@ -34,8 +34,8 @@ export class AppState {
     }
     set caret({ x, y }) {
         this.mutate(() => {
-            const _x = (x === undefined) ? this._selection.x : x;
-            const _y = (y === undefined) ? this._selection.y : y;
+            const _x = (x == null) ? this._selection.x : x;
+            const _y = (y == null) ? this._selection.y : y;
             const caret = { x: _x, y: _y };
             this.selection = { anchor: caret, focus: caret };
         });
@@ -292,6 +292,10 @@ class CodeSpace extends Array {
     }
     get height() {
         return this.length;
+    }
+    getLineWidth(rowIndex) {
+        const line = this[rowIndex];
+        return line ? line.length : 0;
     }
     insert(rowIndex, colIndex, text, spaceFillChar, overwrite) {
         if (text.length === 0) return;

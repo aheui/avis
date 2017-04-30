@@ -318,18 +318,29 @@ function handleInputKeyDown(
             resetCaretAnimation();
             return;
         }
-    case 'ArrowUp': arrowKey(0, -1); return;
-    case 'ArrowDown': arrowKey(0, 1); return;
-    case 'ArrowLeft': arrowKey(-1, 0); return;
-    case 'ArrowRight': arrowKey(1, 0); return;
+    case 'ArrowUp': moveCaret(0, -1); return;
+    case 'ArrowDown': moveCaret(0, 1); return;
+    case 'ArrowLeft': moveCaret(-1, 0); return;
+    case 'ArrowRight': moveCaret(1, 0); return;
+    case 'Home': setCaret(0, null); return;
+    case 'End':
+        {
+            const { x, y } = appState.selection;
+            const lineWidth = appState.codeSpace.getLineWidth(y);
+            if (x < lineWidth) setCaret(lineWidth, null);
+            return;
+        }
     }
-    function arrowKey(dx, dy) {
-        appState.caret = {
-            x: appState.selection.x + inputLength + dx,
-            y: appState.selection.y + dy,
-        };
+    function setCaret(x, y) {
+        appState.caret = { x, y };
         clearInputValue();
         resetCaretAnimation();
+    }
+    function moveCaret(dx, dy) {
+        setCaret(
+            appState.selection.x + inputLength + dx,
+            appState.selection.y + dy,
+        );
     }
 }
 
