@@ -238,6 +238,7 @@ export default connect(
                     }
                     handleInputKeyDown(
                         key,
+                        { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey },
                         this.inputElement.value,
                         appState,
                         () => this.clearInputValue(),
@@ -276,6 +277,7 @@ export default connect(
 
 function handleInputKeyDown(
     key,
+    { ctrl, shift, alt, meta },
     inputValue,
     appState,
     clearInputValue,
@@ -318,28 +320,34 @@ function handleInputKeyDown(
             resetCaretAnimation();
             return;
         }
-    case 'ArrowUp': moveCaret(0, -1); return;
-    case 'ArrowDown': moveCaret(0, 1); return;
-    case 'ArrowLeft': moveCaret(-1, 0); return;
-    case 'ArrowRight': moveCaret(1, 0); return;
-    case 'Home': setCaret(0, null); return;
+    case 'ArrowUp': moveCaret(0, -1, shift); return;
+    case 'ArrowDown': moveCaret(0, 1, shift); return;
+    case 'ArrowLeft': moveCaret(-1, 0, shift); return;
+    case 'ArrowRight': moveCaret(1, 0, shift); return;
+    case 'Home': setCaret(0, null, shift); return;
     case 'End':
         {
             const { x, y } = appState.selection;
             const lineWidth = appState.codeSpace.getLineWidth(y);
-            if (x < lineWidth) setCaret(lineWidth, null);
+            if (x < lineWidth) setCaret(lineWidth, null, shift);
             return;
         }
     }
-    function setCaret(x, y) {
-        appState.caret = { x, y };
+    function setCaret(x, y, extend) {
+        if (extend) {
+            appState.selection = { focus: { x, y } };
+        } else {
+            appState.caret = { x, y };
+        }
         clearInputValue();
         resetCaretAnimation();
     }
-    function moveCaret(dx, dy) {
+    function moveCaret(dx, dy, extend) {
+        const { x, y } = appState.selection.focus;
         setCaret(
-            appState.selection.x + inputLength + dx,
-            appState.selection.y + dy,
+            x + inputLength + dx,
+            y + dy,
+            extend,
         );
     }
 }

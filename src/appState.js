@@ -152,9 +152,9 @@ export class AppState {
 }
 
 class Selection {
-    constructor(anchor = { x: 0, y: 0 }, focus = { x: 0, y: 0 }) {
-        this.anchor = anchor;
-        this.focus = focus;
+    constructor() {
+        this._anchor = { x: 0, y: 0 };
+        this._focus = { x: 0, y: 0 };
     }
     get isCaret() { return (this.width === 1) && (this.height === 1); }
     get x() { return Math.min(this._anchor.x, this._focus.x); }
@@ -167,9 +167,17 @@ class Selection {
     get height() { return Math.abs(this._anchor.y - this._focus.y) + 1; }
     get area() { return this.width * this.height; }
     get anchor() { return this._anchor; }
-    set anchor(value) { this._anchor = { x: Math.max(value.x | 0, 0), y: Math.max(value.y | 0, 0) }; }
+    set anchor(value) {
+        const { x, y } = value;
+        if (x != null) this._anchor.x = Math.max(x | 0, 0);
+        if (y != null) this._anchor.y = Math.max(y | 0, 0);
+    }
     get focus() { return this._focus; }
-    set focus(value) { this._focus = { x: Math.max(value.x | 0, 0), y: Math.max(value.y | 0, 0) }; }
+    set focus(value) {
+        const { x, y } = value;
+        if (x != null) this._focus.x = Math.max(x | 0, 0);
+        if (y != null) this._focus.y = Math.max(y | 0, 0);
+    }
     translate(x, y) {
         this.anchor = { x: this.anchor.x + x, y: this.anchor.y + y };
         this.focus = { x: this.focus.x + x, y: this.focus.y + y };
