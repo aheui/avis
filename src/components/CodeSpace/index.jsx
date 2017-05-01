@@ -353,6 +353,10 @@ function handleInputKeyDown(
     }
     function setCaret(x, y, extend) {
         if (extend) {
+            if (inputLength) {
+                const anchorX = appState.selection.anchor.x + inputLength;
+                appState.selection = { anchor: { x: anchorX } };
+            }
             appState.selection = { focus: { x, y } };
         } else {
             appState.caret = { x, y };
@@ -363,11 +367,7 @@ function handleInputKeyDown(
     }
     function moveCaret(dx, dy, extend) {
         const { x, y } = appState.selection.focus;
-        setCaret(
-            x + inputLength + dx,
-            y + dy,
-            extend,
-        );
+        setCaret(x + inputLength + dx, y + dy, extend);
     }
 }
 
