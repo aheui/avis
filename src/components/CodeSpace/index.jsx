@@ -114,6 +114,20 @@ export default connect(
             classList.add(style.caret);
         }
     }
+    scrollToFocus() {
+        const { appState } = this.props;
+        let { scrollTop, scrollLeft, clientWidth, clientHeight } = this.scrollElement;
+        const [ scrollBottom, scrollRight ] = [scrollTop + clientHeight, scrollLeft + clientWidth];
+        const { focus } = appState.selection;
+        const [ focusTop, focusLeft ] = [ focus.y * 30, focus.x * 30 ];
+        const [ focusBottom, focusRight ] = [ focusTop + 30, focusLeft + 30 ];
+        if (scrollTop > focusTop) scrollTop = focusTop;
+        if (scrollBottom < focusBottom) scrollTop = focusBottom - clientHeight;
+        if (scrollLeft > focusLeft) scrollLeft = focusLeft;
+        if (scrollRight < focusRight) scrollLeft = focusRight - clientWidth;
+        Object.assign(this.scrollElement, { scrollTop, scrollLeft });
+        this.props.onScroll({ scrollTop, scrollLeft });
+    }
     render() {
         const { codeSpace, appState } = this.props;
         const { selection } = appState;
@@ -243,6 +257,7 @@ export default connect(
                         appState,
                         () => this.clearInputValue(),
                         () => this.resetCaretAnimation(),
+                        () => this.scrollToFocus(),
                     );
                 }}
                 onChange={e => {
@@ -282,6 +297,7 @@ function handleInputKeyDown(
     appState,
     clearInputValue,
     resetCaretAnimation,
+    scrollToFocus,
 ) {
     const inputLength = inputValue.length;
     switch (key) {
@@ -309,6 +325,7 @@ function handleInputKeyDown(
                 );
                 appState.caret = {};
             }
+            scrollToFocus();
         }
         return;
     case 'Enter':
@@ -318,6 +335,7 @@ function handleInputKeyDown(
             appState.translateSelection(-x, height);
             clearInputValue();
             resetCaretAnimation();
+            scrollToFocus();
             return;
         }
     case 'ArrowUp': moveCaret(0, -1, shift); return;
@@ -341,6 +359,7 @@ function handleInputKeyDown(
         }
         clearInputValue();
         resetCaretAnimation();
+        scrollToFocus();
     }
     function moveCaret(dx, dy, extend) {
         const { x, y } = appState.selection.focus;
