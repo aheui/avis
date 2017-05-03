@@ -87,6 +87,7 @@ export class AppState {
             this.selection.translate(x, y);
         });
     }
+    squareSelection() { this.mutate(() => { this.selection.square(); }); }
     collapseSelection() {
         if (this._selection.isCaret) return;
         this.mutate(() => {
@@ -157,6 +158,7 @@ class Selection {
         this._focus = { x: 0, y: 0 };
     }
     get isCaret() { return (this.width === 1) && (this.height === 1); }
+    get isSquare() { return this.width === this.height; }
     get x() { return Math.min(this._anchor.x, this._focus.x); }
     get y() { return Math.min(this._anchor.y, this._focus.y); }
     get top() { return this.y; }
@@ -181,6 +183,16 @@ class Selection {
     translate(x, y) {
         this.anchor = { x: this.anchor.x + x, y: this.anchor.y + y };
         this.focus = { x: this.focus.x + x, y: this.focus.y + y };
+    }
+    square() {
+        const { x, y } = this._anchor;
+        const [ dx, dy ] = [ this._focus.x - x, this._focus.y - y ];
+        const [ adx, ady ] = [ Math.abs(dx), Math.abs(dy) ];
+        const d = adx > ady ? adx : ady;
+        this.focus = {
+            x: x + (dx > 0 ? d : -d),
+            y: y + (dy > 0 ? d : -d),
+        };
     }
 }
 

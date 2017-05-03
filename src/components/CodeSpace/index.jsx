@@ -3,6 +3,7 @@ import classNames from 'classnames';
 
 import { connect } from '../../appState';
 import CodeSpaceStateViewer from '../CodeSpaceStateViewer';
+import * as keyboard from '../../misc/keyboard';
 import style from './style.css';
 
 export default connect(
@@ -40,14 +41,15 @@ export default connect(
         this.removeMouseDragEventListeners();
     }
     onMouseDragMove(e) {
-        const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
         const { appState } = this.props;
-        const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
-        appState.selection = { focus: cellPos };
+        const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
+        appState.selection = { focus: this.getCellPosFromMousePos(mouseX, mouseY) };
+        if (keyboard.key('shift')) appState.squareSelection();
     }
     removeMouseDragEventListeners() {
         window.removeEventListener('mouseup', this.mouseDragUpHandler, true);
         window.removeEventListener('mousemove', this.mouseDragMoveHandler, true);
+        keyboard.off('Shift', this.mouseDragShift);
     }
     componentDidMount() {
         this.throttled = new Map();
@@ -68,10 +70,8 @@ export default connect(
             this.focusInputElement();
             this.onMouseDragUp(e);
         };
-        this.mouseDragMoveHandler = (...args) => this.throttled.set(
-            this.onMouseDragMove,
-            args,
-        );
+        this.mouseDragMoveHandler = e => this.throttled.set(this.onMouseDragMove, [e]);
+        this.mouseDragShift = down => this.props.appState.squareSelection();
         this.updateCodeSpacePosition();
     }
     componentWillUnmount() {
@@ -185,6 +185,7 @@ export default connect(
                     this.setState({ mouseDown: true });
                     window.addEventListener('mouseup', this.mouseDragUpHandler, true);
                     window.addEventListener('mousemove', this.mouseDragMoveHandler, true);
+                    keyboard.on('Shift', this.mouseDragShift);
                 }
                 appState.selection = { anchor: cellPos, focus: cellPos };
                 this.clearInputValue();
@@ -264,7 +265,6 @@ export default connect(
                     }
                     handleInputKeyDown(
                         key,
-                        { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey },
                         this.inputElement.value,
                         appState,
                         () => this.clearInputValue(),
@@ -310,7 +310,6 @@ export default connect(
 
 function handleInputKeyDown(
     key,
-    { ctrl, shift, alt, meta },
     inputValue,
     appState,
     clearInputValue,
@@ -318,6 +317,7 @@ function handleInputKeyDown(
     scrollToFocus,
 ) {
     const inputLength = inputValue.length;
+    const { shift } = keyboard.keys('Shift');
     switch (key) {
     case 'Backspace':
         if (!inputLength) {
