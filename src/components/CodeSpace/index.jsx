@@ -63,6 +63,14 @@ export default connect(
             }
         };
         window.requestAnimationFrame(this.raf);
+        this.mouseDragUpHandler = e => {
+            this.inputElement.focus();
+            this.onMouseDragUp(e);
+        };
+        this.mouseDragMoveHandler = (...args) => this.throttled.set(
+            this.onMouseDragMove,
+            args,
+        );
         this.updateCodeSpacePosition();
     }
     componentWillUnmount() {
@@ -168,9 +176,6 @@ export default connect(
                 const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
                 if (!mouseDown) {
                     this.setState({ mouseDown: true });
-                    this.mouseDragUpHandler = e => this.onMouseDragUp(e);
-                    this.mouseDragMoveHandler =
-                        (...args) => this.throttled.set(this.onMouseDragMove, args);
                     window.addEventListener('mouseup', this.mouseDragUpHandler, true);
                     window.addEventListener('mousemove', this.mouseDragMoveHandler, true);
                 }
