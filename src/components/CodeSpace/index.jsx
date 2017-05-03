@@ -20,6 +20,7 @@ export default connect(
             codeSpaceX: 0,
             codeSpaceY: 0,
             compositing: false,
+            inputFocus: false,
         };
         this.scrollElement = null;
         this.codeSpaceElement = null;
@@ -64,7 +65,7 @@ export default connect(
         };
         window.requestAnimationFrame(this.raf);
         this.mouseDragUpHandler = e => {
-            this.inputElement.focus();
+            this.focusInputElement();
             this.onMouseDragUp(e);
         };
         this.mouseDragMoveHandler = (...args) => this.throttled.set(
@@ -110,6 +111,10 @@ export default connect(
             };
         });
     }
+    focusInputElement() {
+        this.inputElement.focus();
+        this.setState({ inputFocus: true });
+    }
     clearInputValue() {
         this.inputElement.value = '';
         this.lastInputValue = '';
@@ -143,7 +148,7 @@ export default connect(
         const {
             mouseOn, mouseDown,
             ghostCaretX, ghostCaretY,
-            compositing,
+            compositing, inputFocus,
         } = this.state;
         const inputText = this.inputElement ? this.inputElement.value : '';
         const caretX = selection.x + inputText.length - (compositing ? 1 : 0);
@@ -155,7 +160,9 @@ export default connect(
         };
         return <div
             ref={scrollElement => this.scrollElement = scrollElement}
-            className={style.codeSpaceScroll}
+            className={classNames(style.codeSpaceScroll, {
+                [style.focus]: inputFocus || mouseDown,
+            })}
             onScroll={() => {
                 this.updateCodeSpacePosition();
                 this.updateGhostCaret(
@@ -184,7 +191,7 @@ export default connect(
                 this.resetCaretAnimation();
             }}
             onMouseUpCapture={e => {
-                this.inputElement.focus();
+                this.focusInputElement();
             }}
             onMouseMoveCapture={e => {
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
@@ -289,7 +296,13 @@ export default connect(
                 // edge에서는 composition 중에 blur되면 compositionend가 호출되지 않음.
                 // 어차피 blur 되었으면 무조건 composition 상태가 아니므로
                 // compositionend의 처리를 blur에서도 처리하는 식으로 우회
-                onBlur={() => this.setState({ compositing: false })}
+                onBlur={() => this.setState({
+                    compositing: false,
+                    inputFocus: false,
+                })}
+                onFocus={() => this.setState({
+                    inputFocus: true,
+                })}
             />
         </div>;
     }

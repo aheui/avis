@@ -92,6 +92,16 @@
     transition-duration: 0.3s;
 }
 
+.code-space-scroll:not(.focus) .selection .dash {
+    stroke: rgba(120, 120, 120, 0.5);
+    animation: none;
+}
+
+.code-space-scroll:not(.focus) .selection.caret {
+    outline: 1px solid rgba(120, 120, 120, 0.5);
+    animation: none;
+}
+
 @keyframes caret-blink {
     0%, 15%, 85%, 100% { opacity: 1; }
     35%, 65% { opacity: 0; }
