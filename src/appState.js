@@ -190,8 +190,8 @@ class Selection {
         const [ adx, ady ] = [ Math.abs(dx), Math.abs(dy) ];
         const d = adx > ady ? adx : ady;
         this.focus = {
-            x: x + (dx > 0 ? d : -d),
-            y: y + (dy > 0 ? d : -d),
+            x: x + (dx >= 0 ? d : -d),
+            y: y + (dy >= 0 ? d : -d),
         };
     }
 }
