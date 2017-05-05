@@ -45,9 +45,11 @@
     height: 100%;
 }
 
-.numbers > .line-number {
+.line-number {
     position: absolute;
-    width: 50px;
+    box-sizing: border-box;
+    padding-right: 20px;
+    width: 100%;
     height: 30px;
     line-height: 30px;
     font-size: 14px;
@@ -55,7 +57,7 @@
     color: rgba(90, 90, 90, 1);
 }
 
-.numbers > .column-number {
+.column-number {
     position: absolute;
     width: 30px;
     height: 30px;
@@ -76,4 +78,13 @@
     text-align: center;
     color: rgba(90, 90, 90, 1);
     background-color: rgb(30, 30, 30);
+}
+
+.line-number:hover,
+.line-number:active,
+.column-number:hover,
+.column-number:active,
+.square:hover,
+.square:active {
+    background-color: rgba(90, 90, 90, 0.1);
 }
