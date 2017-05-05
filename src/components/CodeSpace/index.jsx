@@ -44,6 +44,7 @@ export default connect(
         const { appState } = this.props;
         const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
         appState.selection = { focus: this.getCellPosFromMousePos(mouseX, mouseY) };
+        this.scrollToFocus();
         if (keyboard.key('shift')) appState.squareSelection();
     }
     removeMouseDragEventListeners() {
