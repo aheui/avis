@@ -318,8 +318,14 @@ function handleInputKeyDown(
     scrollToFocus,
 ) {
     const inputLength = inputValue.length;
-    const { shift } = keyboard.keys('Shift');
+    const { control, shift } = keyboard.keys('Control', 'Shift');
     switch (key) {
+    case 'a':
+        if (control) {
+            clearInputValue();
+            appState.selectAll();
+        }
+        break;
     case 'Backspace':
         if (!inputLength) {
             const { selection } = appState;

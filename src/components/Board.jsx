@@ -9,7 +9,7 @@ import style from './Board.css';
 
 
 export default connect(
-    appState => ({ codeSpace: appState.codeSpace }),
+    appState => ({ appState }),
 )(class Board extends React.Component {
     constructor(props) {
         super(props);
@@ -19,10 +19,12 @@ export default connect(
         };
     }
     render() {
-        const { codeSpace } = this.props;
+        const { appState } = this.props;
+        const { codeSpace } = appState;
         const { scrollTop, scrollLeft } = this.state;
         return <div className={style.board}>
             <CodeSpace
+                ref="codeSpace"
                 codeSpace={codeSpace}
                 onScroll={
                     ({ scrollTop, scrollLeft }) => this.setState({ scrollTop, scrollLeft })
@@ -38,7 +40,13 @@ export default connect(
                 scrollTop={scrollTop}
                 scrollLeft={scrollLeft}
             />
-            <div className={style.square}>{
+            <div
+                className={style.square}
+                onClick={() => {
+                    appState.selectAll();
+                    this.refs.codeSpace.ref.focusInputElement();
+                }}
+            >{
                 `${ codeSpace.width } \xd7 ${ codeSpace.height }`
             }</div>
         </div>;

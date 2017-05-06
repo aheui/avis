@@ -96,6 +96,15 @@ export class AppState {
             this.selection = { anchor: caret, focus: caret };
         });
     }
+    selectAll() {
+        this.mutate(() => {
+            const { width, height } = this._codeSpace;
+            this.selection = {
+                anchor: { x: 0, y: 0 },
+                focus: { x: width, y: height - 1 },
+            };
+        });
+    }
     insertCode(rowIndex, colIndex, text, overwrite) {
         this.mutate(() => { this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar); });
     }
@@ -460,6 +469,7 @@ export function connect(mapStateToProps) {
         constructor(props, context) {
             super(props, context);
             this.state = {};
+            this.ref = null;
             this.changeDispatcher = new ChangeDispatcher(
                 context.changeDispatcher ||
                 context.appState.changeDispatcher
@@ -485,6 +495,7 @@ export function connect(mapStateToProps) {
         render() {
             return React.createElement(Container, {
                 ...this.props,
+                ref: ref => this.ref = ref,
                 ...mapStateToProps(this.context.appState),
             });
         }
