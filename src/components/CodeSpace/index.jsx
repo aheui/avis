@@ -337,7 +337,7 @@ function handleInputKeyDown(
                 } else if (y !== 0) {
                     appState.translateSelection(0, -1);
                     const { y } = appState.selection;
-                    appState.caret = { x: appState.codeSpace[y].length };
+                    appState.caret = { x: appState.codeSpace.getLineWidth(y) };
                     appState.joinCodeRows(y, 2);
                 }
                 resetCaretAnimation();
