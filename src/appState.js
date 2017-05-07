@@ -67,6 +67,12 @@ export class AppState {
         });
     }
     get stateId() { return this._stateId; }
+    // 앱 상태에 변경이 있을 때마다 깔아놓은 가정들이 온전한지 체크
+    checkState() {
+        console.assert(this._codeSpace.length > 0);
+    }
+    // 앱 상태를 변경하는 메서드
+    // 모든 상태변경은 이 메서드가 받는 executor 안에서 이루어져야함
     mutate(executor) {
         if (!this._mutating) {
             try {
@@ -76,6 +82,7 @@ export class AppState {
                 this._mutating = false;
                 ++this._stateId;
                 this._changeDispatcher.dispatch();
+                this.checkState();
             }
         } else {
             executor();
@@ -345,11 +352,18 @@ class CodeSpace extends Array {
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
         this.mutate(() => {
+            const voids = [];
             for (let i = 0; i < height; ++i) {
                 const codeLine = this[rowIndex + i];
-                if (!codeLine) return;
-                codeLine.shrink(colIndex, width);
+                if (!codeLine) break;
+                if (colIndex === 0 && codeLine.length < width) {
+                    voids.push(codeLine);
+                } else {
+                    codeLine.shrink(colIndex, width);
+                }
             }
+            for (let codeLine of voids) this.splice(this.indexOf(codeLine), 1);
+            if (this.length === 0) this.push(new CodeLine());
             this._recalculateWidth();
         });
     }
