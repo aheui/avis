@@ -325,7 +325,7 @@ function handleInputKeyDown(
             clearInputValue();
             appState.selectAll();
         }
-        break;
+        return;
     case 'Backspace':
         if (!inputLength) {
             const { selection } = appState;
@@ -336,21 +336,37 @@ function handleInputKeyDown(
                     appState.translateSelection(-1, 0);
                 } else if (y !== 0) {
                     appState.translateSelection(0, -1);
+                    // selection이 변경되었으므로 y값을 새로 가져와야함
                     const { y } = appState.selection;
                     appState.caret = { x: appState.codeSpace.getLineWidth(y) };
                     appState.joinCodeRows(y, 2);
                 }
                 resetCaretAnimation();
             } else {
-                appState.shrinkCode(
-                    appState.selection.y,
-                    appState.selection.x,
-                    appState.selection.width,
-                    appState.selection.height,
-                );
-                appState.caret = {};
+                shrinkSelection();
             }
             scrollToFocus();
+        }
+        return;
+    case 'Delete':
+        {
+            const { selection } = appState;
+            const { x, y } = selection;
+            if (selection.isCaret) {
+                const { codeSpace } = appState;
+                const lineWidth = codeSpace.getLineWidth(y);
+                if (codeSpace.codeLength > codeSpace.getIndex(x, y)) {
+                    if (x >= lineWidth) {
+                        appState.ensureCodeRowWidth(y, x);
+                        appState.joinCodeRows(y, 2);
+                    } else {
+                        appState.shrinkCode(y, x, 1, 1);
+                    }
+                }
+                resetCaretAnimation();
+            } else {
+                shrinkSelection();
+            }
         }
         return;
     case 'Enter':
@@ -393,6 +409,15 @@ function handleInputKeyDown(
     function moveCaret(dx, dy, extend) {
         const { x, y } = appState.selection.focus;
         setCaret(x + inputLength + dx, y + dy, extend);
+    }
+    function shrinkSelection() {
+        appState.shrinkCode(
+            appState.selection.y,
+            appState.selection.x,
+            appState.selection.width,
+            appState.selection.height,
+        );
+        appState.caret = {};
     }
 }
 

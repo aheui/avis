@@ -118,6 +118,9 @@ export class AppState {
     shrinkCode(rowIndex, colIndex, width, height) {
         this.mutate(() => { this._codeSpace.shrink(rowIndex, colIndex, width, height); });
     }
+    ensureCodeRowWidth(rowIndex, width) {
+        this.mutate(() => { this._codeSpace.ensureLineWidth(rowIndex, width, this._spaceFillChar); });
+    }
     joinCodeRows(rowIndex, height) { this.mutate(() => { this._codeSpace.joinRows(rowIndex, height); }); }
     deleteCodeRows(rowIndex, height) { this.mutate(() => { this._codeSpace.deleteRows(rowIndex, height); }); }
     divideAndCarryCode(rowIndex, colIndex, height) {
@@ -259,12 +262,15 @@ class CodeLine extends Array {
         }
         return result;
     }
+    ensureLength(length, spaceFillChar) {
+        while (this.length < length) this.push(new Code(spaceFillChar, false));
+    }
     insert(index, text, spaceFillChar, overwrite) {
         if (text.length === 0) return;
         if (/\r|\n/.test(text)) {
             throw new Error('CodeLine 안에 개행문자가 들어오면 안됨');
         }
-        while (this.length < index) this.push(new Code(spaceFillChar, false));
+        this.ensureLength(index, spaceFillChar);
         const codes = text.split('').map(char => new Code(char, false));
         this.splice(index, overwrite ? codes.length : 0, ...codes);
     }
@@ -304,16 +310,19 @@ class CodeSpace extends Array {
             executor();
         }
     }
-    get(x, y) {
-        const line = this[y];
-        if (line) {
-            const code = line[x];
-            return code || null;
-        }
-        return null;
+    ensureHeight(height) {
+        if (this.length >= height) return;
+        this.mutate(() => {
+            while (this.length < height) this.push(new CodeLine());
+        });
     }
-    _ensureHeight(height) {
-        while (this.length < height) this.push(new CodeLine());
+    ensureLineWidth(rowIndex, width, spaceFillChar) {
+        this.ensureHeight(rowIndex + 1);
+        const codeLine = this[rowIndex];
+        if (codeLine.length >= width) return;
+        this.mutate(() => {
+            codeLine.ensureLength(width, spaceFillChar);
+        });
     }
     _recalculateWidth() {
         this._width = 0;
@@ -329,6 +338,25 @@ class CodeSpace extends Array {
     get height() {
         return this.length;
     }
+    get codeLength() {
+        // 개행은 길이 1
+        return this.reduce((sum, codeLine) => sum + codeLine.length + 1, -1);
+    }
+    get(x, y) {
+        const line = this[y];
+        if (line) {
+            const code = line[x];
+            return code || null;
+        }
+        return null;
+    }
+    getIndex(x, y) {
+        if (y >= this.length) return this.codeLength;
+        let sum = y;
+        for (let i = 0; i < y; ++i) sum += this[i].length;
+        sum += (x > this[y].length) ? this[y].length : x;
+        return sum;
+    }
     getLineWidth(rowIndex) {
         const line = this[rowIndex];
         return line ? line.length : 0;
@@ -337,7 +365,7 @@ class CodeSpace extends Array {
         if (text.length === 0) return;
         this.mutate(() => {
             const textLines = text.split(/\r?\n/);
-            this._ensureHeight(rowIndex + textLines.length);
+            this.ensureHeight(rowIndex + textLines.length);
             for (let i = 0; i < textLines.length; ++i) {
                 const textLine = textLines[i];
                 const codeLine = this[rowIndex + i];
@@ -388,7 +416,7 @@ class CodeSpace extends Array {
     }
     divideAndCarryLines(rowIndex, colIndex, height) {
         this.mutate(() => {
-            this._ensureHeight(rowIndex + height);
+            this.ensureHeight(rowIndex + height);
             const tails = this.slice(rowIndex, rowIndex + height).map(
                 codeLine => codeLine.divide(colIndex)
             );
