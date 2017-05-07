@@ -455,7 +455,7 @@ function handleInputChange(
         appState.insertCode(
             appState.selection.y,
             appState.selection.x,
-            inputValue,
+            inputValue.replace(/ /g, appState.spaceFillChar),
             false,
         );
     }
