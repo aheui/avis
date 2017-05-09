@@ -63,11 +63,11 @@ module.exports = {
                 }],
             },
             {
-                test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
+                test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)(\?.*)?$/,
                 loader: 'file-loader',
                 query: {
-                    name: '[path][name].[ext]?[hash:7]',
-                    useRelativePath: true,
+                    name: '[hash:7].[ext]',
+                    emitFile: true,
                 }
             }
         ],
