@@ -18,6 +18,9 @@ export default connect(
             scrollLeft: 0,
         };
     }
+    updateCodeSpacePosition() {
+        this.refs.codeSpace.ref.updateCodeSpacePosition();
+    }
     render() {
         const { appState } = this.props;
         const { codeSpace } = appState;

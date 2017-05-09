@@ -13,8 +13,10 @@ class App extends React.Component {
         return <div className={style.app}>
             <Shelf/>
             <div className={style.body}>
-                <SideBar/>
-                <Board/>
+                <SideBar updateCodeSpacePosition={
+                    () => this.refs.board.ref.updateCodeSpacePosition()
+                }/>
+                <Board ref="board"/>
             </div>
             <StatusBar/>
         </div>;
