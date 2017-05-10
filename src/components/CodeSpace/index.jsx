@@ -271,6 +271,7 @@ export default connect(
                         () => this.clearInputValue(),
                         () => this.resetCaretAnimation(),
                         () => this.scrollToFocus(),
+                        () => e.preventDefault(),
                     );
                 }}
                 onChange={e => {
@@ -316,6 +317,7 @@ function handleInputKeyDown(
     clearInputValue,
     resetCaretAnimation,
     scrollToFocus,
+    preventDefault,
 ) {
     const inputLength = inputValue.length;
     const { control, shift } = keyboard.keys('Control', 'Shift');
@@ -383,12 +385,16 @@ function handleInputKeyDown(
     case 'ArrowDown': moveCaret(0, 1, shift); return;
     case 'ArrowLeft': moveCaret(-1, 0, shift); return;
     case 'ArrowRight': moveCaret(1, 0, shift); return;
-    case 'Home': setCaret(0, null, shift); return;
+    case 'Home':
+        setCaret(0, null, shift);
+        preventDefault();
+        return;
     case 'End':
         {
             const { x, y } = appState.selection;
             const lineWidth = appState.codeSpace.getLineWidth(y);
             if (x < lineWidth) setCaret(lineWidth, null, shift);
+            preventDefault();
             return;
         }
     }
