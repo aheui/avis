@@ -34,3 +34,50 @@
     color: rgba(174, 175, 173, 1);
     background-color: rgb(37, 37, 38);
 }
+
+.content .sidebar-title {
+    padding-left: 20px;
+    flex-basis: 35px;
+    line-height: 35px;
+    font-size: 11px;
+    color: rgb(187, 187, 187);
+}
+
+.content .folder {
+    display: flex;
+    flex-direction: column;
+}
+
+.content .folder:not(.open) {
+    flex-basis: 22px !important;
+}
+
+.content .folder .bar {
+    flex-basis: 22px;
+    line-height: 22px;
+    font-size: 11px;
+    color: #cccccc;
+    background-color: rgba(128, 128, 128, 0.2);
+    cursor: pointer;
+    user-select: none;
+}
+
+.content .folder.open .bar {
+    box-shadow: 0 3px rgba(0, 0, 0, 0.2);
+}
+
+.content .folder .bar .caret {
+    width: 20px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.content .folder.open .bar .caret {
+    transform: translateY(3px) rotate(45deg);
+}
+
+.content .folder .scroll-area {
+    flex-grow: 1;
+    font-size: 13px;
+    overflow: scroll-y;
+}

@@ -25,14 +25,20 @@ class SideBar extends React.Component {
             [style.open]: !!current,
         })}>
             <div className={style.buttons}>
-                { menus.order.map(name => menus[name].Button({
-                    key: name,
-                    active: current === name,
-                    onActivate: () => this.setState({ current: name }),
-                    onDeactivate: () => this.setState({ current: null }),
-                })) }
+                { menus.order.map(name => {
+                    const { Button } = menus[name];
+                    return <Button
+                        key={name}
+                        active={current === name}
+                        onActivate={() => this.setState({ current: name })}
+                        onDeactivate={() => this.setState({ current: null })}
+                    />;
+                }) }
             </div>
-            { current && menus[current].Content() }
+            { current && (() => {
+                const { Content } = menus[current];
+                return <Content/>;
+            })() }
         </div>;
     }
 }

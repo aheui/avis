@@ -8,6 +8,7 @@ export class AppState {
         this._mutating;
         this._stateId = 0;
         this._changeDispatcher = new ChangeDispatcher();
+        this._uiState = new UIState();
         this._selection = new Selection();
         this._codeSpace = CodeSpace.fromText(content || '');
         this._machine = new Aheui.Machine(this._codeSpace);
@@ -88,6 +89,8 @@ export class AppState {
             executor();
         }
     }
+    getUIOpen(key) { return this._uiState.getOpen(key); }
+    setUIOpen(key, value) { this.mutate(() => { this._uiState.setOpen(key, value); }); }
     translateSelection(x, y) {
         if (x === 0 && y === 0) return;
         this.mutate(() => {
@@ -169,6 +172,17 @@ export class AppState {
             this._codeSpace.toggleBreakPoint(cursor.x, cursor.y);
         });
     }
+}
+
+// stores trivial states
+class UIState {
+    constructor() {
+        this._open = {
+            'edit.inputMethod': true,
+        };
+    }
+    getOpen(key) { return !!this._open[key]; }
+    setOpen(key, value) { this._open[key] = !!value; }
 }
 
 class Selection {
