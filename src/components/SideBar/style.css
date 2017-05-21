@@ -79,5 +79,5 @@
 .content .folder .scroll-area {
     flex-grow: 1;
     font-size: 13px;
-    overflow: scroll-y;
+    overflow-y: scroll;
 }
