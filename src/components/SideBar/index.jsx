@@ -25,4 +25,11 @@ export const SideBarContentFolder = ({ title, open, onBarClick, children, classN
     </div>
 );
 
+export const Label = ({ title, children, className }) => (
+    <label className={classNames(style.label, className)}>
+        <div className={style.title}>{ title }</div>
+        <div className={style.children}>{ children }</div>
+    </label>
+);
+
 export default SideBar;

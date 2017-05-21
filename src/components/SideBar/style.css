@@ -78,6 +78,15 @@
 
 .content .folder .scroll-area {
     flex-grow: 1;
+    padding: 5px 20px;
     font-size: 13px;
     overflow-y: scroll;
+}
+
+.content .folder .scroll-area .label .title {
+    margin-bottom: 5px;
+}
+
+.content .folder .scroll-area .label .children {
+    padding-left: 10px;
 }

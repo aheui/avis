@@ -1,0 +1,36 @@
+.switch {
+    position: relative;
+    padding: 4px 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    cursor: pointer;
+    user-select: none;
+}
+
+.switch .label {
+    z-index: 2;
+}
+
+.switch .highlight {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    background-color: #094771;
+    z-index: 1;
+    transition: left 0.2s;
+}
+
+.switch.left .left {
+    font-weight: bold;
+}
+
+.switch:not(.left) .right {
+    font-weight: bold;
+}
+
+.switch.left .highlight {
+    left: 0;
+}

@@ -5,7 +5,10 @@ import {
     SideBarButton,
     SideBarContent,
     SideBarContentFolder,
+    Label,
 } from '..';
+import Key from '../../misc/Key';
+import Switch from '../../input/Switch';
 
 export const Button = props => <SideBarButton {...props} icon="pencil"/>;
 
@@ -14,10 +17,19 @@ export const Content = connect(
 )(
     ({ appState }) => <SideBarContent title="편집">
         <SideBarContentFolder
-            title='입력방식'
+            title='키보드 입력'
             open={appState.getUIOpen('edit.inputMethod')}
             onBarClick={open => appState.setUIOpen('edit.inputMethod', !open)}>
-            TODO: 밀어쓰기/덮어쓰기 스위치
+            <Label title={<div> 입력방식 <Key listen="insert">insert</Key> </div>}>
+                <Switch
+                    leftLabel="밀어쓰기"
+                    leftValue="insert"
+                    rightLabel="덮어쓰기"
+                    rightValue="overwrite"
+                    value="insert"
+                    onChange={value => console.log(value)}
+                />
+            </Label>
         </SideBarContentFolder>
     </SideBarContent>
 );
