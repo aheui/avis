@@ -26,8 +26,10 @@ export const Content = connect(
                     leftValue="insert"
                     rightLabel="덮어쓰기"
                     rightValue="overwrite"
-                    value="insert"
-                    onChange={value => console.log(value)}
+                    value={appState.editOptions.inputMethod}
+                    onChange={inputMethod => {
+                        appState.editOptions = { inputMethod };
+                    }}
                 />
             </Label>
         </SideBarContentFolder>

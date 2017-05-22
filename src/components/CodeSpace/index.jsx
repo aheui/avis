@@ -371,6 +371,18 @@ function handleInputKeyDown(
             }
         }
         return;
+    case 'Insert':
+        {
+            const { inputMethod } = appState.editOptions;
+            appState.editOptions = {
+                inputMethod:
+                    inputMethod === 'insert' ?
+                    'overwrite' :
+                    'insert'
+            };
+            preventDefault();
+        }
+        return;
     case 'Enter':
         {
             const { x, y, height } = appState.selection;

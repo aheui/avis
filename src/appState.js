@@ -9,6 +9,7 @@ export class AppState {
         this._stateId = 0;
         this._changeDispatcher = new ChangeDispatcher();
         this._uiState = new UIState();
+        this._editOptions = new EditOptions();
         this._selection = new Selection();
         this._codeSpace = CodeSpace.fromText(content || '');
         this._machine = new Aheui.Machine(this._codeSpace);
@@ -23,6 +24,8 @@ export class AppState {
         const code = this._codeSpace.get(cursor.x, cursor.y);
         return !!code && code.breakPoint;
     }
+    get editOptions() { return this._editOptions; }
+    set editOptions(value) { this.mutate(() => Object.assign(this._editOptions, value)); }
     get selection() {
         return this._selection;
     }
@@ -183,6 +186,13 @@ class UIState {
     }
     getOpen(key) { return !!this._open[key]; }
     setOpen(key, value) { this._open[key] = !!value; }
+}
+
+class EditOptions {
+    constructor() {
+        // insert, overwrite
+        this.inputMethod = 'insert';
+    }
 }
 
 class Selection {
