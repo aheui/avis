@@ -320,7 +320,16 @@ function handleInputKeyDown(
     preventDefault,
 ) {
     const inputLength = inputValue.length;
+    const { inputMethod } = appState.editOptions;
+    const overwriteMode = inputMethod === 'overwrite';
     const { control, shift } = keyboard.keys('Control', 'Shift');
+    const del = (...args) => {
+        appState[
+            overwriteMode ?
+            'peelCode' :
+            'shrinkCode'
+        ](...args);
+    };
     switch (key) {
     case 'a':
         if (control) {
@@ -333,24 +342,35 @@ function handleInputKeyDown(
             const { selection } = appState;
             const { x, y } = selection;
             if (selection.isCaret) {
-                if (x !== 0) {
-                    appState.shrinkCode(y, x - 1, 1, 1);
-                    appState.translateSelection(-1, 0);
-                } else if (y !== 0) {
-                    appState.translateSelection(0, -1);
-                    // selection이 변경되었으므로 y값을 새로 가져와야함
-                    const { y } = appState.selection;
-                    appState.caret = { x: appState.codeSpace.getLineWidth(y) };
-                    appState.joinCodeRows(y, 2);
+                if (overwriteMode) {
+                    if (x !== 0) {
+                        appState.peelCode(y, x - 1, 1, 1);
+                        appState.translateSelection(-1, 0);
+                    }
+                } else {
+                    if (x !== 0) {
+                        appState.shrinkCode(y, x - 1, 1, 1);
+                        appState.translateSelection(-1, 0);
+                    } else if (y !== 0) {
+                        appState.translateSelection(0, -1);
+                        // selection이 변경되었으므로 y값을 새로 가져와야함
+                        const { y } = appState.selection;
+                        appState.caret = { x: appState.codeSpace.getLineWidth(y) };
+                        appState.joinCodeRows(y, 2);
+                    }
                 }
                 resetCaretAnimation();
             } else {
-                shrinkSelection();
+                delSelection();
             }
             scrollToFocus();
         }
         return;
     case 'Delete':
+        if (inputLength) {
+            const { x, y } = appState.selection;
+            setCaret(x + inputLength, y, false);
+        }
         {
             const { selection } = appState;
             const { x, y } = selection;
@@ -358,16 +378,23 @@ function handleInputKeyDown(
                 const { codeSpace } = appState;
                 const lineWidth = codeSpace.getLineWidth(y);
                 if (codeSpace.codeLength > codeSpace.getIndex(x, y)) {
-                    if (x >= lineWidth) {
-                        appState.ensureCodeRowWidth(y, x);
-                        appState.joinCodeRows(y, 2);
+                    if (overwriteMode) {
+                        if (x < lineWidth) {
+                            appState.peelCode(y, x, 1, 1);
+                            appState.translateSelection(1, 0);
+                        }
                     } else {
-                        appState.shrinkCode(y, x, 1, 1);
+                        if (x >= lineWidth) {
+                            appState.ensureCodeRowWidth(y, x);
+                            appState.joinCodeRows(y, 2);
+                        } else {
+                            appState.shrinkCode(y, x, 1, 1);
+                        }
                     }
                 }
                 resetCaretAnimation();
             } else {
-                shrinkSelection();
+                delSelection();
             }
         }
         return;
@@ -428,8 +455,8 @@ function handleInputKeyDown(
         const { x, y } = appState.selection.focus;
         setCaret(x + inputLength + dx, y + dy, extend);
     }
-    function shrinkSelection() {
-        appState.shrinkCode(
+    function delSelection() {
+        del(
             appState.selection.y,
             appState.selection.x,
             appState.selection.width,
@@ -447,8 +474,17 @@ function handleInputChange(
 ) {
     const inputLength = inputValue.length;
     const lastInputLength = lastInputValue.length;
+    const { inputMethod } = appState.editOptions;
+    const overwriteMode = inputMethod === 'overwrite';
+    const del = (...args) => {
+        appState[
+            overwriteMode ?
+            'peelCode' :
+            'shrinkCode'
+        ](...args);
+    };
     if (!appState.selection.isCaret) {
-        appState.shrinkCode(
+        del(
             appState.selection.y,
             appState.selection.x,
             appState.selection.width,
@@ -457,14 +493,14 @@ function handleInputChange(
     }
     appState.caret = {};
     if (inputLength < lastInputLength) {
-        appState.shrinkCode(
+        del(
             appState.selection.y,
             appState.selection.x + inputLength,
             lastInputLength - inputLength,
             1,
         );
     } else {
-        appState.shrinkCode(
+        del(
             appState.selection.y,
             appState.selection.x,
             lastInputLength,
@@ -474,7 +510,7 @@ function handleInputChange(
             appState.selection.y,
             appState.selection.x,
             inputValue.replace(/ /g, appState.spaceFillChar),
-            false,
+            overwriteMode,
         );
     }
     resetCaretAnimation();

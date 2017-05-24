@@ -119,7 +119,10 @@ export class AppState {
         });
     }
     insertCode(rowIndex, colIndex, text, overwrite) {
-        this.mutate(() => { this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar); });
+        this.mutate(() => { this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
+    }
+    peelCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => { this._codeSpace.paint(rowIndex, colIndex, width, height, this._spaceFillChar); });
     }
     shrinkCode(rowIndex, colIndex, width, height) {
         this.mutate(() => { this._codeSpace.shrink(rowIndex, colIndex, width, height); });
@@ -298,6 +301,14 @@ class CodeLine extends Array {
         const codes = text.split('').map(char => new Code(char, false));
         this.splice(index, overwrite ? codes.length : 0, ...codes);
     }
+    paint(index, length, paintChar) {
+        if (length < 1) return;
+        if (this.length <= index) return;
+        const to = Math.min(this.length, index + length);
+        for (let i = index; i < to; ++i) {
+            this[i] = new Code(paintChar, false);
+        }
+    }
     divide(index) {
         const tail = this.slice(index);
         this.length = Math.min(this.length, index);
@@ -397,6 +408,17 @@ class CodeSpace extends Array {
                 if (codeLine.length > this._width) {
                     this._width = codeLine.length;
                 }
+            }
+        });
+    }
+    paint(rowIndex, colIndex, width, height, paintChar) {
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
+        this.mutate(() => {
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) break;
+                codeLine.paint(colIndex, width, paintChar);
             }
         });
     }
