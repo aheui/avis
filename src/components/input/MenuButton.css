@@ -1,0 +1,16 @@
+.button {
+    position: relative;
+    padding: 4px 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    cursor: pointer;
+    user-select: none;
+}
+
+.button .label {
+    z-index: 2;
+    width: 100%;
+    text-align: left;
+}
+

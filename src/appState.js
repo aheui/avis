@@ -1,5 +1,6 @@
 import React from 'react';
 import Aheui from 'naheui';
+import * as hangul from './misc/hangul'
 
 const defaultSpaceFillChar = '\u3000';
 
@@ -126,6 +127,12 @@ export class AppState {
     }
     shrinkCode(rowIndex, colIndex, width, height) {
         this.mutate(() => { this._codeSpace.shrink(rowIndex, colIndex, width, height); });
+    }
+    invertHCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => { this._codeSpace.invertH(rowIndex, colIndex, width, height); });
+    }
+    invertVCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => { this._codeSpace.invertV(rowIndex, colIndex, width, height); });
     }
     ensureCodeRowWidth(rowIndex, width) {
         this.mutate(() => { this._codeSpace.ensureLineWidth(rowIndex, width, this._spaceFillChar); });
@@ -284,10 +291,27 @@ class Code {
     get jung() { return this._jung; }
     get jong() { return this._jong; }
     get isComment() { return this._isComment; }
-    invertV() { this._jung += ~~jungVInvertMap[this._jung]; }
-    invertH() { this._jung += ~~jungHInvertMap[this._jung]; }
-    rotateCW() { this._jung += ~~jungCWRotationMap[this._jung]; }
-    rotateCCW() { this._jung += ~~jungCCWRotationMap[this._jung]; }
+    _updateFromIndices() {
+        if (!this._isComment)
+            this._char = hangul.fromIndices(this._cho, this._jung, this._jong);
+    }
+    invertH() {
+        this._jung += ~~jungHInvertMap[this._jung]; 
+        this._updateFromIndices();
+    }
+    invertV() { 
+        this._jung += ~~jungVInvertMap[this._jung]; 
+        this._updateFromIndices();
+    }
+    rotateCW() { 
+        this._jung += ~~jungCWRotationMap[this._jung]; 
+        this._updateFromIndices();
+    }
+    rotateCCW() { 
+        this._jung += ~~jungCCWRotationMap[this._jung]; 
+        this._updateFromIndices();
+    }
+
     toString() {
         return this.char;
     }
@@ -457,6 +481,40 @@ class CodeSpace extends Array {
             for (let codeLine of voids) this.splice(this.indexOf(codeLine), 1);
             if (this.length === 0) this.push(new CodeLine());
             this._recalculateWidth();
+        });
+    }
+    invertH(rowIndex, colIndex, width, height) {
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
+        this.mutate(() => {
+            for (let r = 0; r < height; ++r) {
+                const codeLine = this[rowIndex + r];
+                if (!codeLine) break;
+                for (let c = 0; c < width; ++c)
+                    codeLine[c + colIndex].invertH();
+                for (let c = 0; c < width/2; ++c) 
+                    [codeLine[c + colIndex], codeLine[width-c-1 + colIndex]] = 
+                        [codeLine[width-c-1 + colIndex], codeLine[c + colIndex]];
+            }
+        });
+    }
+    invertV(rowIndex, colIndex, width, height) {
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
+        this.mutate(() => {
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) break;
+                for (let c = 0; c < width; ++c)
+                    codeLine[c + colIndex].invertV();
+            }
+            for (let r = 0; r < height/2; ++r) {
+                const codeLine1 = this[rowIndex + r];
+                const codeLine2 = this[rowIndex + height - r - 1];
+                for (let c = 0; c < width; ++c)
+                    [codeLine1[c + colIndex], codeLine2[c + colIndex]] = 
+                        [codeLine2[c + colIndex], codeLine1[c + colIndex]];
+            }
         });
     }
     joinRows(rowIndex, height) { // TODO: 테스트 짜야겠다
