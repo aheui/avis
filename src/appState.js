@@ -246,6 +246,20 @@ class Selection {
 const significantChoIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18];
 // ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅢㅣ
 const significantJungIndices = [0, 2, 4, 6, 8, 12, 13, 17, 18, 19, 20];
+// ㅏ↔ ㅓ, ㅑ↔ ㅕ
+const jungHInvertMap = { 0:+4,  4:-4,  2:+4,  6:-4 };
+// ㅗ↔ ㅜ, ㅛ↔ ㅠ
+const jungVInvertMap = { 8:+5, 13:-5, 12:+5, 17:-5 };
+// 회전
+const jungCWRotationMap = { 
+    0:+13, 13: -9, 4:+4,  8: -8, // ㅏㅜㅓㅗ
+    2:+15, 17:-11, 6:+6, 12:-10, // ㅑㅠㅕㅛ
+}
+const jungCCWRotationMap = { 
+    0: +8,  8:-4, 4: +9, 13:-13, // ㅏㅗㅓㅜ
+    2:+10, 12:-6, 6:+11, 17:-15, // ㅑㅛㅕㅠ
+}
+
 
 class Code {
     constructor(char, breakPoint = false) {
@@ -270,6 +284,10 @@ class Code {
     get jung() { return this._jung; }
     get jong() { return this._jong; }
     get isComment() { return this._isComment; }
+    invertV() { this._jung += ~~jungVInvertMap[this._jung]; }
+    invertH() { this._jung += ~~jungHInvertMap[this._jung]; }
+    rotateCW() { this._jung += ~~jungCWRotationMap[this._jung]; }
+    rotateCCW() { this._jung += ~~jungCCWRotationMap[this._jung]; }
     toString() {
         return this.char;
     }
