@@ -41,9 +41,19 @@ export const Content = connect(
             <Label title={<div> 회전</div>}>
                 <MenuButton
                     label={<div> 시계방향 <Key listen="alt r">Alt+r</Key> </div>}
+                    disabled={!appState.selection.isSquare}
+                    onClick={() => appState.rotateCWCode(
+                        appState.selection.y, appState.selection.x,
+                        appState.selection.width, appState.selection.height
+                    )}
                 />
                 <MenuButton
                     label={<div> 반시계방향 <Key listen="alt shift r">Alt+Shift+r</Key> </div>}
+                    disabled={!appState.selection.isSquare}
+                    onClick={() => appState.rotateCCWCode(
+                        appState.selection.y, appState.selection.x,
+                        appState.selection.width, appState.selection.height
+                    )}
                 />
             </Label>
             <Label title={<div> 반전</div>}>

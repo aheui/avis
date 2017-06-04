@@ -134,6 +134,12 @@ export class AppState {
     invertVCode(rowIndex, colIndex, width, height) {
         this.mutate(() => { this._codeSpace.invertV(rowIndex, colIndex, width, height); });
     }
+    rotateCWCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => { this._codeSpace.rotateCW(rowIndex, colIndex, width, height); });
+    }
+    rotateCCWCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => { this._codeSpace.rotateCCW(rowIndex, colIndex, width, height); });
+    }
     ensureCodeRowWidth(rowIndex, width) {
         this.mutate(() => { this._codeSpace.ensureLineWidth(rowIndex, width, this._spaceFillChar); });
     }
@@ -516,6 +522,12 @@ class CodeSpace extends Array {
                         [codeLine2[c + colIndex], codeLine1[c + colIndex]];
             }
         });
+    }
+    rotateCW(rowIndex, colIndex, width, height) {
+        console.log(`rotateCW(${rowIndex}, ${colIndex}, ${width}, ${height})`); // TODO
+    }
+    rotateCCW(rowIndex, colIndex, width, height) {
+        console.log(`rotateCCW(${rowIndex}, ${colIndex}, ${width}, ${height})`); // TODO
     }
     joinRows(rowIndex, height) { // TODO: 테스트 짜야겠다
         if (this.length <= rowIndex) return;

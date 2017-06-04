@@ -13,4 +13,8 @@
     width: 100%;
     text-align: left;
 }
+.button .disabled {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
 
