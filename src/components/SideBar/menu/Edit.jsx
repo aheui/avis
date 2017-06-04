@@ -33,5 +33,22 @@ export const Content = connect(
                 />
             </Label>
         </SideBarContentFolder>
+        <SideBarContentFolder
+            title='회전'
+            open={appState.getUIOpen('edit.inputMethod')}
+            onBarClick={open => appState.setUIOpen('edit.inputMethod', !open)}>
+            <Label title={<div> 입력방식 <Key listen="insert">insert</Key> </div>}>
+                <Switch
+                    leftLabel="밀어쓰기"
+                    leftValue="insert"
+                    rightLabel="덮어쓰기"
+                    rightValue="overwrite"
+                    value={appState.editOptions.inputMethod}
+                    onChange={inputMethod => {
+                        appState.editOptions = { inputMethod };
+                    }}
+                />
+            </Label>
+        </SideBarContentFolder>
     </SideBarContent>
 );
