@@ -246,9 +246,9 @@ class Selection {
 const significantChoIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18];
 // ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅢㅣ
 const significantJungIndices = [0, 2, 4, 6, 8, 12, 13, 17, 18, 19, 20];
-// ㅏ↔ ㅓ, ㅑ↔ ㅕ
+// ㅏ↔ㅓ, ㅑ↔ㅕ
 const jungHInvertMap = { 0:+4,  4:-4,  2:+4,  6:-4 };
-// ㅗ↔ ㅜ, ㅛ↔ ㅠ
+// ㅗ↔ㅜ, ㅛ↔ㅠ
 const jungVInvertMap = { 8:+5, 13:-5, 12:+5, 17:-5 };
 // 회전
 const jungCWRotationMap = { 
