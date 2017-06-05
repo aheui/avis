@@ -260,17 +260,17 @@ const significantChoIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18];
 // ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅢㅣ
 const significantJungIndices = [0, 2, 4, 6, 8, 12, 13, 17, 18, 19, 20];
 // ㅏ↔ㅓ, ㅑ↔ㅕ
-const jungHInvertMap = { 0:+4,  4:-4,  2:+4,  6:-4 };
+const jungHInvertMap = { 0: +4,  4: -4,  2: +4,  6: -4 };
 // ㅗ↔ㅜ, ㅛ↔ㅠ
-const jungVInvertMap = { 8:+5, 13:-5, 12:+5, 17:-5 };
+const jungVInvertMap = { 8: +5, 13: -5, 12: +5, 17: -5 };
 // 회전
 const jungCWRotationMap = { 
-    0:+13, 13: -9, 4:+4,  8: -8, // ㅏㅜㅓㅗ
-    2:+15, 17:-11, 6:+6, 12:-10, // ㅑㅠㅕㅛ
+    0: +13, 13:  -9, 4: +4,  8:  -8, // ㅏㅜㅓㅗ
+    2: +15, 17: -11, 6: +6, 12: -10, // ㅑㅠㅕㅛ
 }
 const jungCCWRotationMap = { 
-    0: +8,  8:-4, 4: +9, 13:-13, // ㅏㅗㅓㅜ
-    2:+10, 12:-6, 6:+11, 17:-15, // ㅑㅛㅕㅠ
+    0:  +8,  8: -4, 4:  +9, 13: -13, // ㅏㅗㅓㅜ
+    2: +10, 12: -6, 6: +11, 17: -15, // ㅑㅛㅕㅠ
 }
 
 
@@ -298,23 +298,24 @@ class Code {
     get jong() { return this._jong; }
     get isComment() { return this._isComment; }
     _updateFromIndices() {
-        if (!this._isComment)
+        if (!this._isComment) {
             this._char = hangul.fromIndices(this._cho, this._jung, this._jong);
+        }
     }
     invertH() {
-        this._jung += ~~jungHInvertMap[this._jung]; 
+        this._jung += jungHInvertMap[this._jung] | 0; 
         this._updateFromIndices();
     }
     invertV() { 
-        this._jung += ~~jungVInvertMap[this._jung]; 
+        this._jung += jungVInvertMap[this._jung] | 0; 
         this._updateFromIndices();
     }
     rotateCW() { 
-        this._jung += ~~jungCWRotationMap[this._jung]; 
+        this._jung += jungCWRotationMap[this._jung] | 0; 
         this._updateFromIndices();
     }
     rotateCCW() { 
-        this._jung += ~~jungCCWRotationMap[this._jung]; 
+        this._jung += jungCCWRotationMap[this._jung] | 0; 
         this._updateFromIndices();
     }
 

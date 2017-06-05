@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 
-import * as edit from './menu/Edit';
+import * as edit from './menu/edit';
 import style from './style.css';
 
 const menus = {
