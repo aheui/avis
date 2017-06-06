@@ -40,7 +40,7 @@ export const Content = connect(
             onBarClick={open => appState.setUIOpen('edit.rotate', !open)}>
             <Label title={<div> 회전</div>}>
                 <MenuButton
-                    label={<div> 시계방향 <Key listen="alt r">Alt+r</Key> </div>}
+                    label={<div> 시계방향 <Key listen="alt">Alt</Key><Key listen="r">r</Key></div>}
                     disabled={!appState.selection.isSquare}
                     onClick={() => appState.rotateCWCode(
                         appState.selection.y, appState.selection.x,
@@ -48,7 +48,7 @@ export const Content = connect(
                     )}
                 />
                 <MenuButton
-                    label={<div> 반시계방향 <Key listen="alt shift r">Alt+Shift+r</Key> </div>}
+                    label={<div> 반시계방향 <Key listen="alt">Alt</Key><Key listen="shift">Shift</Key><Key listen="r">r</Key></div>}
                     disabled={!appState.selection.isSquare}
                     onClick={() => appState.rotateCCWCode(
                         appState.selection.y, appState.selection.x,
@@ -58,14 +58,14 @@ export const Content = connect(
             </Label>
             <Label title={<div> 반전</div>}>
                 <MenuButton
-                    label={<div> 좌우반전 <Key listen="alt h">Alt+h</Key> </div>}
+                    label={<div> 좌우반전 <Key listen="alt">Alt</Key><Key listen="h">h</Key></div>}
                     onClick={() => appState.invertHCode(
                         appState.selection.y, appState.selection.x,
                         appState.selection.width, appState.selection.height
                     )}
                 />
                 <MenuButton
-                    label={<div> 상하반전 <Key listen="alt h">Alt+h</Key> </div>}
+                    label={<div> 상하반전 <Key listen="alt">Alt</Key><Key listen="v">v</Key></div>}
                     onClick={() => appState.invertVCode(
                         appState.selection.y, appState.selection.x,
                         appState.selection.width, appState.selection.height

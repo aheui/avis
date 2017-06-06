@@ -368,6 +368,46 @@ class CodeLine extends Array {
         if (length < 1) return;
         this.splice(index, length);
     }
+    invertH(index, length, jungConv = true) {
+        if (length < 1) return;
+        if (this.length <= index) return;
+        const to = Math.min(this.length, index + length);
+        if (jungConv) {
+            for (let i = index; i < to; ++i) {
+                this[i].invertH();
+            }
+        }
+        const halfLength = length / 2;
+        for (let c = 0; c < halfLength; ++c) {
+            const left = c + index;
+            const right = length - c - 1 + index;
+            [this[left], this[right]] = [this[right], this[left]];
+        }
+    }
+    invertV(index, length) {
+        if (length < 1) return;
+        if (this.length <= index) return;
+        const to = Math.min(this.length, index + length);
+        for (let i = index; i < to; ++i) {
+            this[i].invertV();
+        }
+    }
+    rotateCW(index, length) {
+        if (length < 1) return;
+        if (this.length <= index) return;
+        const to = Math.min(this.length, index + length);
+        for (let i = index; i < to; ++i) {
+            this[i].rotateCW();
+        }
+    }
+    rotateCCW(index, length) {
+        if (length < 1) return;
+        if (this.length <= index) return;
+        const to = Math.min(this.length, index + length);
+        for (let i = index; i < to; ++i) {
+            this[i].rotateCCW();
+        }
+    }
     toString() {
         return this.map(code => code.toString()).join('');
     }
@@ -497,11 +537,7 @@ class CodeSpace extends Array {
             for (let r = 0; r < height; ++r) {
                 const codeLine = this[rowIndex + r];
                 if (!codeLine) break;
-                for (let c = 0; c < width; ++c)
-                    codeLine[c + colIndex].invertH();
-                for (let c = 0; c < width/2; ++c) 
-                    [codeLine[c + colIndex], codeLine[width-c-1 + colIndex]] = 
-                        [codeLine[width-c-1 + colIndex], codeLine[c + colIndex]];
+                codeLine.invertH(colIndex, width);
             }
         });
     }
@@ -512,15 +548,17 @@ class CodeSpace extends Array {
             for (let i = 0; i < height; ++i) {
                 const codeLine = this[rowIndex + i];
                 if (!codeLine) break;
-                for (let c = 0; c < width; ++c)
-                    codeLine[c + colIndex].invertV();
+                codeLine.invertV(colIndex, width);
             }
-            for (let r = 0; r < height/2; ++r) {
+            const halfHeight = height / 2;
+            for (let r = 0; r < halfHeight; ++r) {
+
                 const codeLine1 = this[rowIndex + r];
                 const codeLine2 = this[rowIndex + height - r - 1];
-                for (let c = 0; c < width; ++c)
-                    [codeLine1[c + colIndex], codeLine2[c + colIndex]] = 
-                        [codeLine2[c + colIndex], codeLine1[c + colIndex]];
+                for (let c = 0; c < width; ++c) {
+                    const i = c + colIndex;
+                    [codeLine1[i], codeLine2[i]] = [codeLine2[i], codeLine1[i]];
+                }
             }
         });
     }
