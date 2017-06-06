@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
 
+import * as propTypes from './propTypes'
+
 import './app.css';
 
 
@@ -17,7 +19,7 @@ class Provider extends React.Component {
         return React.Children.only(this.props.children);
     }
     static childContextTypes = {
-        appState: React.PropTypes.object.isRequired,
+        appState: propTypes.objectIsRequired,
     };
 }
 

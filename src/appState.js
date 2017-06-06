@@ -1,6 +1,8 @@
 import React from 'react';
 import Aheui from 'naheui';
 
+import * as propTypes from './propTypes'
+
 const defaultSpaceFillChar = '\u3000';
 
 export class AppState {
@@ -588,12 +590,12 @@ export function connect(mapStateToProps) {
             });
         }
         static contextTypes = {
-            appState: React.PropTypes.object.isRequired,
-            changeDispatcher: React.PropTypes.object,
+            appState: propTypes.objectIsRequired,
+            changeDispatcher: propTypes.object,
         };
         static childContextTypes = {
-            appState: React.PropTypes.object.isRequired,
-            changeDispatcher: React.PropTypes.object.isRequired,
+            appState: propTypes.objectIsRequired,
+            changeDispatcher: propTypes.objectIsRequired,
         };
     };
 }
