@@ -563,10 +563,56 @@ class CodeSpace extends Array {
         });
     }
     rotateCW(rowIndex, colIndex, width, height) {
-        console.log(`rotateCW(${rowIndex}, ${colIndex}, ${width}, ${height})`); // TODO
+        // rotateCW : invertXY then invertH
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
+        if (width != height) return;
+        this.mutate(() => {
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) break;
+                codeLine.rotateCW(colIndex, width);
+            }
+            // invert XY
+            for (let r = 0; r < height; ++r) {
+                const y = rowIndex + r;
+                const tx = colIndex + r;
+                for (let c = 0; c < r; ++c) {
+                    const x = colIndex + c;
+                    const ty = rowIndex + c;
+                    [this[y][x], this[ty][tx]] = [this[ty][tx], this[y][x]];
+                }
+            }
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) break;
+                codeLine.invertH(colIndex, width, false);
+            }
+        });
     }
     rotateCCW(rowIndex, colIndex, width, height) {
-        console.log(`rotateCCW(${rowIndex}, ${colIndex}, ${width}, ${height})`); // TODO
+        // rotateCW : invertH then invertXY
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
+        if (width != height) return;
+        this.mutate(() => {
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) break;
+                codeLine.rotateCCW(colIndex, width);
+                codeLine.invertH(colIndex, width, false);
+            }
+            // invert XY
+            for (let r = 0; r < height; ++r) {
+                const y = rowIndex + r;
+                const tx = colIndex + r;
+                for (let c = 0; c < r; ++c) {
+                    const x = colIndex + c;
+                    const ty = rowIndex + c;
+                    [this[y][x], this[ty][tx]] = [this[ty][tx], this[y][x]];
+                }
+            }
+        });
     }
     joinRows(rowIndex, height) { // TODO: 테스트 짜야겠다
         if (this.length <= rowIndex) return;
