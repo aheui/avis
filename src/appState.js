@@ -54,6 +54,9 @@ export class AppState {
             this._spaceFillChar = value;
         });
     }
+    get cursor() {
+        return this._machine.cursor;
+    }
     get codeSpace() {
         return this._codeSpace;
     }

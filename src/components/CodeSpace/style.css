@@ -102,6 +102,38 @@
     animation: none;
 }
 
+.cursor {
+    position: absolute;
+    transition-property: top, left;
+    transition-duration: 0.05s;
+}
+
+.cursor-rect {
+    stroke: rgb(0, 122, 204);
+    stroke-width: 3;
+    fill: transparent;
+}
+
+.cursor-deco {
+    stroke: white;
+    stroke-width: 3;
+    stroke-opacity: 0.1;
+    stroke-dasharray: 10, 40;
+    fill: transparent;
+    animation-duration: 0.5s;
+    animation-name: deco-rotate;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    transition-property: stroke, stroke-opacity, stroke-dasharray;
+    transition-duration: 0.5s;
+}
+
+.cursor.on-break-point .cursor-deco {
+    stroke: #c10;
+    stroke-opacity: 1;
+    stroke-dasharray: 40, 0;
+}
+
 @keyframes caret-blink {
     0%, 15%, 85%, 100% { opacity: 1; }
     35%, 65% { opacity: 0; }
@@ -110,4 +142,9 @@
 @keyframes dash-rotate {
     0% { stroke-dashoffset: 0; }
     100% { stroke-dashoffset: -6; }
+}
+
+@keyframes deco-rotate {
+    0% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -50; }
 }
