@@ -1,5 +1,6 @@
 import React from 'react';
 import Aheui from 'naheui';
+import * as hangul from './misc/hangul'
 
 import * as propTypes from './propTypes'
 
@@ -132,6 +133,18 @@ export class AppState {
     shrinkCode(rowIndex, colIndex, width, height) {
         this.mutate(() => { this._codeSpace.shrink(rowIndex, colIndex, width, height); });
     }
+    invertHCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => { this._codeSpace.invertH(rowIndex, colIndex, width, height); });
+    }
+    invertVCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => { this._codeSpace.invertV(rowIndex, colIndex, width, height); });
+    }
+    rotateCWCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => { this._codeSpace.rotateCW(rowIndex, colIndex, width, height); });
+    }
+    rotateCCWCode(rowIndex, colIndex, width, height) {
+        this.mutate(() => { this._codeSpace.rotateCCW(rowIndex, colIndex, width, height); });
+    }
     ensureCodeRowWidth(rowIndex, width) {
         this.mutate(() => { this._codeSpace.ensureLineWidth(rowIndex, width, this._spaceFillChar); });
     }
@@ -251,6 +264,20 @@ class Selection {
 const significantChoIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18];
 // ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅢㅣ
 const significantJungIndices = [0, 2, 4, 6, 8, 12, 13, 17, 18, 19, 20];
+// ㅏ↔ㅓ, ㅑ↔ㅕ
+const jungHInvertMap = { 0: +4,  4: -4,  2: +4,  6: -4 };
+// ㅗ↔ㅜ, ㅛ↔ㅠ
+const jungVInvertMap = { 8: +5, 13: -5, 12: +5, 17: -5 };
+// 회전
+const jungCWRotationMap = { 
+    0: +13, 13:  -9, 4: +4,  8:  -8, // ㅏㅜㅓㅗ
+    2: +15, 17: -11, 6: +6, 12: -10, // ㅑㅠㅕㅛ
+}
+const jungCCWRotationMap = { 
+    0:  +8,  8: -4, 4:  +9, 13: -13, // ㅏㅗㅓㅜ
+    2: +10, 12: -6, 6: +11, 17: -15, // ㅑㅛㅕㅠ
+}
+
 
 class Code {
     constructor(char, breakPoint = false) {
@@ -275,6 +302,28 @@ class Code {
     get jung() { return this._jung; }
     get jong() { return this._jong; }
     get isComment() { return this._isComment; }
+    _updateFromIndices() {
+        if (!this._isComment) {
+            this._char = hangul.fromIndices(this._cho, this._jung, this._jong);
+        }
+    }
+    invertH() {
+        this._jung += jungHInvertMap[this._jung] | 0; 
+        this._updateFromIndices();
+    }
+    invertV() { 
+        this._jung += jungVInvertMap[this._jung] | 0; 
+        this._updateFromIndices();
+    }
+    rotateCW() { 
+        this._jung += jungCWRotationMap[this._jung] | 0; 
+        this._updateFromIndices();
+    }
+    rotateCCW() { 
+        this._jung += jungCCWRotationMap[this._jung] | 0; 
+        this._updateFromIndices();
+    }
+
     toString() {
         return this.char;
     }
@@ -323,6 +372,46 @@ class CodeLine extends Array {
     shrink(index, length) {
         if (length < 1) return;
         this.splice(index, length);
+    }
+    invertH(index, length, jungConv = true) {
+        if (length < 1) return;
+        if (this.length <= index) return;
+        const to = Math.min(this.length, index + length);
+        if (jungConv) {
+            for (let i = index; i < to; ++i) {
+                this[i].invertH();
+            }
+        }
+        const halfLength = length / 2;
+        for (let c = 0; c < halfLength; ++c) {
+            const left = c + index;
+            const right = length - c - 1 + index;
+            [this[left], this[right]] = [this[right], this[left]];
+        }
+    }
+    invertV(index, length) {
+        if (length < 1) return;
+        if (this.length <= index) return;
+        const to = Math.min(this.length, index + length);
+        for (let i = index; i < to; ++i) {
+            this[i].invertV();
+        }
+    }
+    rotateCW(index, length) {
+        if (length < 1) return;
+        if (this.length <= index) return;
+        const to = Math.min(this.length, index + length);
+        for (let i = index; i < to; ++i) {
+            this[i].rotateCW();
+        }
+    }
+    rotateCCW(index, length) {
+        if (length < 1) return;
+        if (this.length <= index) return;
+        const to = Math.min(this.length, index + length);
+        for (let i = index; i < to; ++i) {
+            this[i].rotateCCW();
+        }
     }
     toString() {
         return this.map(code => code.toString()).join('');
@@ -444,6 +533,90 @@ class CodeSpace extends Array {
             for (let codeLine of voids) this.splice(this.indexOf(codeLine), 1);
             if (this.length === 0) this.push(new CodeLine());
             this._recalculateWidth();
+        });
+    }
+    invertH(rowIndex, colIndex, width, height) {
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
+        this.mutate(() => {
+            for (let r = 0; r < height; ++r) {
+                const codeLine = this[rowIndex + r];
+                if (!codeLine) break;
+                codeLine.invertH(colIndex, width);
+            }
+        });
+    }
+    invertV(rowIndex, colIndex, width, height) {
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
+        this.mutate(() => {
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) break;
+                codeLine.invertV(colIndex, width);
+            }
+            const halfHeight = height / 2;
+            for (let r = 0; r < halfHeight; ++r) {
+
+                const codeLine1 = this[rowIndex + r];
+                const codeLine2 = this[rowIndex + height - r - 1];
+                for (let c = 0; c < width; ++c) {
+                    const i = c + colIndex;
+                    [codeLine1[i], codeLine2[i]] = [codeLine2[i], codeLine1[i]];
+                }
+            }
+        });
+    }
+    rotateCW(rowIndex, colIndex, width, height) {
+        // rotateCW : invertXY then invertH
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
+        if (width != height) return;
+        this.mutate(() => {
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) break;
+                codeLine.rotateCW(colIndex, width);
+            }
+            // invert XY
+            for (let r = 0; r < height; ++r) {
+                const y = rowIndex + r;
+                const tx = colIndex + r;
+                for (let c = 0; c < r; ++c) {
+                    const x = colIndex + c;
+                    const ty = rowIndex + c;
+                    [this[y][x], this[ty][tx]] = [this[ty][tx], this[y][x]];
+                }
+            }
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) break;
+                codeLine.invertH(colIndex, width, false);
+            }
+        });
+    }
+    rotateCCW(rowIndex, colIndex, width, height) {
+        // rotateCW : invertH then invertXY
+        if (width < 1 || height < 1) return;
+        if (this._width <= colIndex || this.length <= rowIndex) return;
+        if (width != height) return;
+        this.mutate(() => {
+            for (let i = 0; i < height; ++i) {
+                const codeLine = this[rowIndex + i];
+                if (!codeLine) break;
+                codeLine.rotateCCW(colIndex, width);
+                codeLine.invertH(colIndex, width, false);
+            }
+            // invert XY
+            for (let r = 0; r < height; ++r) {
+                const y = rowIndex + r;
+                const tx = colIndex + r;
+                for (let c = 0; c < r; ++c) {
+                    const x = colIndex + c;
+                    const ty = rowIndex + c;
+                    [this[y][x], this[ty][tx]] = [this[ty][tx], this[y][x]];
+                }
+            }
         });
     }
     joinRows(rowIndex, height) { // TODO: 테스트 짜야겠다
