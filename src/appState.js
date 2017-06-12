@@ -201,6 +201,7 @@ class UIState {
     constructor() {
         this._open = {
             'edit.inputMethod': true,
+            'edit.rotateAndFlip': true,
         };
     }
     getOpen(key) { return !!this._open[key]; }

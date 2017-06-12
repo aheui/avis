@@ -18,7 +18,7 @@ export const Content = connect(
 )(
     ({ appState }) => <SideBarContent title="편집">
         <SideBarContentFolder
-            title='키보드 입력'
+            title="키보드 입력"
             open={appState.getUIOpen('edit.inputMethod')}
             onBarClick={open => appState.setUIOpen('edit.inputMethod', !open)}>
             <Label title={<div> 입력방식 <Key listen="insert">insert</Key> </div>}>
@@ -35,12 +35,12 @@ export const Content = connect(
             </Label>
         </SideBarContentFolder>
         <SideBarContentFolder
-            title='회전/ 반전'
-            open={appState.getUIOpen('edit.inputMethod')}
-            onBarClick={open => appState.setUIOpen('edit.rotate', !open)}>
-            <Label title={<div> 회전</div>}>
+            title="회전 / 반전"
+            open={appState.getUIOpen('edit.rotateAndFlip')}
+            onBarClick={open => appState.setUIOpen('edit.rotateAndFlip', !open)}>
+            <Label title="회전">
                 <MenuButton
-                    label={<div> 시계방향 <Key listen="alt">Alt</Key><Key listen="r">r</Key></div>}
+                    label="시계방향"
                     disabled={!appState.selection.isSquare}
                     onClick={() => appState.rotateCWCode(
                         appState.selection.y, appState.selection.x,
@@ -48,7 +48,7 @@ export const Content = connect(
                     )}
                 />
                 <MenuButton
-                    label={<div> 반시계방향 <Key listen="alt">Alt</Key><Key listen="shift">Shift</Key><Key listen="r">r</Key></div>}
+                    label="반시계방향"
                     disabled={!appState.selection.isSquare}
                     onClick={() => appState.rotateCCWCode(
                         appState.selection.y, appState.selection.x,
@@ -56,16 +56,16 @@ export const Content = connect(
                     )}
                 />
             </Label>
-            <Label title={<div> 반전</div>}>
+            <Label title="반전">
                 <MenuButton
-                    label={<div> 좌우반전 <Key listen="alt">Alt</Key><Key listen="h">h</Key></div>}
+                    label="좌우반전"
                     onClick={() => appState.invertHCode(
                         appState.selection.y, appState.selection.x,
                         appState.selection.width, appState.selection.height
                     )}
                 />
                 <MenuButton
-                    label={<div> 상하반전 <Key listen="alt">Alt</Key><Key listen="v">v</Key></div>}
+                    label="상하반전"
                     onClick={() => appState.invertVCode(
                         appState.selection.y, appState.selection.x,
                         appState.selection.width, appState.selection.height
