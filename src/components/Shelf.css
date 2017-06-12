@@ -1,4 +1,5 @@
 .shelf {
+    position: relative;
     flex-basis: 37px;
     display: flex;
     align-items: center;
@@ -15,4 +16,39 @@
     margin-left: 5px;
     font-size: 10px;
     color: rgb(212, 212, 212);
+}
+
+.control-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    height: 100%;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(
+        to right,
+        rgba(66, 66, 66, 0),
+        rgba(66, 66, 66, 1),
+        rgba(66, 66, 66, 1),
+        rgba(66, 66, 66, 0)
+    );
+}
+
+.control-box .control-button {
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    font-size: 14px;
+    text-align: center;
+    color: white;
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.control-box .control-button:hover {
+    opacity: 1;
 }

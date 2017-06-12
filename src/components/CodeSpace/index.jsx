@@ -207,8 +207,8 @@ export default connect(
             <div className={classNames(style.cursor, {
                 [style.onBreakPoint]: false,
             })} style={{
-                top: `${ 30 * appState.cursor.y }`,
-                left: `${ 30 * appState.cursor.x }`,
+                top: `${ 30 * appState.cursor.y }px`,
+                left: `${ 30 * appState.cursor.x }px`,
             }}>
                 <svg viewBox="0 0 30 30" width="30" height="30">
                     <rect className={style.cursorRect} x="3" y="3" width="24" height="24"/>

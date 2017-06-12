@@ -156,9 +156,7 @@ export class AppState {
     init() {
         this.mutate(() => {
             this.stop();
-            // TODO
-            // clear machine state
-            // init machine with appState's codeSpace
+            this._machine = new Aheui.Machine(this._codeSpace);
         });
     }
     run() {
