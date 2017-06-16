@@ -552,7 +552,7 @@ class CodeSpace extends Array {
             let i;
             // 가로는 밀어낼 길이를 알아내기 위해서 검사를 두 번 돌아야 함...
             if (pushDown) {
-                this.ensureHeight(rowIndex);
+                this.ensureHeight(rowIndex + 1);
                 boundWidth = 0;
                 // 첫 줄이 비어있으면 그냥 그대로 덮어쓰고, 아니면 새로 만듦
                 if (this[rowIndex].isEmptyAfter(colIndex, ignoreChars)) {
