@@ -316,6 +316,47 @@ export default connect(
                 onFocus={() => this.setState({
                     inputFocus: true,
                 })}
+                onCopy={e => {
+                    const { appState: { codeSpace, selection } } = this.props;
+                    e.preventDefault();
+                    // 복사되는 내용을 현재 선택영역의 문자열 값으로 바꿈
+                    e.clipboardData.setData(
+                         'text/plain',
+                         codeSpace.toString(selection)
+                    );
+                }}
+                onCut={e => {
+                    const { appState: { codeSpace, selection } } = this.props;
+                    e.preventDefault();
+                    // 복사되는 내용을 현재 선택영역의 문자열 값으로 바꿈
+                    e.clipboardData.setData(
+                         'text/plain',
+                         codeSpace.toString(selection)
+                    );
+                    handleInputCut(
+                        this.inputElement.value,
+                        appState,
+                        () => this.clearInputValue(),
+                        () => this.resetCaretAnimation(),
+                        () => this.scrollToFocus(),
+                    );
+                }}
+                onPaste={e => {
+                    // 다른 브라우저들과 파이어폭스 22+에서 지원하고 있어서
+                    // 파이어폭스 22 미만을 지원하려면 다른 방법도 구현해야 함
+                    let clipboardData, pastedData;
+                    e.preventDefault();
+                    clipboardData = e.clipboardData || window.clipboardData;
+                    pastedData = clipboardData.getData('Text');
+                    handleInputPaste(
+                        this.inputElement.value,
+                        pastedData.trim(),
+                        appState,
+                        () => this.clearInputValue(),
+                        () => this.resetCaretAnimation(),
+                        () => this.scrollToFocus(),
+                    );
+                }}
             />
         </div>;
     }
@@ -525,6 +566,78 @@ function handleInputChange(
         );
     }
     resetCaretAnimation();
+}
+
+function handleInputCut(
+    inputValue,
+    appState, 
+    clearInputValue,
+    resetCaretAnimation,
+    scrollToFocus,
+) {
+    // 선택한 부분의 내용 전체를 삭제하면 됨 
+    const { inputMethod } = appState.editOptions;
+    const overwriteMode = inputMethod === 'overwrite';
+    const del = (...args) => {
+        appState[
+            overwriteMode ?
+            'peelCode' :
+            'shrinkCode'
+        ](...args);
+    };
+    del(
+        appState.selection.y,
+        appState.selection.x,
+        appState.selection.width,
+        appState.selection.height,
+    );
+    clearInputValue();
+    resetCaretAnimation();
+    scrollToFocus();
+}
+
+function handleInputPaste(
+    inputValue,
+    pasteValue,
+    appState, 
+    clearInputValue,
+    resetCaretAnimation,
+    scrollToFocus,
+) {
+    // 밀어쓰기 모드의 경우 붙여넣을 영역이 전부 빈 공간인지 확인하고,
+    // 빈 공간이라면 해당 공간에 그대로 덮어쓰면 됨
+    // 아니라면 붙여넣을 영역을 확보하기 위해 행과 열을 밀어낸 뒤 덮어 씀
+    // 덮어쓰기 모드에서는 그대로 덮어쓰면 됨
+    // TODO: 밀어쓰기 모드에서의 빈 공간 확보
+    const inputLength = inputValue.length;
+    const { inputMethod } = appState.editOptions;
+    const overwriteMode = inputMethod === 'overwrite';
+    const pasteLines = pasteValue.split(/\r?\n/);
+    const pasteWidth = pasteLines.reduce(
+        (prev, current) => Math.max(prev, current.length),
+        0
+    );
+    const pasteHeight = pasteLines.length;
+    appState.insertCode(
+        appState.selection.y,
+        appState.selection.x + inputLength,
+        pasteValue,
+        true
+    );
+    // 입력한 뒤 붙여넣은 텍스트를 선택 (엑셀의 동작)
+    appState.selection = {
+        anchor: {
+            y: appState.selection.y + pasteHeight - 1,
+            x: appState.selection.x + inputLength + pasteWidth - 1,
+        },
+        focus: {
+            y: appState.selection.y,
+            x: appState.selection.x + inputLength,
+        }
+    };
+    clearInputValue();
+    resetCaretAnimation();
+    scrollToFocus();
 }
 
 const CodeLine = props => <div
