@@ -628,7 +628,7 @@ function handleInputPaste(
           appState.selection.height,
       );
     }
-    appState.insertChunkCode(
+    appState.insertChunkSmartCode(
         appState.selection.y,
         appState.selection.x + inputLength,
         pasteValue,

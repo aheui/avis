@@ -127,8 +127,11 @@ export class AppState {
     insertCode(rowIndex, colIndex, text, overwrite) {
         this.mutate(() => { this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
     }
-    insertChunkCode(rowIndex, colIndex, text, overwrite) {
-        this.mutate(() => { this._codeSpace.insertChunk(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
+    insertChunkCode(rowIndex, colIndex, text, pushDown, overwrite) {
+        this.mutate(() => { this._codeSpace.insertChunk(rowIndex, colIndex, text, this._spaceFillChar, pushDown, overwrite); });
+    }
+    insertChunkSmartCode(rowIndex, colIndex, text, overwrite) {
+        this.mutate(() => { this._codeSpace.insertChunkSmart(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
     }
     peelCode(rowIndex, colIndex, width, height) {
         this.mutate(() => { this._codeSpace.paint(rowIndex, colIndex, width, height, this._spaceFillChar); });
@@ -345,6 +348,14 @@ class CodeLine extends Array {
         }
         return result;
     }
+    isEmptyAfter(index, ignoreChars) {
+        for (let i = index; i < this.length; ++i) {
+            if (!ignoreChars.includes(this[i].char)) {
+                return false;
+            }
+        }
+        return true;
+    }
     ensureLength(length, spaceFillChar) {
         while (this.length < length) this.push(new Code(spaceFillChar, false));
     }
@@ -515,7 +526,7 @@ class CodeSpace extends Array {
             }
         });
     }
-    insertChunk(rowIndex, colIndex, text, spaceFillChar, overwrite) {
+    insertChunk(rowIndex, colIndex, text, spaceFillChar, pushDown, overwrite) {
         // TODO 테스트 작성?
         // TODO ignoreChars 딴 곳으로 옮기기
         const ignoreChars = [spaceFillChar, ' '];
@@ -536,35 +547,41 @@ class CodeSpace extends Array {
                 (prev, current) => Math.max(prev, current.length),
                 0
             );
-            this.ensureHeight(rowIndex + textLines.length);
-            // colIndex의 값이 무시할 글자라면 가로 방향으로 밀어내고,
-            // 아니라면 그 구간부터 세로로 밀어냄
-            // 밀어낼 길이를 알아내기 위해서 검사를 두 번 돌아야 함...
             let boundWidth = textWidth;
             let boundHeight;
             let i;
-            for (i = 0; i < textLines.length; ++i) {
-                const textLine = textLines[i];
-                const codeLine = this[rowIndex + i];
-                const codeCol = codeLine[colIndex];
-                codeLine.ensureLength(colIndex, spaceFillChar);
-                let j;
-                if (codeCol != null && !ignoreChars.includes(codeCol.char)) {
-                    break;
+            // 가로는 밀어낼 길이를 알아내기 위해서 검사를 두 번 돌아야 함...
+            if (pushDown) {
+                this.ensureHeight(rowIndex);
+                boundWidth = 0;
+                // 첫 줄이 비어있으면 그냥 그대로 덮어쓰고, 아니면 새로 만듦
+                if (this[rowIndex].isEmptyAfter(colIndex, ignoreChars)) {
+                    this[rowIndex].ensureLength(colIndex, spaceFillChar);
+                    boundHeight = 1;
+                } else {
+                    boundHeight = 0;
                 }
-                // code가 존재하는 만큼만 검사함
-                const loopSize = Math.min(codeLine.length - colIndex, textWidth);
-                for (j = 0; j < loopSize; ++j) {
-                    let code = codeLine[j + colIndex];
-                    // 해당 열에 Code가 무시할 글자가 아니면 그 구간부터 가로로
-                    // 밀어냄
-                    if (!ignoreChars.includes(code.char)) {
-                        if (j < boundWidth) boundWidth = j;
-                        break;
+            } else {
+                boundHeight = Math.min(this.length - rowIndex, textLines.length);
+                for (i = 0; i < boundHeight; ++i) {
+                    const textLine = textLines[i];
+                    const codeLine = this[rowIndex + i];
+                    const codeCol = codeLine[colIndex];
+                    codeLine.ensureLength(colIndex, spaceFillChar);
+                    let j;
+                    // code가 존재하는 만큼만 검사함
+                    const loopSize = Math.min(codeLine.length - colIndex, textWidth);
+                    for (j = 0; j < loopSize; ++j) {
+                        let code = codeLine[j + colIndex];
+                        // 해당 열에 Code가 무시할 글자가 아니면 그 구간부터 가로로
+                        // 밀어냄
+                        if (!ignoreChars.includes(code.char)) {
+                            if (j < boundWidth) boundWidth = j;
+                            break;
+                        }
                     }
                 }
             }
-            boundHeight = i;
             for (i = 0; i < boundHeight; ++i) {
                 const textLine = textLines[i];
                 const codeLine = this[rowIndex + i];
@@ -600,6 +617,25 @@ class CodeSpace extends Array {
                 this.splice(rowIndex + i, 0, ...codeLineAppends);
             }
         });
+    }
+    insertChunkSmart(rowIndex, colIndex, text, spaceFillChar, overwrite) {
+        // TODO ignoreChars 딴 곳으로 옮기기
+        const ignoreChars = [spaceFillChar, ' '];
+        // 해당 행이 해당 열부터 비어있는지 여부를 검사하고 비어있다면
+        // 아래로 내리고, 아니라면 오른쪽으로 밈
+        const codeLine = this[rowIndex];
+        let pushDown = true;
+        if (codeLine != null && !codeLine.isEmptyAfter(colIndex, ignoreChars)) {
+            pushDown = false;
+        }
+        return this.insertChunk(
+            rowIndex,
+            colIndex,
+            text,
+            spaceFillChar,
+            pushDown,
+            overwrite
+        );
     }
     paint(rowIndex, colIndex, width, height, paintChar) {
         if (width < 1 || height < 1) return;
