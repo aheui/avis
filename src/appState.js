@@ -624,12 +624,20 @@ class CodeSpace extends Array {
     insertChunkSmart(rowIndex, colIndex, text, spaceFillChar, overwrite) {
         // TODO ignoreChars 딴 곳으로 옮기기
         const ignoreChars = [spaceFillChar, ' '];
-        // 해당 행이 해당 열부터 비어있는지 여부를 검사하고 비어있다면
-        // 아래로 내리고, 아니라면 오른쪽으로 밈
-        const codeLine = this[rowIndex];
+        const textLines = text.split(/\r?\n/);
+        // 첫째 행이 해당 열부터 비어있다면:
+        // 적용될 행들이 해당 열부터 비어있는지 여부를 검사하고 비어있다면
+        // 오른쪽으로 밀고, 아니면 아래로 내림
+        // 첫째 행이 비어있지 않으면 그냥 오른쪽으로 밂
         let pushDown = true;
-        if (codeLine != null && !codeLine.isEmptyAfter(colIndex, ignoreChars)) {
-            pushDown = false;
+        for (let i = 0; i < textLines.length; ++i) {
+            const codeLine = this[i];
+            if (codeLine != null && !codeLine.isEmptyAfter(colIndex, ignoreChars)) {
+                pushDown = i !== 0;
+                break;
+            } else {
+                pushDown = i === 0;
+            }
         }
         return this.insertChunk(
             rowIndex,
