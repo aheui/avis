@@ -342,12 +342,9 @@ export default connect(
                     );
                 }}
                 onPaste={e => {
-                    // 다른 브라우저들과 파이어폭스 22+에서 지원하고 있어서
-                    // 파이어폭스 22 미만을 지원하려면 다른 방법도 구현해야 함
-                    let clipboardData, pastedData;
+                    const clipboardData = e.clipboardData || window.clipboardData;
+                    const pastedData = clipboardData.getData('Text');
                     e.preventDefault();
-                    clipboardData = e.clipboardData || window.clipboardData;
-                    pastedData = clipboardData.getData('Text');
                     handleInputPaste(
                         this.inputElement.value,
                         pastedData,
