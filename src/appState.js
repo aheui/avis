@@ -412,8 +412,16 @@ class CodeLine extends Array {
             this[i].rotateCCW();
         }
     }
-    toString() {
-        return this.map(code => code.toString()).join('');
+    toString(selection) {
+        // selection이 없으면 전체를 뱉음
+        if (selection == null) {
+            return this.map(code => code.toString()).join('');
+        }
+        // 아니라면 selection의 left / right만큼 잘라서 보내줌
+        // right는 exclusive한 인덱스라서 1만큼 더해야 slice에서 쓸 수 있음
+        return this.slice(selection.left, selection.right + 1).map(
+            code => code.toString()
+        ).join('');
     }
 }
 
@@ -650,8 +658,16 @@ class CodeSpace extends Array {
     toggleBreakPoint(x, y) {
         // TODO
     }
-    toString() {
-        return this.map(line => line.toString()).join('\n');
+    toString(selection) {
+        // 선택 영역을 지정하지 않았으면 코드 전체를 뱉음
+        if (selection == null) {
+            return this.map(line => line.toString()).join('\n');
+        }
+        // right / bottom은 exclusive 인덱스라서 slice에다가 쓰려면 1을
+        // 더해야 함
+        return this.slice(selection.top, selection.bottom + 1).map(
+            line => line.toString(selection)
+        ).join('\n');
     }
     static fromText(text) {
         const lines = text.split(/\r?\n/g);
