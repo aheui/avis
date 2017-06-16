@@ -618,11 +618,11 @@ function handleInputPaste(
         0
     );
     const pasteHeight = pasteLines.length;
-    appState.insertCode(
+    appState.insertChunkCode(
         appState.selection.y,
         appState.selection.x + inputLength,
         pasteValue,
-        true
+        overwriteMode
     );
     // 입력한 뒤 붙여넣은 텍스트를 선택 (엑셀의 동작)
     appState.selection = {
