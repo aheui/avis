@@ -632,7 +632,7 @@ class CodeSpace extends Array {
         // 첫째 행이 비어있지 않으면 그냥 오른쪽으로 밂
         let pushDown = true;
         for (let i = 0; i < textLines.length; ++i) {
-            const codeLine = this[i];
+            const codeLine = this[i + rowIndex];
             if (codeLine != null && !codeLine.isEmptyAfter(colIndex, ignoreChars)) {
                 pushDown = i !== 0;
                 break;
