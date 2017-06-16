@@ -350,7 +350,7 @@ export default connect(
                     pastedData = clipboardData.getData('Text');
                     handleInputPaste(
                         this.inputElement.value,
-                        pastedData.trim(),
+                        pastedData,
                         appState,
                         () => this.clearInputValue(),
                         () => this.resetCaretAnimation(),
@@ -597,7 +597,7 @@ function handleInputCut(
 }
 
 function handleInputPaste(
-    inputValue,
+    inputValueUntrimmed,
     pasteValue,
     appState, 
     clearInputValue,
@@ -608,7 +608,9 @@ function handleInputPaste(
     // 빈 공간이라면 해당 공간에 그대로 덮어쓰면 됨
     // 아니라면 붙여넣을 영역을 확보하기 위해 행과 열을 밀어낸 뒤 덮어 씀
     // 덮어쓰기 모드에서는 그대로 덮어쓰면 됨
-    // TODO: 밀어쓰기 모드에서의 빈 공간 확보
+    // 외부에서 가지고 올 때 \n은 자르되 공백은 자르면 안되므로 따로
+    // 정규표현식으로 처리함
+    const inputValue = inputValueUntrimmed.replace(/^[\r\n]+|[\r\n]+$/, '');
     const inputLength = inputValue.length;
     const { inputMethod } = appState.editOptions;
     const overwriteMode = inputMethod === 'overwrite';
