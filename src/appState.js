@@ -615,6 +615,9 @@ class CodeSpace extends Array {
                     return codeLine;
                 });
                 this.splice(rowIndex + i, 0, ...codeLineAppends);
+                if (colIndex + textWidth > this._width) {
+                    this._width = colIndex + textWidth;
+                }
             }
         });
     }
