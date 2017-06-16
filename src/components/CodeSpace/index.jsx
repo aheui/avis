@@ -620,6 +620,14 @@ function handleInputPaste(
         0
     );
     const pasteHeight = pasteLines.length;
+    if (!appState.selection.isCaret) {
+      appState.peelCode(
+          appState.selection.y,
+          appState.selection.x + inputLength,
+          appState.selection.width,
+          appState.selection.height,
+      );
+    }
     appState.insertChunkCode(
         appState.selection.y,
         appState.selection.x + inputLength,

@@ -421,7 +421,7 @@ class CodeLine extends Array {
             return this.map(code => code.toString()).join('');
         }
         // 아니라면 selection의 left / right만큼 잘라서 보내줌
-        // right는 exclusive한 인덱스라서 1만큼 더해야 slice에서 쓸 수 있음
+        // right는 inclusive한 인덱스라서 1만큼 더해야 slice에서 쓸 수 있음
         return this.slice(selection.left, selection.right + 1).map(
             code => code.toString()
         ).join('');
@@ -540,13 +540,14 @@ class CodeSpace extends Array {
             // colIndex의 값이 무시할 글자라면 가로 방향으로 밀어내고,
             // 아니라면 그 구간부터 세로로 밀어냄
             // 밀어낼 길이를 알아내기 위해서 검사를 두 번 돌아야 함...
-            let boundWidth = Infinity;
+            let boundWidth = textWidth;
             let boundHeight;
             let i;
             for (i = 0; i < textLines.length; ++i) {
                 const textLine = textLines[i];
                 const codeLine = this[rowIndex + i];
                 const codeCol = codeLine[colIndex];
+                codeLine.ensureLength(colIndex, spaceFillChar);
                 let j;
                 if (codeCol != null && !ignoreChars.includes(codeCol.char)) {
                     break;
@@ -568,13 +569,21 @@ class CodeSpace extends Array {
                 const textLine = textLines[i];
                 const codeLine = this[rowIndex + i];
                 let j;
-                for (j = 0; j < Math.min(codeLine.length, boundWidth); ++j) {
+                const loopSize = Math.min(codeLine.length - colIndex, boundWidth);
+                for (j = 0; j < loopSize; ++j) {
                     codeLine[j + colIndex].char = textLine[j] || spaceFillChar;
                 }
                 if (j < textWidth) {
                     const codes = textLine.split('').slice(j).map(
                         char => new Code(char, false)
                     );
+                    // 코드 뒤에 뭐가 있으면 spaceFillChar를 필요한 만큼 붙임
+                    if (codeLine.length > colIndex + j) {
+                        const fillWidth = textWidth - boundWidth;
+                        for (let k = codes.length; k < fillWidth; ++k) {
+                            codes.push(new Code(spaceFillChar, false));
+                        }
+                    }
                     codeLine.splice(colIndex + j, 0, ...codes);
                 }
                 if (codeLine.length > this._width) {
@@ -582,9 +591,12 @@ class CodeSpace extends Array {
                 }
             }
             if (i < textLines.length) {
-                const codeLineAppends = textLines.slice(i).map(
-                    text => CodeLine.fromText(text),   
-                );
+                const codeLineAppends = textLines.slice(i).map(text => {
+                    let codeLine = new CodeLine();
+                    codeLine.ensureLength(colIndex, spaceFillChar);
+                    codeLine.insert(colIndex, text, spaceFillChar, true);
+                    return codeLine;
+                });
                 this.splice(rowIndex + i, 0, ...codeLineAppends);
             }
         });
@@ -740,7 +752,7 @@ class CodeSpace extends Array {
         if (selection == null) {
             return this.map(line => line.toString()).join('\n');
         }
-        // right / bottom은 exclusive 인덱스라서 slice에다가 쓰려면 1을
+        // right / bottom은 inclusive 인덱스라서 slice에다가 쓰려면 1을
         // 더해야 함
         return this.slice(selection.top, selection.bottom + 1).map(
             line => line.toString(selection)
