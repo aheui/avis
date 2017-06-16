@@ -562,6 +562,7 @@ class CodeSpace extends Array {
                     boundHeight = 0;
                 }
             } else {
+                this.ensureHeight(rowIndex);
                 boundHeight = Math.min(this.length - rowIndex, textLines.length);
                 for (i = 0; i < boundHeight; ++i) {
                     const textLine = textLines[i];
