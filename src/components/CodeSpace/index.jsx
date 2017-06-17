@@ -601,10 +601,6 @@ function handleInputPaste(
     resetCaretAnimation,
     scrollToFocus,
 ) {
-    // 밀어쓰기 모드의 경우 붙여넣을 영역이 전부 빈 공간인지 확인하고,
-    // 빈 공간이라면 해당 공간에 그대로 덮어쓰면 됨
-    // 아니라면 붙여넣을 영역을 확보하기 위해 행과 열을 밀어낸 뒤 덮어 씀
-    // 덮어쓰기 모드에서는 그대로 덮어쓰면 됨
     // 외부에서 가지고 올 때 \n은 자르되 공백은 자르면 안되므로 따로
     // 정규표현식으로 처리함
     const inputValue = inputValueUntrimmed.replace(/^[\r\n]+|[\r\n]+$/, '');
@@ -633,13 +629,13 @@ function handleInputPaste(
     );
     // 입력한 뒤 붙여넣은 텍스트를 선택 (엑셀의 동작)
     appState.selection = {
-        anchor: {
-            y: appState.selection.y + pasteHeight - 1,
-            x: appState.selection.x + inputLength + pasteWidth - 1,
-        },
         focus: {
             y: appState.selection.y,
             x: appState.selection.x + inputLength,
+        },
+        anchor: {
+            y: appState.selection.y + pasteHeight - 1,
+            x: appState.selection.x + inputLength + pasteWidth - 1,
         }
     };
     clearInputValue();

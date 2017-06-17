@@ -348,9 +348,9 @@ class CodeLine extends Array {
         }
         return result;
     }
-    isEmptyAfter(index, ignoreChars) {
+    isEmptyAfter(index, spaceChars) {
         for (let i = index; i < this.length; ++i) {
-            if (!ignoreChars.includes(this[i].char)) {
+            if (!spaceChars.has(this[i].char)) {
                 return false;
             }
         }
@@ -528,8 +528,8 @@ class CodeSpace extends Array {
     }
     insertChunk(rowIndex, colIndex, text, spaceFillChar, pushDown, overwrite) {
         // TODO 테스트 작성?
-        // TODO ignoreChars 딴 곳으로 옮기기
-        const ignoreChars = [spaceFillChar, ' '];
+        // TODO spaceChars 딴 곳으로 옮기기
+        const spaceChars = new Set([spaceFillChar, ' ']);
         // 덮어쓰기 모드라면 insert를 그대로 적용해도 무방함
         if (overwrite) {
             return this.insert(
@@ -555,7 +555,7 @@ class CodeSpace extends Array {
                 this.ensureHeight(rowIndex + 1);
                 boundWidth = 0;
                 // 첫 줄이 비어있으면 그냥 그대로 덮어쓰고, 아니면 새로 만듦
-                if (this[rowIndex].isEmptyAfter(colIndex, ignoreChars)) {
+                if (this[rowIndex].isEmptyAfter(colIndex, spaceChars)) {
                     this[rowIndex].ensureLength(colIndex, spaceFillChar);
                     boundHeight = 1;
                 } else {
@@ -576,7 +576,7 @@ class CodeSpace extends Array {
                         let code = codeLine[j + colIndex];
                         // 해당 열에 Code가 무시할 글자가 아니면 그 구간부터 가로로
                         // 밀어냄
-                        if (!ignoreChars.includes(code.char)) {
+                        if (!spaceChars.has(code.char)) {
                             if (j < boundWidth) boundWidth = j;
                             break;
                         }
@@ -623,8 +623,8 @@ class CodeSpace extends Array {
         });
     }
     insertChunkSmart(rowIndex, colIndex, text, spaceFillChar, overwrite) {
-        // TODO ignoreChars 딴 곳으로 옮기기
-        const ignoreChars = [spaceFillChar, ' '];
+        // TODO spaceChars 딴 곳으로 옮기기
+        const spaceChars = new Set([spaceFillChar, ' ']);
         const textLines = text.split(/\r?\n/);
         // 첫째 행이 해당 열부터 비어있다면:
         // 적용될 행들이 해당 열부터 비어있는지 여부를 검사하고 비어있다면
@@ -633,7 +633,7 @@ class CodeSpace extends Array {
         let pushDown = true;
         for (let i = 0; i < textLines.length; ++i) {
             const codeLine = this[i + rowIndex];
-            if (codeLine != null && !codeLine.isEmptyAfter(colIndex, ignoreChars)) {
+            if (codeLine != null && !codeLine.isEmptyAfter(colIndex, spaceChars)) {
                 pushDown = i !== 0;
                 break;
             } else {
