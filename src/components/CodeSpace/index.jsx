@@ -629,11 +629,11 @@ function handleInputPaste(
     );
     // 입력한 뒤 붙여넣은 텍스트를 선택 (엑셀의 동작)
     appState.selection = {
-        focus: {
+        anchor: {
             y: appState.selection.y,
             x: appState.selection.x + inputLength,
         },
-        anchor: {
+        focus: {
             y: appState.selection.y + pasteHeight - 1,
             x: appState.selection.x + inputLength + pasteWidth - 1,
         }
