@@ -316,6 +316,44 @@ export default connect(
                 onFocus={() => this.setState({
                     inputFocus: true,
                 })}
+                onCopy={e => {
+                    const { appState: { codeSpace, selection } } = this.props;
+                    e.preventDefault();
+                    // 복사되는 내용을 현재 선택영역의 문자열 값으로 바꿈
+                    e.clipboardData.setData(
+                         'text/plain',
+                         codeSpace.toString(selection)
+                    );
+                }}
+                onCut={e => {
+                    const { appState: { codeSpace, selection } } = this.props;
+                    e.preventDefault();
+                    // 복사되는 내용을 현재 선택영역의 문자열 값으로 바꿈
+                    e.clipboardData.setData(
+                         'text/plain',
+                         codeSpace.toString(selection)
+                    );
+                    handleInputCut(
+                        this.inputElement.value,
+                        appState,
+                        () => this.clearInputValue(),
+                        () => this.resetCaretAnimation(),
+                        () => this.scrollToFocus(),
+                    );
+                }}
+                onPaste={e => {
+                    const clipboardData = e.clipboardData || window.clipboardData;
+                    const pastedData = clipboardData.getData('Text');
+                    e.preventDefault();
+                    handleInputPaste(
+                        this.inputElement.value,
+                        pastedData,
+                        appState,
+                        () => this.clearInputValue(),
+                        () => this.resetCaretAnimation(),
+                        () => this.scrollToFocus(),
+                    );
+                }}
             />
         </div>;
     }
@@ -525,6 +563,84 @@ function handleInputChange(
         );
     }
     resetCaretAnimation();
+}
+
+function handleInputCut(
+    inputValue,
+    appState, 
+    clearInputValue,
+    resetCaretAnimation,
+    scrollToFocus,
+) {
+    // 선택한 부분의 내용 전체를 삭제하면 됨 
+    const { inputMethod } = appState.editOptions;
+    const overwriteMode = inputMethod === 'overwrite';
+    const del = (...args) => {
+        appState[
+            overwriteMode ?
+            'peelCode' :
+            'shrinkCode'
+        ](...args);
+    };
+    del(
+        appState.selection.y,
+        appState.selection.x,
+        appState.selection.width,
+        appState.selection.height,
+    );
+    clearInputValue();
+    resetCaretAnimation();
+    scrollToFocus();
+}
+
+function handleInputPaste(
+    inputValueUntrimmed,
+    pasteValue,
+    appState, 
+    clearInputValue,
+    resetCaretAnimation,
+    scrollToFocus,
+) {
+    // 외부에서 가지고 올 때 \n은 자르되 공백은 자르면 안되므로 따로
+    // 정규표현식으로 처리함
+    const inputValue = inputValueUntrimmed.replace(/^[\r\n]+|[\r\n]+$/, '');
+    const inputLength = inputValue.length;
+    const { inputMethod } = appState.editOptions;
+    const overwriteMode = inputMethod === 'overwrite';
+    const pasteLines = pasteValue.split(/\r?\n/);
+    const pasteWidth = pasteLines.reduce(
+        (prev, current) => Math.max(prev, current.length),
+        0
+    );
+    const pasteHeight = pasteLines.length;
+    if (!appState.selection.isCaret) {
+      appState.peelCode(
+          appState.selection.y,
+          appState.selection.x + inputLength,
+          appState.selection.width,
+          appState.selection.height,
+      );
+    }
+    appState.insertChunkSmartCode(
+        appState.selection.y,
+        appState.selection.x + inputLength,
+        pasteValue,
+        overwriteMode
+    );
+    // 입력한 뒤 붙여넣은 텍스트를 선택 (엑셀의 동작)
+    appState.selection = {
+        focus: {
+            y: appState.selection.y,
+            x: appState.selection.x + inputLength,
+        },
+        anchor: {
+            y: appState.selection.y + pasteHeight - 1,
+            x: appState.selection.x + inputLength + pasteWidth - 1,
+        }
+    };
+    clearInputValue();
+    resetCaretAnimation();
+    scrollToFocus();
 }
 
 const CodeLine = props => <div
