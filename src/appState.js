@@ -1,6 +1,5 @@
 import React from 'react';
 import Aheui from 'naheui';
-import * as hangul from './misc/hangul'
 
 import * as propTypes from './propTypes'
 
@@ -269,20 +268,22 @@ class Selection {
 const significantChoIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18];
 // ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅢㅣ
 const significantJungIndices = [0, 2, 4, 6, 8, 12, 13, 17, 18, 19, 20];
-// ㅏ↔ㅓ, ㅑ↔ㅕ
-const jungHInvertMap = { 0: +4,  4: -4,  2: +4,  6: -4 };
-// ㅗ↔ㅜ, ㅛ↔ㅠ
-const jungVInvertMap = { 8: +5, 13: -5, 12: +5, 17: -5 };
-// 회전
+const jungHInvertMap = {
+    0: 4, 4: 0, // ㅏㅓ
+    2: 6, 6: 2, // ㅑㅕ
+};
+const jungVInvertMap = {
+    8: 13, 13: 8, // ㅗㅜ
+    12: 17, 17: 12, // ㅛㅠ
+};
 const jungCWRotationMap = { 
-    0: +13, 13:  -9, 4: +4,  8:  -8, // ㅏㅜㅓㅗ
-    2: +15, 17: -11, 6: +6, 12: -10, // ㅑㅠㅕㅛ
+    0: 13, 13: 4, 4: 8, 8: 0, // ㅏㅜㅓㅗ
+    2: 17, 17: 6, 6: 12, 12: 2, // ㅑㅠㅕㅛ
 }
 const jungCCWRotationMap = { 
-    0:  +8,  8: -4, 4:  +9, 13: -13, // ㅏㅗㅓㅜ
-    2: +10, 12: -6, 6: +11, 17: -15, // ㅑㅛㅕㅠ
+    0: 8, 8: 4, 4: 13, 13: 0, // ㅏㅗㅓㅜ
+    2: 12, 12: 6, 6: 17, 17: 2, // ㅑㅛㅕㅠ
 }
-
 
 class Code {
     constructor(char, breakPoint = false) {
@@ -307,27 +308,22 @@ class Code {
     get jung() { return this._jung; }
     get jong() { return this._jong; }
     get isComment() { return this._isComment; }
-    _updateFromIndices() {
-        if (!this._isComment) {
-            this._char = hangul.fromIndices(this._cho, this._jung, this._jong);
-        }
+    set jung(value) {
+        this._jung = value;
+        const { _cho, _jung, _jong } = this;
+        this._char = String.fromCharCode(
+            44032 + 28 * ((_cho * 21) + _jung) + _jong
+        );
     }
-    invertH() {
-        this._jung += jungHInvertMap[this._jung] | 0; 
-        this._updateFromIndices();
+    _mapJung(table) {
+        if (this._isComment) return;
+        const jung = table[this._jung];
+        if (jung != null) this.jung = jung;
     }
-    invertV() { 
-        this._jung += jungVInvertMap[this._jung] | 0; 
-        this._updateFromIndices();
-    }
-    rotateCW() { 
-        this._jung += jungCWRotationMap[this._jung] | 0; 
-        this._updateFromIndices();
-    }
-    rotateCCW() { 
-        this._jung += jungCCWRotationMap[this._jung] | 0; 
-        this._updateFromIndices();
-    }
+    invertH() { this._mapJung(jungHInvertMap); }
+    invertV() { this._mapJung(jungVInvertMap); }
+    rotateCW() { this._mapJung(jungCWRotationMap); }
+    rotateCCW() { this._mapJung(jungCCWRotationMap); }
 
     toString() {
         return this.char;
