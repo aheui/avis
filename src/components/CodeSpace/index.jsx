@@ -3,6 +3,7 @@ import classNames from 'classnames';
 
 import { connect } from '../../appState';
 import CodeSpaceStateViewer from '../CodeSpaceStateViewer';
+import PathTrack from './PathTrack';
 import * as keyboard from '../../misc/keyboard';
 import style from './style.css';
 
@@ -215,6 +216,7 @@ export default connect(
                     <rect className={style.cursorDeco} x="3" y="3" width="24" height="24"/>
                 </svg>
             </div>
+            <PathTrack path={appState.path} codeSpace={codeSpace}/>
             <CodeSpaceStateViewer>
                 <div
                     ref={codeSpaceElement => this.codeSpaceElement = codeSpaceElement}

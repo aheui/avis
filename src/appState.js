@@ -67,6 +67,9 @@ export class AppState {
     get codeSpace() {
         return this._codeSpace;
     }
+    get path () {
+        return this._path;
+    }
     get isRunning() {
         return this._intervalId !== null;
     }

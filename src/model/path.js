@@ -10,6 +10,7 @@ export class Vec2 {
 }
 
 // 모이면 path를 이루는 각각의 순간
+let momentId = 0;
 export class Moment {
     constructor(cp, cn, i, o, p, f) {
         this.cp = cp; // connected with prev
@@ -18,6 +19,7 @@ export class Moment {
         this.o = o; // out vector
         this.p = p; // position
         this.f = f; // fuel
+        this.id = ++momentId;
     }
     get shapeHash() {
         const { cp, cn, i, o } = this;
@@ -65,11 +67,13 @@ export class Moment {
 
 @mutationManager()
 export class Path {
-    constructor() {
+    constructor(color='rgb(0, 122, 204)') {
+        this.color = color;
         this.moments = [];
     }
     *[Symbol.iterator]() {
         const l = this.moments.length - 2;
+        if (l < 0) return;
         for (let i = 0; i < l; ++i) yield this.moments[i];
         yield this.moments[l].clone(false);
     }
