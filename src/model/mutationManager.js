@@ -1,10 +1,13 @@
-export default function mutationManager(stateIdFieldName='stateId') {
+export default function mutationManager(
+    stateIdFieldName='stateId',
+    mutateFieldName='mutate',
+) {
     return function (target) {
         const mutating = Symbol('mutating');
         const stateId = Symbol('stateId');
         return class extends target {
             get [stateIdFieldName]() { return this[stateId] || 0; }
-            mutate(executor) {
+            [mutateFieldName](executor) {
                 if (!this[mutating]) {
                     try {
                         this[mutating] = true;
