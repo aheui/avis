@@ -1,6 +1,11 @@
 import React from 'react';
 import Aheui from 'naheui';
 
+import {
+    Vec2,
+    Moment,
+    Path,
+} from './model/path'
 import * as propTypes from './propTypes'
 
 const defaultSpaceFillChar = '\u3000';
@@ -14,11 +19,13 @@ export class AppState {
         this._editOptions = new EditOptions();
         this._selection = new Selection();
         this._codeSpace = CodeSpace.fromText(content || '');
-        this._machine = new Aheui.Machine(this._codeSpace);
+        // this._machine; // init에서 생성됨
         this._spaceFillChar = defaultSpaceFillChar;
-        this._pathTrace = new PathTrace();
+        this._path = new Path();
+        this._fuel = 20; // 과거 추적 깊이
         this._intervalId = null;
         this._interval = 1; // 코드 실행 속도
+        this.init();
     }
     get changeDispatcher() { return this._changeDispatcher; }
     get cursorOnBreakPoint() {
@@ -162,6 +169,13 @@ export class AppState {
         this.mutate(() => {
             this.stop();
             this._machine = new Aheui.Machine(this._codeSpace);
+            this._path.clear();
+            this._path.step(Moment.fromMachineState(
+                this._machine,
+                this._codeSpace,
+                false,
+                this._fuel,
+            ));
         });
     }
     run() {
@@ -184,10 +198,25 @@ export class AppState {
     step() {
         this.mutate(() => {
             const machine = this._machine;
-            const pathTrace = this._pathTrace;
+            const path = this._path;
             const { cursor, storage } = machine;
-            pathTrace.push(cursor.x, cursor.y);
-            machine.step();
+            const stepResult = machine.step();
+            if (stepResult.cursorMoveResult) {
+                const path = this._path;
+                const r = stepResult.cursorMoveResult
+                const cp =
+                    (r.xSpeed < 2) &&
+                    (r.ySpeed < 2) &&
+                    !r.xWrapped &&
+                    !r.yWrapped;
+                Object.assign(path.lastMoment, { cn: cp });
+                path.step(Moment.fromMachineState(
+                    this._machine,
+                    this._codeSpace,
+                    cp,
+                    this._fuel,
+                ));
+            }
             if (machine.terminated || this.cursorOnBreakPoint) {
                 this.stop();
             }
@@ -816,39 +845,6 @@ class CodeSpace extends Array {
             result.push(new CodeLine());
         }
         return result;
-    }
-}
-
-class PathTrace {
-    constructor(limit = 20) {
-        this.data = [];
-        this._limit = limit;
-    }
-    get limit() {
-        return this._limit;
-    }
-    set limit(value) {
-        if (value < 0) {
-            this._limit = 0;
-        } else {
-            this._limit = value | 0;
-        }
-        this._cut();
-    }
-    push(x, y) {
-        this.data.unshift({ x, y });
-        this._cut();
-    }
-    clear() {
-        this.data.length = 0;
-    }
-    _cut() {
-        if (this.data.length > this._limit) {
-            this.data.length = this._limit;
-        }
-    }
-    *[Symbol.iterator]() {
-        for (let data of this.data) yield data;
     }
 }
 
