@@ -1,6 +1,7 @@
 export default function mutationManager(
     stateIdFieldName='stateId',
     mutateFieldName='mutate',
+    onMutateFieldName='onMutate',
 ) {
     return function (target) {
         const mutating = Symbol('mutating');
@@ -15,7 +16,7 @@ export default function mutationManager(
                     } finally {
                         this[mutating] = false;
                         this[stateId] = this[stateIdFieldName] + 1;
-                        this.onMutate && this.onMutate();
+                        this[onMutateFieldName] && this[onMutateFieldName]();
                     }
                 } else {
                     executor();
