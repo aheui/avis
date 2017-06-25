@@ -1,5 +1,7 @@
 import Aheui from 'naheui';
 
+import mutationManager from './mutationManager';
+
 export class Vec2 {
     constructor(x, y) {
         this.x = x;
@@ -61,6 +63,7 @@ export class Moment {
     }
 }
 
+@mutationManager()
 export class Path {
     constructor() {
         this.moments = [];
@@ -74,17 +77,23 @@ export class Path {
         return this.moments[this.moments.length - 1] || null;
     }
     step(moment) {
-        this.burn();
-        this.moments.push(moment);
+        this.mutate(() => {
+            this.burn();
+            this.moments.push(moment);
+        });
     }
     burn() {
-        const { moments } = this;
-        for (let moment of moments) --moment.f;
-        const rest = moments.filter(moment => moment.f >= 0);
-        this.clear();
-        moments.push(...rest);
+        this.mutate(() => {
+            const { moments } = this;
+            for (let moment of moments) --moment.f;
+            const rest = moments.filter(moment => moment.f >= 0);
+            this.clear();
+            moments.push(...rest);
+        });
     }
     clear() {
-        this.moments.length = 0;
+        this.mutate(() => {
+            this.moments.length = 0;
+        });
     }
 }

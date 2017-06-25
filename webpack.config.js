@@ -35,6 +35,7 @@ module.exports = {
                 query: {
                     plugins: [
                         'transform-runtime',
+                        'transform-decorators-legacy',
                         'transform-object-rest-spread',
                         'transform-class-properties',
                         'react-hot-loader/babel',

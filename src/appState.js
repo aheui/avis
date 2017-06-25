@@ -5,15 +5,15 @@ import {
     Vec2,
     Moment,
     Path,
-} from './model/path'
-import * as propTypes from './propTypes'
+} from './model/path';
+import mutationManager from './model/mutationManager';
+import * as propTypes from './propTypes';
 
 const defaultSpaceFillChar = '\u3000';
 
+@mutationManager()
 export class AppState {
     constructor({ content }) {
-        this._mutating;
-        this._stateId = 0;
         this._changeDispatcher = new ChangeDispatcher();
         this._uiState = new UIState();
         this._editOptions = new EditOptions();
@@ -82,27 +82,15 @@ export class AppState {
             this._interval = value;
         });
     }
-    get stateId() { return this._stateId; }
     // 앱 상태에 변경이 있을 때마다 깔아놓은 가정들이 온전한지 체크
     checkState() {
         console.assert(this._codeSpace.length > 0);
     }
-    // 앱 상태를 변경하는 메서드
-    // 모든 상태변경은 이 메서드가 받는 executor 안에서 이루어져야함
-    mutate(executor) {
-        if (!this._mutating) {
-            try {
-                this._mutating = true;
-                executor();
-            } finally {
-                this._mutating = false;
-                ++this._stateId;
-                this._changeDispatcher.dispatch();
-                this.checkState();
-            }
-        } else {
-            executor();
-        }
+    // 앱 상태가 변경될 때마다 처리되는 작업들
+    // 모든 상태변경은 mutate 메서드가 인자로 받는 핸들러 안에서 이루어져야 함
+    onMutate() {
+        this._changeDispatcher.dispatch();
+        this.checkState();
     }
     getUIOpen(key) { return this._uiState.getOpen(key); }
     setUIOpen(key, value) { this.mutate(() => { this._uiState.setOpen(key, value); }); }
@@ -464,26 +452,11 @@ class CodeLine extends Array {
     }
 }
 
+@mutationManager()
 class CodeSpace extends Array {
     constructor(...args) {
         super(...args);
-        this._mutating = false;
-        this._stateId = 0;
         this._width = 0;
-    }
-    get stateId() { return this._stateId; }
-    mutate(executor) {
-        if (!this._mutating) {
-            try {
-                this._mutating = true;
-                executor();
-            } finally {
-                this._mutating = false;
-                ++this._stateId;
-            }
-        } else {
-            executor();
-        }
     }
     ensureHeight(height) {
         if (this.length >= height) return;
