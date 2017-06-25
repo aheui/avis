@@ -47,8 +47,10 @@
     color: white;
     opacity: 0.6;
     cursor: pointer;
+    transition: text-shadow 0.3s;
 }
 
 .control-box .control-button:hover {
+    text-shadow: 0 0 40px white;
     opacity: 1;
 }
