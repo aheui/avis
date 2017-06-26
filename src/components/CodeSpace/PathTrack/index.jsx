@@ -62,13 +62,14 @@ function momentD(moment) {
     const { shapeHash } = moment;
     if (memo[shapeHash]) return memo[shapeHash];
     const { cp, cn, i, o } = moment;
-    const [ti, to] = [i.y && (i.y > 0), o.y && (o.y < 0)];
-    const [ri, ro] = [i.x && (i.x < 0), o.x && (o.x > 0)];
-    const [bi, bo] = [i.y && (i.y < 0), o.y && (o.y > 0)];
-    const [li, lo] = [i.x && (i.x > 0), o.x && (o.x < 0)];
+    const [ti, to] = [i.y > 0, o.y < 0];
+    const [ri, ro] = [i.x < 0, o.x > 0];
+    const [bi, bo] = [i.y < 0, o.y > 0];
+    const [li, lo] = [i.x > 0, o.x < 0];
+    const [tx, rx, bx, lx] = [ti && to, ri && ro, bi && bo, li && lo];
     return memo[shapeHash] =
-        top((ti && cp) || (to && cn), ti, to) +
-        right((ri && cp) || (ro && cn), ri, ro) +
-        bottom((bi && cp) || (bo && cn), bi, bo) +
-        left((li && cp) || (lo && cn), li, lo);
+        top(!bx && ((ti && cp) || (to && cn)), bx ? bo : ti, bx ? bi : to) +
+        right(!lx && ((ri && cp) || (ro && cn)), lx ? lo : ri, lx ? li : ro) +
+        bottom(!tx && ((bi && cp) || (bo && cn)), tx ? to : bi, tx ? ti : bo) +
+        left(!rx && ((li && cp) || (lo && cn)), rx ? ro : li, rx ? ri : lo);
 }
