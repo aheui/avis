@@ -196,8 +196,8 @@ export class AppState {
                 const path = this._path;
                 const r = stepResult.cursorMoveResult
                 const cp =
-                    (r.xSpeed < 2) &&
-                    (r.ySpeed < 2) &&
+                    (Math.abs(r.xSpeed) < 2) &&
+                    (Math.abs(r.ySpeed) < 2) &&
                     !r.xWrapped &&
                     !r.yWrapped;
                 Object.assign(path.lastMoment, { cn: cp });
