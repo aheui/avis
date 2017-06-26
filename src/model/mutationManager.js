@@ -6,21 +6,21 @@ export default function mutationManager(
     return function (target) {
         const mutating = Symbol('mutating');
         const stateId = Symbol('stateId');
-        return class extends target {
-            get [stateIdFieldName]() { return this[stateId] || 0; }
-            [mutateFieldName](executor) {
-                if (!this[mutating]) {
-                    try {
-                        this[mutating] = true;
-                        executor();
-                    } finally {
-                        this[mutating] = false;
-                        this[stateId] = this[stateIdFieldName] + 1;
-                        this[onMutateFieldName] && this[onMutateFieldName]();
-                    }
-                } else {
+        Object.defineProperty(target.prototype, stateIdFieldName, {
+            get() { return this[stateId] || 0; }
+        });
+        target.prototype[mutateFieldName] = function (executor) {
+            if (!this[mutating]) {
+                try {
+                    this[mutating] = true;
                     executor();
+                } finally {
+                    this[mutating] = false;
+                    this[stateId] = this[stateIdFieldName] + 1;
+                    this[onMutateFieldName] && this[onMutateFieldName]();
                 }
+            } else {
+                executor();
             }
         };
     };
