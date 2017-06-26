@@ -22,7 +22,7 @@ export class AppState {
         // this._machine; // init에서 생성됨
         this._spaceFillChar = defaultSpaceFillChar;
         this._path = new Path();
-        this._fuel = 20; // 과거 추적 깊이
+        this._fuel = 50; // 과거 추적 깊이
         this._intervalId = null;
         this._interval = 1; // 코드 실행 속도
         this.init();
