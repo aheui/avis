@@ -190,6 +190,13 @@ export class AppState {
         this.mutate(() => {
             const machine = this._machine;
             const path = this._path;
+            const { cp, f } = path.lastMoment;
+            Object.assign(path.lastMoment, Moment.fromMachineState(
+                this._machine,
+                this._codeSpace,
+                cp,
+                f,
+            ));
             const { cursor, storage } = machine;
             const stepResult = machine.step();
             if (stepResult.cursorMoveResult) {
@@ -200,7 +207,10 @@ export class AppState {
                     (Math.abs(r.ySpeed) < 2) &&
                     !r.xWrapped &&
                     !r.yWrapped;
-                Object.assign(path.lastMoment, { cn: cp });
+                Object.assign(path.lastMoment, {
+                    o: new Vec2(r.xSpeed, r.ySpeed),
+                    cn: cp,
+                });
                 path.step(Moment.fromMachineState(
                     this._machine,
                     this._codeSpace,
