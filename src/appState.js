@@ -23,8 +23,7 @@ export class AppState {
         this._spaceFillChar = defaultSpaceFillChar;
         this._path = new Path();
         this._fuel = 50; // 과거 추적 깊이
-        this._intervalId = null;
-        this._interval = 1; // 코드 실행 속도
+        this._runner = null; // rAF handler
         this.init();
     }
     get changeDispatcher() { return this._changeDispatcher; }
@@ -71,19 +70,7 @@ export class AppState {
         return this._path;
     }
     get isRunning() {
-        return this._intervalId !== null;
-    }
-    get interval() {
-        return this._interval;
-    }
-    set interval(value) {
-        this.mutate(() => {
-            if (this.isRunning) {
-                window.clearInterval(this._intervalId);
-                this._intervalId = window.setInterval(() => this.step(), value);
-            }
-            this._interval = value;
-        });
+        return this._runner !== null;
     }
     // 앱 상태에 변경이 있을 때마다 깔아놓은 가정들이 온전한지 체크
     checkState() {
@@ -173,14 +160,19 @@ export class AppState {
         if (this.isRunning) return;
         this.mutate(() => {
             this._machine.terminateFlag = false;
-            this._intervalId = window.setInterval(() => this.step(), this._interval);
+            this._runner = () => {
+                if (this._runner) {
+                    this.step();
+                    window.requestAnimationFrame(this._runner);
+                }
+            };
+            this._runner();
         });
     }
     stop() {
         if (!this.isRunning) return;
         this.mutate(() => {
-            window.clearInterval(this._intervalId);
-            this._intervalId = null;
+            this._runner = null;
         });
     }
     dump() {
