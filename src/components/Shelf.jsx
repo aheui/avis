@@ -12,7 +12,7 @@ export default connect(
         const { appState } = this.props;
         return <div className={style.shelf}>
             <img className={style.logo} src="./aheui.svg" alt="아희"/>
-            <div className={style.label}>AVIS - 잘만든 아희 편집기 &amp; 실행기</div>
+            <div className={style.label}>AVIS - 잘 만든 아희 편집기 &amp; 실행기</div>
             <div className={style.controlBox}>
                 {
                     appState.isRunning ?
