@@ -6,6 +6,7 @@ import {
     Moment,
     Path,
 } from './model/path';
+import cloneable from './model/cloneable';
 import mutationManager from './model/mutationManager';
 import * as propTypes from './propTypes';
 
@@ -307,6 +308,7 @@ const jungCCWRotationMap = {
     2: 12, 12: 6, 6: 17, 17: 2, // ㅑㅛㅕㅠ
 }
 
+@cloneable()
 class Code {
     constructor(char, breakPoint = false) {
         this._cho = -1;
@@ -358,6 +360,7 @@ class Code {
     }
 }
 
+@cloneable()
 class CodeLine extends Array {
     static fromText(text) {
         const result = new CodeLine(text.length);
@@ -458,6 +461,7 @@ class CodeLine extends Array {
 }
 
 @mutationManager()
+@cloneable()
 class CodeSpace extends Array {
     constructor(...args) {
         super(...args);
