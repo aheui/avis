@@ -279,6 +279,7 @@ export default connect(
                     }
                     handleInputKeyDown(
                         key,
+                        e.nativeEvent.code,
                         this.inputElement.value,
                         appState,
                         () => this.clearInputValue(),
@@ -363,6 +364,7 @@ export default connect(
 
 function handleInputKeyDown(
     key,
+    keyCode,
     inputValue,
     appState,
     clearInputValue,
@@ -381,8 +383,8 @@ function handleInputKeyDown(
             'shrinkCode'
         ](...args);
     };
-    switch (key) {
-    case 'a':
+    switch (keyCode) {
+    case 'KeyA':
         if (control) {
             clearInputValue();
             appState.selectAll();

@@ -1,3 +1,5 @@
+import 'js-polyfills/keyboard';
+
 import qs from 'qs';
 
 import { decode } from './compat/content';

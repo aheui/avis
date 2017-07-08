@@ -1,20 +1,27 @@
 import EventEmitter from 'events';
 
 const emitter = new EventEmitter();
-const map = {};
+const keyMap = {};
+const codeMap = {};
 
 function keydown(e) {
     const key = e.key.toLowerCase();
+    const code = e.code.toLowerCase();
     const down = true;
-    map[key] = down;
+    keyMap[key] = down;
+    codeMap[code] = down;
     emitter.emit(key, down);
+    if (key !== code) emitter.emit(code, down);
 }
 
 function keyup(e) {
     const key = e.key.toLowerCase();
+    const code = e.code.toLowerCase();
     const down = false;
-    map[key] = down;
+    keyMap[key] = down;
+    codeMap[code] = down;
     emitter.emit(key, down);
+    if (key !== code) emitter.emit(code, down);
 }
 
 window.addEventListener('keydown', keydown, true);
@@ -28,15 +35,16 @@ export function off(event, listener) {
     emitter.removeListener(event.toLowerCase(), listener);
 }
 
-export function key(key) {
-    return !!map[key.toLowerCase()];
+export function key(keyOrCode) {
+    const _keyOrCode = keyOrCode.toLowerCase();
+    return !!keyMap[_keyOrCode] || !!codeMap[_keyOrCode];
 }
 
-export function keys(...keys) {
+export function keys(...keyOrCodes) {
     const result = {};
-    for (let key of keys) {
-        const _key = key.toLowerCase();
-        result[_key] = !!map[_key];
+    for (let keyOrCode of keyOrCodes) {
+        const _keyOrCode = keyOrCode.toLowerCase();
+        result[_keyOrCode] = !!keyMap[_keyOrCode] || !!codeMap[_keyOrCode];
     }
     return result;
 }

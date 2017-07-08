@@ -1,6 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 
+import * as keyboard from '../../misc/keyboard';
 import style from './Key.css';
 
 export default class extends React.Component {
@@ -11,23 +12,12 @@ export default class extends React.Component {
     componentDidMount() {
         const { listen } = this.props;
         if (listen) {
-            this.keydownHandler = e => {
-                if (e.key.toLowerCase() === listen) {
-                    this.setState({ down: true });
-                }
-            };
-            this.keyupHandler = e => {
-                if (e.key.toLowerCase() === listen) {
-                    this.setState({ down: false });
-                }
-            };
-            window.addEventListener('keydown', this.keydownHandler, true);
-            window.addEventListener('keyup', this.keyupHandler, true);
+            this.handler = down => this.setState({ down });
+            keyboard.on(listen, this.handler);
         }
     }
     componentWillUnmount() {
-        window.removeEventListener('keydown', this.keydownHandler, true);
-        window.removeEventListener('keyup', this.keyupHandler, true);
+        keyboard.off(listen, this.handler);
     }
     render() {
         const { children } = this.props;
