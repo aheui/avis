@@ -17,6 +17,7 @@ export default class extends React.Component {
         }
     }
     componentWillUnmount() {
+        const { listen } = this.props;
         keyboard.off(listen, this.handler);
     }
     render() {
