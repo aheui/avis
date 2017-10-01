@@ -1,4 +1,4 @@
-import qs from 'qs';
+import * as qs from 'qs';
 
 import { decode } from './compat/content';
 import App from './components/App';
@@ -23,11 +23,11 @@ new Promise(resolve => {
         content,
     });
     const appElement = window.document.getElementById('app');
-    render(App, appState, appElement);
-    if (module.hot) {
-        module.hot.accept('./components/App', () => {
+    render(App, appState, appElement!);
+    if ((module as any).hot) {
+        (module as any).hot.accept('./components/App', () => {
             const App = require('./components/App').default;
-            render(App, appState, appElement);
+            render(App, appState, appElement!);
         });
     }
 });

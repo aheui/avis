@@ -1,6 +1,9 @@
-import React from 'react';
+import * as React from 'react';
 
-import { connect } from '../../../appState';
+import {
+    connect,
+    Selection,
+} from '../../../appState';
 import {
     SideBarButton,
     SideBarContent,
@@ -11,7 +14,16 @@ import Key from '../../misc/Key';
 import Switch from '../../input/Switch';
 import MenuButton from '../../input/MenuButton';
 
-export const Button = props => <SideBarButton {...props} icon="pencil"/>;
+interface ButtonProps {
+    active?: boolean;
+    onActivate: () => void;
+    onDeactivate: () => void;
+}
+
+export const Button = (props: ButtonProps) => <SideBarButton
+    {...props}
+    icon="pencil"
+/>;
 
 export const Content = connect(
     appState => ({ appState })
@@ -28,7 +40,7 @@ export const Content = connect(
                     rightLabel="덮어쓰기"
                     rightValue="overwrite"
                     value={appState.editOptions.inputMethod}
-                    onChange={inputMethod => {
+                    onChange={(inputMethod: 'insert' | 'overwrite') => {
                         appState.editOptions = { inputMethod };
                     }}
                 />
@@ -41,18 +53,18 @@ export const Content = connect(
             <Label title="회전">
                 <MenuButton
                     label="시계방향"
-                    disabled={!appState.selection.isSquare}
+                    disabled={!(appState.selection as Selection).isSquare}
                     onClick={() => appState.rotateCWCode(
-                        appState.selection.y, appState.selection.x,
-                        appState.selection.width, appState.selection.height
+                        (appState.selection as Selection).y, (appState.selection as Selection).x,
+                        (appState.selection as Selection).width, (appState.selection as Selection).height
                     )}
                 />
                 <MenuButton
                     label="반시계방향"
-                    disabled={!appState.selection.isSquare}
+                    disabled={!(appState.selection as Selection).isSquare}
                     onClick={() => appState.rotateCCWCode(
-                        appState.selection.y, appState.selection.x,
-                        appState.selection.width, appState.selection.height
+                        (appState.selection as Selection).y, (appState.selection as Selection).x,
+                        (appState.selection as Selection).width, (appState.selection as Selection).height
                     )}
                 />
             </Label>
@@ -60,15 +72,15 @@ export const Content = connect(
                 <MenuButton
                     label="좌우반전"
                     onClick={() => appState.invertHCode(
-                        appState.selection.y, appState.selection.x,
-                        appState.selection.width, appState.selection.height
+                        (appState.selection as Selection).y, (appState.selection as Selection).x,
+                        (appState.selection as Selection).width, (appState.selection as Selection).height
                     )}
                 />
                 <MenuButton
                     label="상하반전"
                     onClick={() => appState.invertVCode(
-                        appState.selection.y, appState.selection.x,
-                        appState.selection.width, appState.selection.height
+                        (appState.selection as Selection).y, (appState.selection as Selection).x,
+                        (appState.selection as Selection).width, (appState.selection as Selection).height
                     )}
                 />
             </Label>

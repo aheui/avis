@@ -21,7 +21,7 @@ module.exports = {
         publicPath: '/dist/',
     },
     resolve: {
-        extensions: ['.js', '.jsx', '.json'],
+        extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     },
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
@@ -29,29 +29,9 @@ module.exports = {
     module: {
         loaders: [
             {
-                test: /\.jsx?$/,
+                test: /\.tsx?$/,
                 exclude: /(node_modules)/,
-                loader: 'babel-loader',
-                query: {
-                    plugins: [
-                        'transform-runtime',
-                        'transform-decorators-legacy',
-                        'transform-object-rest-spread',
-                        'transform-class-properties',
-                        'react-hot-loader/babel',
-                    ],
-                    presets: [
-                        ['env', {
-                            targets: {
-                                browsers: [
-                                    'last 2 Chrome versions',
-                                    'last 2 Firefox versions',
-                                ],
-                            },
-                        }],
-                        'react',
-                    ],
-                },
+                loader: 'awesome-typescript-loader',
             },
             {
                 test: /\.css$/,

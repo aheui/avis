@@ -1,16 +1,29 @@
-import React from 'react';
-import classNames from 'classnames';
+import * as React from 'react';
+import * as classNames from 'classnames';
 
 import * as edit from './menu/edit';
-import style from './style.css';
+import * as style from './style.css';
 
-const menus = {
-    order: [ 'edit' ],
+const menus: {
+    [key: string]: {
+        Button: React.ComponentClass | React.SFC<any>,
+        Content: React.ComponentClass | React.SFC<any>,
+    };
+} = {
     edit,
 };
+const menuButtonOrder: (keyof typeof menus)[] = [ 'edit' ];
 
-class SideBar extends React.Component {
-    constructor(props) {
+interface SideBarProps {
+    updateCodeSpacePosition: () => void;
+}
+
+interface SideBarState {
+    current: string | null;
+}
+
+class SideBar extends React.Component<SideBarProps, SideBarState> {
+    constructor(props: SideBarProps) {
         super(props);
         this.state = {
             current: null,
@@ -25,7 +38,7 @@ class SideBar extends React.Component {
             [style.open]: !!current,
         })}>
             <div className={style.buttons}>
-                { menus.order.map(name => {
+                { menuButtonOrder.map(name => {
                     const { Button } = menus[name];
                     return <Button
                         key={name}

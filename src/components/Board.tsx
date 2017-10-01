@@ -1,17 +1,30 @@
-import React from 'react';
-import classNames from 'classnames';
+import * as React from 'react';
+import * as classNames from 'classnames';
 
-import { connect } from '../appState';
+import {
+    connect,
+    AppState,
+    CodeSpace,
+} from '../appState';
 import { base26 } from '../misc/base';
-import CodeSpace from './CodeSpace';
+import CodeSpaceComponent from './CodeSpace';
 import CodeSpaceStateViewer from './CodeSpaceStateViewer';
-import style from './Board.css';
+import * as style from './Board.css';
 
+
+interface BoardProps {
+    appState: AppState;
+}
+
+interface BoardState {
+    scrollTop: number;
+    scrollLeft: number;
+}
 
 export default connect(
     appState => ({ appState }),
-)(class Board extends React.Component {
-    constructor(props) {
+)(class Board extends React.Component<BoardProps, BoardState> {
+    constructor(props: BoardProps) {
         super(props);
         this.state = {
             scrollTop: 0,
@@ -19,14 +32,14 @@ export default connect(
         };
     }
     updateCodeSpacePosition() {
-        this.refs.codeSpace.ref.updateCodeSpacePosition();
+        (this.refs.codeSpace as any).ref.updateCodeSpacePosition();
     }
     render() {
         const { appState } = this.props;
         const { codeSpace } = appState;
         const { scrollTop, scrollLeft } = this.state;
         return <div className={style.board}>
-            <CodeSpace
+            <CodeSpaceComponent
                 ref="codeSpace"
                 codeSpace={codeSpace}
                 onScroll={
@@ -47,7 +60,7 @@ export default connect(
                 className={style.square}
                 onClick={() => {
                     appState.selectAll();
-                    this.refs.codeSpace.ref.focusInputElement();
+                    (this.refs.codeSpace as any).ref.focusInputElement();
                 }}
             >{
                 `${ codeSpace.width } \xd7 ${ codeSpace.height }`
@@ -56,7 +69,13 @@ export default connect(
     }
 });
 
-const LineNumbersScroll = ({ codeSpace, scrollTop, scrollLeft }) => <div
+interface LineNumbersScrollProps {
+    codeSpace: CodeSpace;
+    scrollTop: number;
+    scrollLeft: number;
+}
+
+const LineNumbersScroll: React.SFC<LineNumbersScrollProps> = ({ codeSpace, scrollTop, scrollLeft }) => <div
     className={classNames(style.lineNumbersScroll, {
         [style.shadow]: scrollLeft > 0,
     })}>
@@ -83,7 +102,13 @@ const LineNumbersScroll = ({ codeSpace, scrollTop, scrollLeft }) => <div
     </div>
 </div>;
 
-const ColumnNumbersScroll = ({ codeSpace, scrollTop, scrollLeft }) => <div
+interface ColumnNumbersScrollProps {
+    codeSpace: CodeSpace;
+    scrollTop: number;
+    scrollLeft: number;
+}
+
+const ColumnNumbersScroll: React.SFC<ColumnNumbersScrollProps> = ({ codeSpace, scrollTop, scrollLeft }) => <div
     className={classNames(style.columnNumbersScroll, {
         [style.shadow]: scrollTop > 0,
     })}>

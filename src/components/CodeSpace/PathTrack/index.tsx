@@ -1,14 +1,24 @@
-import React from 'react';
+import * as React from 'react';
 
-import style from './style.css';
+import { CodeSpace } from 'appState';
+import { Path, Moment } from 'model/path';
+import * as style from './style.css';
 
-export default class PathTrack extends React.Component {
-    constructor(props) {
+
+interface PathTrackProps {
+    path: Path;
+    codeSpace: CodeSpace;
+}
+
+export default class PathTrack extends React.Component<PathTrackProps> {
+    pathStateId: number;
+    codeSpaceStateId: number;
+    constructor(props: PathTrackProps) {
         super(props);
         this.pathStateId = this.props.path.stateId;
         this.codeSpaceStateId = this.props.codeSpace.stateId;
     }
-    shouldComponentUpdate({ path, codeSpace }) {
+    shouldComponentUpdate({ path, codeSpace }: PathTrackProps) {
         return (this.pathStateId !== path.stateId) ||
             (this.codeSpaceStateId !== codeSpace.stateId);
     }
@@ -37,28 +47,28 @@ export default class PathTrack extends React.Component {
     }
 }
 
-const memo = {};
-const top = (c, i, o) =>
+const memo: { [shapeHash: string]: string } = {};
+const top = (c: boolean, i: boolean, o: boolean) =>
     c ? 'M5,5L5,0 25,0 25,5' :
     i ? 'M5,5L5,0 15,5 25,0 25,5' :
     o ? 'M5,5L15,0 25,5' :
     'M5,5L25,5';
-const right = (c, i, o) =>
+const right = (c: boolean, i: boolean, o: boolean) =>
     c ? ' 30,5 30,25 25,25' :
     i ? ' 30,5 25,15 30,25 25,25' :
     o ? ' 30,15 25,25' :
     ' 25,25';
-const bottom = (c, i, o) =>
+const bottom = (c: boolean, i: boolean, o: boolean) =>
     c ? ' 25,30 5,30 5,25' :
     i ? ' 25,30 15,25 5,30 5,25' :
     o ? ' 15,30 5,25' :
     ' 5,25';
-const left = (c, i, o) =>
+const left = (c: boolean, i: boolean, o: boolean) =>
     c ? ' 0,25 0,5Z' :
     i ? ' 0,25 5,15 0,5Z' :
     o ? ' 0,15Z' :
     'Z';
-function momentD(moment) {
+function momentD(moment: Moment) {
     const { shapeHash } = moment;
     if (memo[shapeHash]) return memo[shapeHash];
     const { cp, cn, i, o } = moment;

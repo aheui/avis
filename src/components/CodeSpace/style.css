@@ -19,7 +19,7 @@
     pointer-events: none;
 }
 
-.code-line {
+.cell-line {
     position: absolute;
     height: 30px;
 }

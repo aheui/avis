@@ -1,9 +1,19 @@
-import React from 'react';
-import classNames from 'classnames';
+import * as React from 'react';
+import * as classNames from 'classnames';
 
-import style from './Switch.css';
+import * as style from './Switch.css';
 
-export default class extends React.Component {
+interface SwitchProps {
+    leftLabel: string;
+    leftValue: string;
+    rightLabel: string;
+    rightValue: string;
+    value: string;
+    onChange: (value: string) => void;
+    className?: string;
+}
+
+export default class extends React.Component<SwitchProps> {
     render() {
         const {
             leftLabel,

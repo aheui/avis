@@ -1,13 +1,17 @@
-import React from 'react';
+import * as React from 'react';
 
-import { connect } from '../appState';
-import style from './Shelf.css';
+import { connect, AppState } from '../appState';
+import * as style from './Shelf.css';
 import FontAwesome from './FontAwesome';
 
 
+interface ShelfProps {
+    appState: AppState;
+}
+
 export default connect(
     appState => ({ appState }),
-)(class Shelf extends React.Component {
+)(class Shelf extends React.Component<ShelfProps> {
     render() {
         const { appState } = this.props;
         return <div className={style.shelf}>

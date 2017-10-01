@@ -1,20 +1,37 @@
-import React from 'react';
-import Aheui from 'naheui';
+import * as React from 'react';
+import * as Aheui from 'naheui';
 
 import {
     Vec2,
     Moment,
     Path,
 } from './model/path';
-import cloneable from './model/cloneable';
-import mutationManager from './model/mutationManager';
+import cloneable, { Cloneable } from './model/cloneable';
+import mutationManager, {
+    Executor,
+    MutationManager,
+} from './model/mutationManager';
 import * as propTypes from './propTypes';
 
 const defaultSpaceFillChar = '\u3000';
 
 @mutationManager()
-export class AppState {
-    constructor({ content }) {
+export class AppState implements MutationManager {
+    // MutationManager
+    stateId: number;
+    mutate: (executor: Executor) => void;
+    // AppState
+    private _changeDispatcher: ChangeDispatcher;
+    private _uiState: UIState;
+    private _editOptions: EditOptions;
+    private _selection: Selection;
+    private _codeSpace: CodeSpace;
+    private _machine: Aheui.Machine;
+    private _spaceFillChar: string;
+    private _path: Path;
+    private _fuel: number;
+    private _runner: (() => void) | null;
+    constructor({ content }: { content: string }) {
         this._changeDispatcher = new ChangeDispatcher();
         this._uiState = new UIState();
         this._editOptions = new EditOptions();
@@ -38,14 +55,14 @@ export class AppState {
     get selection() {
         return this._selection;
     }
-    set selection({ anchor, focus }) {
+    set selection({ anchor, focus }: { anchor?: Vec2, focus?: Vec2 }) {
         if (!anchor && !focus) return;
         this.mutate(() => {
             if (anchor) this._selection.anchor = anchor;
             if (focus) this._selection.focus = focus;
         });
     }
-    set caret({ x, y }) {
+    set caret({ x, y }: { x?: number | null, y?: number | null }) {
         this.mutate(() => {
             const _x = (x == null) ? this._selection.x : x;
             const _y = (y == null) ? this._selection.y : y;
@@ -83,15 +100,15 @@ export class AppState {
         this._changeDispatcher.dispatch();
         this.checkState();
     }
-    getUIOpen(key) { return this._uiState.getOpen(key); }
-    setUIOpen(key, value) { this.mutate(() => { this._uiState.setOpen(key, value); }); }
-    translateSelection(x, y) {
+    getUIOpen(key: string) { return this._uiState.getOpen(key); }
+    setUIOpen(key: string, value: boolean) { this.mutate(() => { this._uiState.setOpen(key, value); }); }
+    translateSelection(x: number, y: number) {
         if (x === 0 && y === 0) return;
         this.mutate(() => {
-            this.selection.translate(x, y);
+            (this.selection as Selection).translate(x, y);
         });
     }
-    squareSelection() { this.mutate(() => { this.selection.square(); }); }
+    squareSelection() { this.mutate(() => { (this.selection as Selection).square(); }); }
     collapseSelection() {
         if (this._selection.isCaret) return;
         this.mutate(() => {
@@ -109,39 +126,39 @@ export class AppState {
             };
         });
     }
-    insertCode(rowIndex, colIndex, text, overwrite) {
+    insertCode(rowIndex: number, colIndex: number, text: string, overwrite: boolean) {
         this.mutate(() => { this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
     }
-    insertChunkCode(rowIndex, colIndex, text, pushDown, overwrite) {
+    insertChunkCode(rowIndex: number, colIndex: number, text: string, pushDown: boolean, overwrite: boolean) {
         this.mutate(() => { this._codeSpace.insertChunk(rowIndex, colIndex, text, this._spaceFillChar, pushDown, overwrite); });
     }
-    insertChunkSmartCode(rowIndex, colIndex, text, overwrite) {
+    insertChunkSmartCode(rowIndex: number, colIndex: number, text: string, overwrite: boolean) {
         this.mutate(() => { this._codeSpace.insertChunkSmart(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
     }
-    peelCode(rowIndex, colIndex, width, height) {
+    peelCode(rowIndex: number, colIndex: number, width: number, height: number) {
         this.mutate(() => { this._codeSpace.paint(rowIndex, colIndex, width, height, this._spaceFillChar); });
     }
-    shrinkCode(rowIndex, colIndex, width, height) {
+    shrinkCode(rowIndex: number, colIndex: number, width: number, height: number) {
         this.mutate(() => { this._codeSpace.shrink(rowIndex, colIndex, width, height); });
     }
-    invertHCode(rowIndex, colIndex, width, height) {
+    invertHCode(rowIndex: number, colIndex: number, width: number, height: number) {
         this.mutate(() => { this._codeSpace.invertH(rowIndex, colIndex, width, height); });
     }
-    invertVCode(rowIndex, colIndex, width, height) {
+    invertVCode(rowIndex: number, colIndex: number, width: number, height: number) {
         this.mutate(() => { this._codeSpace.invertV(rowIndex, colIndex, width, height); });
     }
-    rotateCWCode(rowIndex, colIndex, width, height) {
+    rotateCWCode(rowIndex: number, colIndex: number, width: number, height: number) {
         this.mutate(() => { this._codeSpace.rotateCW(rowIndex, colIndex, width, height); });
     }
-    rotateCCWCode(rowIndex, colIndex, width, height) {
+    rotateCCWCode(rowIndex: number, colIndex: number, width: number, height: number) {
         this.mutate(() => { this._codeSpace.rotateCCW(rowIndex, colIndex, width, height); });
     }
-    ensureCodeRowWidth(rowIndex, width) {
+    ensureCodeRowWidth(rowIndex: number, width: number) {
         this.mutate(() => { this._codeSpace.ensureLineWidth(rowIndex, width, this._spaceFillChar); });
     }
-    joinCodeRows(rowIndex, height) { this.mutate(() => { this._codeSpace.joinRows(rowIndex, height); }); }
-    deleteCodeRows(rowIndex, height) { this.mutate(() => { this._codeSpace.deleteRows(rowIndex, height); }); }
-    divideAndCarryCode(rowIndex, colIndex, height) {
+    joinCodeRows(rowIndex: number, height: number) { this.mutate(() => { this._codeSpace.joinRows(rowIndex, height); }); }
+    deleteCodeRows(rowIndex: number, height: number) { this.mutate(() => { this._codeSpace.deleteRows(rowIndex, height); }); }
+    divideAndCarryCode(rowIndex: number, colIndex: number, height: number) {
         this.mutate(() => { this._codeSpace.divideAndCarryLines(rowIndex, colIndex, height); });
     }
     init() {
@@ -160,7 +177,7 @@ export class AppState {
     run() {
         if (this.isRunning) return;
         this.mutate(() => {
-            this._machine.terminateFlag = false;
+            this._machine.terminated = false;
             this._runner = () => {
                 if (this._runner) {
                     this.step();
@@ -190,7 +207,6 @@ export class AppState {
                 cp,
                 f,
             ));
-            const { cursor, storage } = machine;
             const stepResult = machine.step();
             if (stepResult.cursorMoveResult) {
                 const path = this._path;
@@ -216,7 +232,7 @@ export class AppState {
             }
         });
     }
-    toggleBreakPoint(x, y) {
+    toggleBreakPoint() {
         this.mutate(() => {
             const { cursor } = this._machine;
             this._codeSpace.toggleBreakPoint(cursor.x, cursor.y);
@@ -226,24 +242,27 @@ export class AppState {
 
 // stores trivial states
 class UIState {
+    private _open: { [key: string]: boolean };
     constructor() {
         this._open = {
             'edit.inputMethod': true,
             'edit.rotateAndFlip': true,
         };
     }
-    getOpen(key) { return !!this._open[key]; }
-    setOpen(key, value) { this._open[key] = !!value; }
+    getOpen(key: string) { return !!this._open[key]; }
+    setOpen(key: string, value: boolean) { this._open[key] = !!value; }
 }
 
 class EditOptions {
+    inputMethod: 'insert' | 'overwrite';
     constructor() {
-        // insert, overwrite
         this.inputMethod = 'insert';
     }
 }
 
-class Selection {
+export class Selection {
+    private _anchor: Vec2;
+    private _focus: Vec2;
     constructor() {
         this._anchor = { x: 0, y: 0 };
         this._focus = { x: 0, y: 0 };
@@ -271,7 +290,7 @@ class Selection {
         if (x != null) this._focus.x = Math.max(x | 0, 0);
         if (y != null) this._focus.y = Math.max(y | 0, 0);
     }
-    translate(x, y) {
+    translate(x: number, y: number) {
         this.anchor = { x: this.anchor.x + x, y: this.anchor.y + y };
         this.focus = { x: this.focus.x + x, y: this.focus.y + y };
     }
@@ -308,9 +327,18 @@ const jungCCWRotationMap = {
     2: 12, 12: 6, 6: 17, 17: 2, // ㅑㅛㅕㅠ
 }
 
-@cloneable()
-class Code {
-    constructor(char, breakPoint = false) {
+@cloneable<typeof Code>()
+export class Code implements Cloneable<Code> {
+    // Cloneable
+    clone: () => Code;
+    // Code
+    private _char: string;
+    private _cho: number;
+    private _jung: number;
+    private _jong: number;
+    private _isComment: boolean;
+    breakPoint: boolean;
+    constructor(char: string, breakPoint: boolean = false) {
         this._cho = -1;
         this._jung = -1;
         this._jong = -1;
@@ -339,7 +367,7 @@ class Code {
             44032 + 28 * ((_cho * 21) + _jung) + _jong
         );
     }
-    _mapJung(table) {
+    _mapJung(table: { [jung: number]: number }) {
         if (this._isComment) return;
         const jung = table[this._jung];
         if (jung != null) this.jung = jung;
@@ -352,7 +380,7 @@ class Code {
     toString() {
         return this.char;
     }
-    static isComment(cho, jung) {
+    static isComment(cho: number, jung: number) {
         return (
             significantChoIndices.indexOf(cho) === -1 &&
             significantJungIndices.indexOf(jung) === -1
@@ -360,16 +388,24 @@ class Code {
     }
 }
 
-@cloneable()
-class CodeLine extends Array {
-    static fromText(text) {
+@cloneable<typeof CodeLine>()
+export class CodeLine extends Array<Code> implements Cloneable<CodeLine> {
+    // Cloneable
+    clone: () => CodeLine;
+    // CodeLine
+    constructor(length: number);
+    constructor() {
+        super(...arguments);
+        Object.setPrototypeOf(this, CodeLine.prototype);
+    }
+    static fromText(text: string) {
         const result = new CodeLine(text.length);
         for (let i = 0; i < text.length; ++i) {
             result[i] = new Code(text[i], false);
         }
         return result;
     }
-    isEmptyAfter(index, spaceChars) {
+    isEmptyAfter(index: number, spaceChars: Set<string>) {
         for (let i = index; i < this.length; ++i) {
             if (!spaceChars.has(this[i].char)) {
                 return false;
@@ -377,10 +413,15 @@ class CodeLine extends Array {
         }
         return true;
     }
-    ensureLength(length, spaceFillChar) {
+    ensureLength(length: number, spaceFillChar: string) {
         while (this.length < length) this.push(new Code(spaceFillChar, false));
     }
-    insert(index, text, spaceFillChar, overwrite) {
+    insert(
+        index: number,
+        text: string,
+        spaceFillChar: string,
+        overwrite: boolean,
+    ) {
         if (text.length === 0) return;
         if (/\r|\n/.test(text)) {
             throw new Error('CodeLine 안에 개행문자가 들어오면 안됨');
@@ -389,7 +430,7 @@ class CodeLine extends Array {
         const codes = text.split('').map(char => new Code(char, false));
         this.splice(index, overwrite ? codes.length : 0, ...codes);
     }
-    paint(index, length, paintChar) {
+    paint(index: number, length: number, paintChar: string) {
         if (length < 1) return;
         if (this.length <= index) return;
         const to = Math.min(this.length, index + length);
@@ -397,17 +438,17 @@ class CodeLine extends Array {
             this[i] = new Code(paintChar, false);
         }
     }
-    divide(index) {
+    divide(index: number) {
         const tail = this.slice(index);
         this.length = Math.min(this.length, index);
         console.assert(tail instanceof CodeLine);
         return tail;
     }
-    shrink(index, length) {
+    shrink(index: number, length: number) {
         if (length < 1) return;
         this.splice(index, length);
     }
-    invertH(index, length, jungConv = true) {
+    invertH(index: number, length: number, jungConv: boolean = true) {
         if (length < 1) return;
         if (this.length <= index) return;
         const to = Math.min(this.length, index + length);
@@ -423,7 +464,7 @@ class CodeLine extends Array {
             [this[left], this[right]] = [this[right], this[left]];
         }
     }
-    invertV(index, length) {
+    invertV(index: number, length: number) {
         if (length < 1) return;
         if (this.length <= index) return;
         const to = Math.min(this.length, index + length);
@@ -431,7 +472,7 @@ class CodeLine extends Array {
             this[i].invertV();
         }
     }
-    rotateCW(index, length) {
+    rotateCW(index: number, length: number) {
         if (length < 1) return;
         if (this.length <= index) return;
         const to = Math.min(this.length, index + length);
@@ -439,7 +480,7 @@ class CodeLine extends Array {
             this[i].rotateCW();
         }
     }
-    rotateCCW(index, length) {
+    rotateCCW(index: number, length: number) {
         if (length < 1) return;
         if (this.length <= index) return;
         const to = Math.min(this.length, index + length);
@@ -447,7 +488,7 @@ class CodeLine extends Array {
             this[i].rotateCCW();
         }
     }
-    toString(selection) {
+    toString(selection?: Selection) {
         // selection이 없으면 전체를 뱉음
         if (selection == null) {
             return this.map(code => code.toString()).join('');
@@ -461,19 +502,33 @@ class CodeLine extends Array {
 }
 
 @mutationManager()
-@cloneable()
-class CodeSpace extends Array {
-    constructor(...args) {
-        super(...args);
+@cloneable<typeof CodeSpace>()
+export class CodeSpace
+    extends Array<CodeLine>
+    implements
+        MutationManager,
+        Cloneable<CodeSpace> {
+    // MutationManager
+    stateId: number;
+    mutate: (executor: Executor) => void;
+    onMutate?: () => void;
+    // Cloneable
+    clone: () => CodeSpace;
+    // CodeSpace
+    private _width: number;
+    constructor(length: number);
+    constructor() {
+        super(...arguments);
         this._width = 0;
+        Object.setPrototypeOf(this, CodeSpace.prototype);
     }
-    ensureHeight(height) {
+    ensureHeight(height: number) {
         if (this.length >= height) return;
         this.mutate(() => {
-            while (this.length < height) this.push(new CodeLine());
+            while (this.length < height) this.push(new CodeLine(0));
         });
     }
-    ensureLineWidth(rowIndex, width, spaceFillChar) {
+    ensureLineWidth(rowIndex: number, width: number, spaceFillChar: string) {
         this.ensureHeight(rowIndex + 1);
         const codeLine = this[rowIndex];
         if (codeLine.length >= width) return;
@@ -499,7 +554,7 @@ class CodeSpace extends Array {
         // 개행은 길이 1
         return this.reduce((sum, codeLine) => sum + codeLine.length + 1, -1);
     }
-    get(x, y) {
+    get(x: number, y: number) {
         const line = this[y];
         if (line) {
             const code = line[x];
@@ -507,18 +562,24 @@ class CodeSpace extends Array {
         }
         return null;
     }
-    getIndex(x, y) {
+    getIndex(x: number, y: number) {
         if (y >= this.length) return this.codeLength;
         let sum = y;
         for (let i = 0; i < y; ++i) sum += this[i].length;
         sum += (x > this[y].length) ? this[y].length : x;
         return sum;
     }
-    getLineWidth(rowIndex) {
+    getLineWidth(rowIndex: number) {
         const line = this[rowIndex];
         return line ? line.length : 0;
     }
-    insert(rowIndex, colIndex, text, spaceFillChar, overwrite) {
+    insert(
+        rowIndex: number,
+        colIndex: number,
+        text: string,
+        spaceFillChar: string,
+        overwrite: boolean,
+    ) {
         if (text.length === 0) return;
         this.mutate(() => {
             const textLines = text.split(/\r?\n/);
@@ -533,7 +594,14 @@ class CodeSpace extends Array {
             }
         });
     }
-    insertChunk(rowIndex, colIndex, text, spaceFillChar, pushDown, overwrite) {
+    insertChunk(
+        rowIndex: number,
+        colIndex: number,
+        text: string,
+        spaceFillChar: string,
+        pushDown: boolean,
+        overwrite: boolean,
+    ) {
         // TODO 테스트 작성?
         // TODO spaceChars 딴 곳으로 옮기기
         const spaceChars = new Set([spaceFillChar, ' ']);
@@ -572,9 +640,7 @@ class CodeSpace extends Array {
                 this.ensureHeight(rowIndex);
                 boundHeight = Math.min(this.length - rowIndex, textLines.length);
                 for (i = 0; i < boundHeight; ++i) {
-                    const textLine = textLines[i];
                     const codeLine = this[rowIndex + i];
-                    const codeCol = codeLine[colIndex];
                     codeLine.ensureLength(colIndex, spaceFillChar);
                     let j;
                     // code가 존재하는 만큼만 검사함
@@ -617,7 +683,7 @@ class CodeSpace extends Array {
             }
             if (i < textLines.length) {
                 const codeLineAppends = textLines.slice(i).map(text => {
-                    let codeLine = new CodeLine();
+                    let codeLine = new CodeLine(0);
                     codeLine.ensureLength(colIndex, spaceFillChar);
                     codeLine.insert(colIndex, text, spaceFillChar, true);
                     return codeLine;
@@ -629,7 +695,13 @@ class CodeSpace extends Array {
             }
         });
     }
-    insertChunkSmart(rowIndex, colIndex, text, spaceFillChar, overwrite) {
+    insertChunkSmart(
+        rowIndex: number,
+        colIndex: number,
+        text: string,
+        spaceFillChar: string,
+        overwrite: boolean,
+    ) {
         // TODO spaceChars 딴 곳으로 옮기기
         const spaceChars = new Set([spaceFillChar, ' ']);
         const textLines = text.split(/\r?\n/);
@@ -656,7 +728,13 @@ class CodeSpace extends Array {
             overwrite
         );
     }
-    paint(rowIndex, colIndex, width, height, paintChar) {
+    paint(
+        rowIndex: number,
+        colIndex: number,
+        width: number,
+        height: number,
+        paintChar: string,
+    ) {
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
         this.mutate(() => {
@@ -667,7 +745,12 @@ class CodeSpace extends Array {
             }
         });
     }
-    shrink(rowIndex, colIndex, width, height) {
+    shrink(
+        rowIndex: number,
+        colIndex: number,
+        width: number,
+        height: number,
+    ) {
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
         this.mutate(() => {
@@ -682,11 +765,16 @@ class CodeSpace extends Array {
                 }
             }
             for (let codeLine of voids) this.splice(this.indexOf(codeLine), 1);
-            if (this.length === 0) this.push(new CodeLine());
+            if (this.length === 0) this.push(new CodeLine(0));
             this._recalculateWidth();
         });
     }
-    invertH(rowIndex, colIndex, width, height) {
+    invertH(
+        rowIndex: number,
+        colIndex: number,
+        width: number,
+        height: number,
+    ) {
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
         this.mutate(() => {
@@ -697,7 +785,12 @@ class CodeSpace extends Array {
             }
         });
     }
-    invertV(rowIndex, colIndex, width, height) {
+    invertV(
+        rowIndex: number,
+        colIndex: number,
+        width: number,
+        height: number,
+    ) {
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
         this.mutate(() => {
@@ -718,7 +811,12 @@ class CodeSpace extends Array {
             }
         });
     }
-    rotateCW(rowIndex, colIndex, width, height) {
+    rotateCW(
+        rowIndex: number,
+        colIndex: number,
+        width: number,
+        height: number,
+    ) {
         // rotateCW : invertXY then invertH
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
@@ -746,7 +844,12 @@ class CodeSpace extends Array {
             }
         });
     }
-    rotateCCW(rowIndex, colIndex, width, height) {
+    rotateCCW(
+        rowIndex: number,
+        colIndex: number,
+        width: number,
+        height: number,
+    ) {
         // rotateCW : invertH then invertXY
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
@@ -770,26 +873,36 @@ class CodeSpace extends Array {
             }
         });
     }
-    joinRows(rowIndex, height) { // TODO: 테스트 짜야겠다
+    joinRows(
+        rowIndex: number,
+        height: number,
+    ) { // TODO: 테스트 짜야겠다
         if (this.length <= rowIndex) return;
         const _height = Math.min(height, this.length - rowIndex);
         if (_height < 2) return;
         this.mutate(() => {
             this[rowIndex] = this[rowIndex].concat(
                 ...this.slice(rowIndex + 1, rowIndex + _height)
-            );
+            ) as CodeLine;
             this.deleteRows(rowIndex + 1, _height - 1);
             // width 계산은 deleteRows에서 일어남
         });
     }
-    deleteRows(rowIndex, height = 1) {
+    deleteRows(
+        rowIndex: number,
+        height: number = 1,
+    ) {
         if (height < 1) return;
         this.mutate(() => {
             this.splice(rowIndex, height);
             this._recalculateWidth();
         });
     }
-    divideAndCarryLines(rowIndex, colIndex, height) {
+    divideAndCarryLines(
+        rowIndex: number,
+        colIndex: number,
+        height: number,
+    ) {
         this.mutate(() => {
             this.ensureHeight(rowIndex + height);
             const tails = this.slice(rowIndex, rowIndex + height).map(
@@ -799,10 +912,10 @@ class CodeSpace extends Array {
             this._recalculateWidth();
         });
     }
-    toggleBreakPoint(x, y) {
+    toggleBreakPoint(_x: number, _y: number) {
         // TODO
     }
-    toString(selection) {
+    toString(selection?: Selection) {
         // 선택 영역을 지정하지 않았으면 코드 전체를 뱉음
         if (selection == null) {
             return this.map(line => line.toString()).join('\n');
@@ -813,7 +926,7 @@ class CodeSpace extends Array {
             line => line.toString(selection)
         ).join('\n');
     }
-    static fromText(text) {
+    static fromText(text: string) {
         const lines = text.split(/\r?\n/g);
         const result = new CodeSpace(lines.length);
         for (let i = 0; i < lines.length; ++i) {
@@ -824,29 +937,34 @@ class CodeSpace extends Array {
             }
         }
         if (result.length === 0) {
-            result.push(new CodeLine());
+            result.push(new CodeLine(0));
         }
         return result;
     }
 }
 
+type ChangeListener = () => void;
+
 class ChangeDispatcher {
-    constructor(parent = null) {
+    private _listeners: ChangeListener[];
+    private __listeners: ChangeListener[];
+    parent: ChangeDispatcher | null;
+    constructor(parent: ChangeDispatcher | null = null) {
         this.parent = parent;
         this._listeners = [];
         this.__listeners = this._listeners;
     }
     dispatch() {
         this._listeners = this.__listeners;
-        for (let listener of this._listeners) listener.call();
+        for (let listener of this._listeners) listener.call(null);
     }
-    addListener(listener) {
+    addListener(listener: ChangeListener) {
         if (this.__listeners === this._listeners) {
             this.__listeners = [...this._listeners];
         }
         this.__listeners.push(listener);
     }
-    removeListener(listener) {
+    removeListener(listener: ChangeListener) {
         if (this.__listeners === this._listeners) {
             this.__listeners = [...this._listeners];
         }
@@ -856,9 +974,30 @@ class ChangeDispatcher {
     }
 }
 
-export function connect(mapStateToProps) {
-    return Container => class Connect extends React.Component {
-        constructor(props, context) {
+type Diff<T extends string, U extends string> = ({ [P in T]: P } & { [P in U]: never } & { [x: string]: never })[T];
+type Omit<T, K extends keyof T> = Pick<T, Diff<keyof T, K>>;
+
+type ReactComponent<T> = React.ComponentClass<T> | React.SFC<T>;
+
+interface Connect<TOwnProps extends TInjectedProps, TInjectedProps> {
+    (Container: ReactComponent<TOwnProps>): React.ComponentClass<Omit<TOwnProps, keyof TInjectedProps>>;
+}
+
+export function connect<
+    TOwnProps extends TInjectedProps,
+    TInjectedProps={ appState: AppState }
+>(mapStateToProps: (appState: AppState) => TInjectedProps): Connect<TOwnProps, TInjectedProps> {
+    interface Context {
+        changeDispatcher: ChangeDispatcher;
+        appState: AppState;
+    }
+    void mapStateToProps;
+    return (
+        Container: ReactComponent<TOwnProps>,
+    ) => class Connect extends React.Component<TOwnProps> {
+        ref: typeof Container | null;
+        changeDispatcher: ChangeDispatcher;
+        constructor(props: TOwnProps, context: Context) {
             super(props, context);
             this.state = {};
             this.ref = null;
@@ -868,15 +1007,19 @@ export function connect(mapStateToProps) {
             );
         }
         componentDidMount() {
-            this.changeDispatcher.call = () => {
+            (this.changeDispatcher as any).call = () => {
                 this.setState({});
                 this.changeDispatcher.dispatch();
             }
-            this.changeDispatcher.parent.addListener(this.changeDispatcher);
+            this.changeDispatcher.parent!.addListener(
+                this.changeDispatcher as any as ChangeListener,
+            );
         }
         componentWillUnmount() {
-            this.changeDispatcher.call = null;
-            this.changeDispatcher.parent.removeListener(this.changeDispatcher);
+            (this.changeDispatcher as any).call = null;
+            this.changeDispatcher.parent!.removeListener(
+                this.changeDispatcher as any as ChangeListener,
+            );
         }
         getChildContext() {
             return {
@@ -885,10 +1028,10 @@ export function connect(mapStateToProps) {
             };
         }
         render() {
-            return React.createElement(Container, {
-                ...this.props,
-                ref: ref => this.ref = ref,
-                ...mapStateToProps(this.context.appState),
+            return React.createElement(Container as any, {
+                ...this.props as any,
+                ref: (ref: typeof Container | null) => this.ref = ref,
+                ...(mapStateToProps as any)(this.context.appState),
             });
         }
         static contextTypes = {
@@ -899,5 +1042,5 @@ export function connect(mapStateToProps) {
             appState: propTypes.objectIsRequired,
             changeDispatcher: propTypes.objectIsRequired,
         };
-    };
+    } as any;
 }

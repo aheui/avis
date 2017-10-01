@@ -1,12 +1,10 @@
-import React from 'react';
+import * as React from 'react';
 
-import { connect } from '../appState';
 import Board from './Board';
 import Shelf from './Shelf';
 import SideBar from './SideBar';
 import StatusBar from './StatusBar';
-import style from './App.css';
-
+import * as style from './App.css';
 
 class App extends React.Component {
     render() {
@@ -14,7 +12,7 @@ class App extends React.Component {
             <Shelf/>
             <div className={style.body}>
                 <SideBar updateCodeSpacePosition={
-                    () => this.refs.board.ref.updateCodeSpacePosition()
+                    () => (this.refs.board as any).ref.updateCodeSpacePosition()
                 }/>
                 <Board ref="board"/>
             </div>

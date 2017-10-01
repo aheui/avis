@@ -1,24 +1,35 @@
-import Aheui from 'naheui';
+import * as Aheui from 'naheui';
 
-import mutationManager from './mutationManager';
+import { CodeSpace } from 'appState';
+import mutationManager, {
+    MutationManager,
+    Executor,
+} from './mutationManager';
 
 export class Vec2 {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-    }
+    constructor(
+        public x: number,
+        public y: number,
+    ) { }
 }
 
 // 모이면 path를 이루는 각각의 순간
 let momentId = 0;
-export class Moment {
-    constructor(cp, cn, i, o, p, f) {
-        this.cp = cp; // connected with prev
-        this.cn = cn; // connected with next
-        this.i = i; // in vector
-        this.o = o; // out vector
-        this.p = p; // position
-        this.f = f; // fuel
+export class Moment implements MutationManager {
+    // MutationManager
+    stateId: number;
+    mutate: (executor: Executor) => void;
+    onMutate?: () => void;
+    // Moment
+    id: number;
+    constructor(
+        public cp: boolean, // connected with prev
+        public cn: boolean, // connected with next
+        public i: Vec2, // in vector
+        public o: Vec2, // out vector
+        public p: Vec2, // position
+        public f: number, // fuel
+    ) {
         this.id = ++momentId;
     }
     get shapeHash() {
@@ -29,16 +40,16 @@ export class Moment {
             o.x + 2 }${ o.y + 2
         }`;
     }
-    clone(cn) {
+    clone(cn: boolean) {
         const { cp, i, o, p, f } = this;
         const _cn = (cn == null) ? this.cn : cn;
         return new Moment(cp, _cn, i, o, p, f);
     }
     static fromMachineState(
-        machine,
-        codeSpace,
-        cp,
-        f,
+        machine: Aheui.Machine,
+        codeSpace: CodeSpace,
+        cp: boolean,
+        f: number,
     ) {
         const { cursor } = machine;
         const { x, y, xSpeed, ySpeed } = cursor;
@@ -67,6 +78,13 @@ export class Moment {
 
 @mutationManager()
 export class Path {
+    // MutationManager
+    stateId: number;
+    mutate: (executor: Executor) => void;
+    onMutate?: () => void;
+    // Path
+    color: string;
+    moments: Moment[];
     constructor(color='rgb(0, 122, 204)') {
         this.color = color;
         this.moments = [];
@@ -80,7 +98,7 @@ export class Path {
     get lastMoment() {
         return this.moments[this.moments.length - 1] || null;
     }
-    step(moment) {
+    step(moment: Moment) {
         this.mutate(() => {
             this.burn();
             this.moments.push(moment);

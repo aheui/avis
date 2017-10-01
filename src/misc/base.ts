@@ -1,4 +1,4 @@
-export function base26(num) {
+export function base26(num: number) {
     let _num = num | 0;
     const result = [];
     while (_num >= 0) {
@@ -9,7 +9,7 @@ export function base26(num) {
     return result.reverse().join('');
 }
 
-export function base30(num) {
+export function base30(num: number) {
     let _num = num | 0;
     const result = [];
     while (_num >= 0) {

@@ -1,11 +1,20 @@
-import React from 'react';
-import classNames from 'classnames';
+import * as React from 'react';
+import * as classNames from 'classnames';
 
 import * as keyboard from '../../misc/keyboard';
-import style from './Key.css';
+import * as style from './Key.css';
 
-export default class extends React.Component {
-    constructor(props) {
+interface KeyProps {
+    listen: string;
+}
+
+interface KeyState {
+    down: boolean;
+}
+
+export default class extends React.Component<KeyProps, KeyState> {
+    handler: (down: boolean) => void;
+    constructor(props: KeyProps) {
         super(props);
         this.state = { down: false };
     }

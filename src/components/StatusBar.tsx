@@ -1,7 +1,6 @@
-import React from 'react';
+import * as React from 'react';
 
-import { connect } from '../appState';
-import style from './StatusBar.css';
+import * as style from './StatusBar.css';
 
 
 class StatusBar extends React.Component {

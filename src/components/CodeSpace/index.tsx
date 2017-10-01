@@ -1,16 +1,56 @@
-import React from 'react';
-import classNames from 'classnames';
+import * as React from 'react';
+import * as classNames from 'classnames';
 
-import { connect } from '../../appState';
+import {
+    connect,
+    AppState,
+    CodeSpace,
+    CodeLine,
+    Code,
+    Selection,
+} from '../../appState';
 import CodeSpaceStateViewer from '../CodeSpaceStateViewer';
 import PathTrack from './PathTrack';
+import { Vec2 } from '../../model/path';
 import * as keyboard from '../../misc/keyboard';
-import style from './style.css';
+import * as style from './style.css';
 
-export default connect(
+interface CodeSpaceProps {
+    appState: AppState;
+    codeSpace: CodeSpace;
+    onScroll: (scroll: { scrollTop: number, scrollLeft: number }) => void;
+}
+
+interface CodeSpaceState {
+    mouseOn: boolean;
+    mouseDown: boolean;
+    mouseX: number;
+    mouseY: number;
+    ghostCaretX: number;
+    ghostCaretY: number;
+    codeSpaceX: number;
+    codeSpaceY: number;
+    compositing: boolean;
+    inputFocus: boolean;
+}
+
+export default connect<CodeSpaceProps>(
     appState => ({ appState }),
-)(class CodeSpace extends React.Component {
-    constructor(props) {
+)(class CodeSpace extends React.Component<CodeSpaceProps, CodeSpaceState> {
+    scrollElement: HTMLElement;
+    codeSpaceElement: HTMLElement;
+    caretElement: HTMLElement;
+    inputElement: HTMLInputElement;
+    lastInputValue: string;
+    mouseDragUpHandler: (e: MouseEvent) => void;
+    mouseDragMoveHandler: (e: MouseEvent) => void;
+    mouseDragShift: () => void;
+    // mousemove 이벤트 쓰로틀을 위한 속성
+    raf: (() => void) | null;
+    throttled: Map<(...args: any[]) => void, any[] | null>;
+    // ime hack을 위한 속성
+    startComposition: boolean;
+    constructor(props: CodeSpaceProps) {
         super(props);
         this.state = {
             mouseOn: false,
@@ -24,24 +64,13 @@ export default connect(
             compositing: false,
             inputFocus: false,
         };
-        this.scrollElement = null;
-        this.codeSpaceElement = null;
-        this.caretElement = null;
-        this.inputElement = null;
         this.lastInputValue = '';
-        { // mousemove 이벤트 쓰로틀을 위한 속성
-            this.raf = null;
-            this.throttled = null;
-        }
-        { // ime hack을 위한 속성
-            this.startComposition = false;
-        }
     }
-    onMouseDragUp(e) {
+    onMouseDragUp(_e: MouseEvent) {
         this.setState({ mouseDown: false });
         this.removeMouseDragEventListeners();
     }
-    onMouseDragMove(e) {
+    onMouseDragMove(e: MouseEvent) {
         const { appState } = this.props;
         const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
         appState.selection = { focus: this.getCellPosFromMousePos(mouseX, mouseY) };
@@ -60,6 +89,7 @@ export default connect(
                 for (let [handler, args] of this.throttled.entries()) {
                     if (args) {
                         handler.apply(this, args);
+                        // FIXME: delete 해야하지 않으려나
                         this.throttled.set(handler, null);
                     }
                 }
@@ -73,7 +103,7 @@ export default connect(
             this.onMouseDragUp(e);
         };
         this.mouseDragMoveHandler = e => this.throttled.set(this.onMouseDragMove, [e]);
-        this.mouseDragShift = down => this.props.appState.squareSelection();
+        this.mouseDragShift = () => this.props.appState.squareSelection();
         this.updateCodeSpacePosition();
     }
     componentWillUnmount() {
@@ -88,8 +118,8 @@ export default connect(
         });
     }
     getCellPosFromMousePos(
-        mouseX,
-        mouseY,
+        mouseX: number,
+        mouseY: number,
         codeSpaceX = this.state.codeSpaceX,
         codeSpaceY = this.state.codeSpaceY,
     ) {
@@ -98,7 +128,7 @@ export default connect(
             y: ((mouseY - codeSpaceY) / 30) | 0,
         };
     }
-    updateGhostCaret(mouseX, mouseY, mouseOn) {
+    updateGhostCaret(mouseX: number, mouseY: number, mouseOn: boolean) {
         this.setState(({ codeSpaceX, codeSpaceY }) => {
             const cellPos = this.getCellPosFromMousePos(
                 mouseX,
@@ -133,7 +163,7 @@ export default connect(
         const { appState } = this.props;
         let { scrollTop, scrollLeft, clientWidth, clientHeight } = this.scrollElement;
         const [ scrollBottom, scrollRight ] = [scrollTop + clientHeight, scrollLeft + clientWidth];
-        const { focus } = appState.selection;
+        const focus = appState.selection.focus!;
         const [ focusTop, focusLeft ] = [ focus.y * 30, focus.x * 30 ];
         const [ focusBottom, focusRight ] = [ focusTop + 30, focusLeft + 30 ];
         if (scrollTop > focusTop) scrollTop = focusTop;
@@ -145,7 +175,7 @@ export default connect(
     }
     render() {
         const { codeSpace, appState } = this.props;
-        const { selection } = appState;
+        const selection = appState.selection as Selection;
         const { isCaret } = selection;
         const {
             mouseOn, mouseDown,
@@ -161,7 +191,7 @@ export default connect(
             height: selection.height * 30,
         };
         return <div
-            ref={scrollElement => this.scrollElement = scrollElement}
+            ref={scrollElement => this.scrollElement = scrollElement!}
             className={classNames(style.codeSpaceScroll, {
                 [style.focus]: inputFocus || mouseDown,
             })}
@@ -193,7 +223,7 @@ export default connect(
                 this.clearInputValue();
                 this.resetCaretAnimation();
             }}
-            onMouseUpCapture={e => {
+            onMouseUpCapture={_e => {
                 this.focusInputElement();
             }}
             onMouseMoveCapture={e => {
@@ -219,7 +249,7 @@ export default connect(
             <PathTrack path={appState.path} codeSpace={codeSpace}/>
             <CodeSpaceStateViewer>
                 <div
-                    ref={codeSpaceElement => this.codeSpaceElement = codeSpaceElement}
+                    ref={codeSpaceElement => this.codeSpaceElement = codeSpaceElement!}
                     className={style.codeSpace}
                     style={{
                         width: `calc(100% + ${ (codeSpace.width - 1) * 30 }px)`,
@@ -229,7 +259,7 @@ export default connect(
                     {
                         codeSpace.map(
                             (codeLine, index) =>
-                            <CodeLine key={index} index={index} codeLine={codeLine}/>
+                            <CellLine key={index} index={index} codeLine={codeLine}/>
                         )
                     }
                 </div>
@@ -244,7 +274,7 @@ export default connect(
             <div
                 className={classNames(style.selection, { [style.caret]: isCaret })}
                 style={selectionBox}
-                ref={caretElement => this.caretElement = caretElement}
+                ref={caretElement => this.caretElement = caretElement!}
             >
                 { !isCaret && <svg
                     viewBox={`0 0 ${ selectionBox.width } ${ selectionBox.height }`}
@@ -264,7 +294,7 @@ export default connect(
                     top: selectionBox.top,
                     left: selectionBox.left,
                 }}
-                ref={inputElement => this.inputElement = inputElement}
+                ref={inputElement => this.inputElement = inputElement!}
                 onKeyDown={e => {
                     let key = e.key;
                     // 맥 크롬57에서 방향키 입력시 캐럿이 이동한 위치에 코드가 입력되고 캐럿이 추가이동되는 문제 우회용.
@@ -274,7 +304,7 @@ export default connect(
                     // 맥 크롬57에서는 `e.key`에 해당 키의 값(예: `"ArrowRight"`)가 그대로 들어있어서 선술한 문제가 발생하였다.
                     // 따라서 아래의 조건문과 같이 우회한다. `e.isComposing`을 바로 접근하지 않고 `e.nativeEvent.isComposing`을 바라보는 이유는
                     // react 15에서 이벤트의 `isComposing` 속성을 감춰버리기 때문에 네이티브 이벤트에 직접 접근할 필요가 있기 때문이다.
-                    if (e.nativeEvent.isComposing) {
+                    if ((e.nativeEvent as any).isComposing) {
                         key = 'Process';
                     }
                     handleInputKeyDown(
@@ -288,7 +318,7 @@ export default connect(
                         () => e.preventDefault(),
                     );
                 }}
-                onChange={e => {
+                onChange={_e => {
                     // compositionstart로부터 위임받은 상태 변경 처리
                     if (this.startComposition) {
                         this.setState({ compositing: true });
@@ -325,7 +355,7 @@ export default connect(
                     // 복사되는 내용을 현재 선택영역의 문자열 값으로 바꿈
                     e.clipboardData.setData(
                          'text/plain',
-                         codeSpace.toString(selection)
+                         codeSpace.toString(selection as Selection)
                     );
                 }}
                 onCut={e => {
@@ -334,7 +364,7 @@ export default connect(
                     // 복사되는 내용을 현재 선택영역의 문자열 값으로 바꿈
                     e.clipboardData.setData(
                          'text/plain',
-                         codeSpace.toString(selection)
+                         codeSpace.toString(selection as Selection)
                     );
                     handleInputCut(
                         this.inputElement.value,
@@ -345,7 +375,7 @@ export default connect(
                     );
                 }}
                 onPaste={e => {
-                    const clipboardData = e.clipboardData || window.clipboardData;
+                    const clipboardData = e.clipboardData || (window as any).clipboardData;
                     const pastedData = clipboardData.getData('Text');
                     e.preventDefault();
                     handleInputPaste(
@@ -363,25 +393,25 @@ export default connect(
 });
 
 function handleInputKeyDown(
-    key,
-    keyCode,
-    inputValue,
-    appState,
-    clearInputValue,
-    resetCaretAnimation,
-    scrollToFocus,
-    preventDefault,
+    _key: string,
+    keyCode: string,
+    inputValue: string,
+    appState: AppState,
+    clearInputValue: () => void,
+    resetCaretAnimation: () => void,
+    scrollToFocus: () => void,
+    preventDefault: () => void,
 ) {
     const inputLength = inputValue.length;
     const { inputMethod } = appState.editOptions;
     const overwriteMode = inputMethod === 'overwrite';
     const { control, shift } = keyboard.keys('Control', 'Shift');
-    const del = (...args) => {
+    const del = (y: number, x: number, width: number, height: number) => {
         appState[
             overwriteMode ?
             'peelCode' :
             'shrinkCode'
-        ](...args);
+        ](y, x, width, height);
     };
     switch (keyCode) {
     case 'KeyA':
@@ -392,7 +422,7 @@ function handleInputKeyDown(
         return;
     case 'Backspace':
         if (!inputLength) {
-            const { selection } = appState;
+            const selection = appState.selection as Selection;
             const { x, y } = selection;
             if (selection.isCaret) {
                 if (overwriteMode) {
@@ -407,7 +437,7 @@ function handleInputKeyDown(
                     } else if (y !== 0) {
                         appState.translateSelection(0, -1);
                         // selection이 변경되었으므로 y값을 새로 가져와야함
-                        const { y } = appState.selection;
+                        const { y } = appState.selection as Selection;
                         appState.caret = { x: appState.codeSpace.getLineWidth(y) };
                         appState.joinCodeRows(y, 2);
                     }
@@ -421,11 +451,11 @@ function handleInputKeyDown(
         return;
     case 'Delete':
         if (inputLength) {
-            const { x, y } = appState.selection;
+            const { x, y } = appState.selection as Selection;
             setCaret(x + inputLength, y, false);
         }
         {
-            const { selection } = appState;
+            const selection = appState.selection as Selection;
             const { x, y } = selection;
             if (selection.isCaret) {
                 const { codeSpace } = appState;
@@ -465,7 +495,7 @@ function handleInputKeyDown(
         return;
     case 'Enter':
         {
-            const { x, y, height } = appState.selection;
+            const { x, y, height } = appState.selection as Selection;
             appState.divideAndCarryCode(y, x + inputLength, height);
             appState.translateSelection(-x, height);
             clearInputValue();
@@ -483,20 +513,20 @@ function handleInputKeyDown(
         return;
     case 'End':
         {
-            const { x, y } = appState.selection;
+            const { x, y } = appState.selection as Selection;
             const lineWidth = appState.codeSpace.getLineWidth(y);
             if (x < lineWidth) setCaret(lineWidth, null, shift);
             preventDefault();
             return;
         }
     }
-    function setCaret(x, y, extend) {
+    function setCaret(x: number, y: number | null, extend: boolean) {
         if (extend) {
             if (inputLength) {
-                const anchorX = appState.selection.anchor.x + inputLength;
-                appState.selection = { anchor: { x: anchorX } };
+                const anchorX = appState.selection!.anchor!.x + inputLength;
+                appState.selection = { anchor: { x: anchorX } } as Selection;
             }
-            appState.selection = { focus: { x, y } };
+            appState.selection = { focus: { x, y } as Vec2 };
         } else {
             appState.caret = { x, y };
         }
@@ -504,64 +534,46 @@ function handleInputKeyDown(
         resetCaretAnimation();
         scrollToFocus();
     }
-    function moveCaret(dx, dy, extend) {
-        const { x, y } = appState.selection.focus;
+    function moveCaret(dx: number, dy: number, extend: boolean) {
+        const { x, y } = appState.selection.focus!;
         setCaret(x + inputLength + dx, y + dy, extend);
     }
     function delSelection() {
-        del(
-            appState.selection.y,
-            appState.selection.x,
-            appState.selection.width,
-            appState.selection.height,
-        );
+        const { y, x, width, height } = appState.selection as Selection;
+        del(y, x, width, height);
         appState.caret = {};
     }
 }
 
 function handleInputChange(
-    inputValue,
-    lastInputValue,
-    appState,
-    resetCaretAnimation,
+    inputValue: string,
+    lastInputValue: string,
+    appState: AppState,
+    resetCaretAnimation: () => void,
 ) {
     const inputLength = inputValue.length;
     const lastInputLength = lastInputValue.length;
     const { inputMethod } = appState.editOptions;
     const overwriteMode = inputMethod === 'overwrite';
-    const del = (...args) => {
+    const del = (y: number, x: number, width: number, height: number) => {
         appState[
             overwriteMode ?
             'peelCode' :
             'shrinkCode'
-        ](...args);
+        ](y, x, width, height);
     };
-    if (!appState.selection.isCaret) {
-        del(
-            appState.selection.y,
-            appState.selection.x,
-            appState.selection.width,
-            appState.selection.height,
-        );
+    const { y, x, width, height, isCaret } = appState.selection as Selection;
+    if (!isCaret) {
+        del(y, x, width, height);
     }
     appState.caret = {};
     if (inputLength < lastInputLength) {
-        del(
-            appState.selection.y,
-            appState.selection.x + inputLength,
-            lastInputLength - inputLength,
-            1,
-        );
+        del(y, x + inputLength, lastInputLength - inputLength, 1);
     } else {
-        del(
-            appState.selection.y,
-            appState.selection.x,
-            lastInputLength,
-            1,
-        );
+        del(y, x, lastInputLength, 1);
         appState.insertCode(
-            appState.selection.y,
-            appState.selection.x,
+            y,
+            x,
             inputValue.replace(/ /g, appState.spaceFillChar),
             overwriteMode,
         );
@@ -570,40 +582,36 @@ function handleInputChange(
 }
 
 function handleInputCut(
-    inputValue,
-    appState, 
-    clearInputValue,
-    resetCaretAnimation,
-    scrollToFocus,
+    _inputValue: string,
+    appState: AppState,
+    clearInputValue: () => void,
+    resetCaretAnimation: () => void,
+    scrollToFocus: () => void,
 ) {
     // 선택한 부분의 내용 전체를 삭제하면 됨 
     const { inputMethod } = appState.editOptions;
     const overwriteMode = inputMethod === 'overwrite';
-    const del = (...args) => {
+    const del = (y: number, x: number, width: number, height: number) => {
         appState[
             overwriteMode ?
             'peelCode' :
             'shrinkCode'
-        ](...args);
+        ](y, x, width, height);
     };
-    del(
-        appState.selection.y,
-        appState.selection.x,
-        appState.selection.width,
-        appState.selection.height,
-    );
+    const { y, x, width, height } = appState.selection as Selection;
+    del(y, x, width, height);
     clearInputValue();
     resetCaretAnimation();
     scrollToFocus();
 }
 
 function handleInputPaste(
-    inputValueUntrimmed,
-    pasteValue,
-    appState, 
-    clearInputValue,
-    resetCaretAnimation,
-    scrollToFocus,
+    inputValueUntrimmed: string,
+    pasteValue: string,
+    appState: AppState,
+    clearInputValue: () => void,
+    resetCaretAnimation: () => void,
+    scrollToFocus: () => void,
 ) {
     // 외부에서 가지고 올 때 \n은 자르되 공백은 자르면 안되므로 따로
     // 정규표현식으로 처리함
@@ -617,29 +625,25 @@ function handleInputPaste(
         0
     );
     const pasteHeight = pasteLines.length;
-    if (!appState.selection.isCaret) {
-      appState.peelCode(
-          appState.selection.y,
-          appState.selection.x + inputLength,
-          appState.selection.width,
-          appState.selection.height,
-      );
+    const { y, x, width, height, isCaret } = appState.selection as Selection;
+    if (!isCaret) {
+        appState.peelCode(y, x + inputLength, width, height);
     }
     appState.insertChunkSmartCode(
-        appState.selection.y,
-        appState.selection.x + inputLength,
+        y,
+        x + inputLength,
         pasteValue,
         overwriteMode
     );
     // 입력한 뒤 붙여넣은 텍스트를 선택 (엑셀의 동작)
     appState.selection = {
         anchor: {
-            y: appState.selection.y,
-            x: appState.selection.x + inputLength,
+            y: y,
+            x: x + inputLength,
         },
         focus: {
-            y: appState.selection.y + pasteHeight - 1,
-            x: appState.selection.x + inputLength + pasteWidth - 1,
+            y: y + pasteHeight - 1,
+            x: x + inputLength + pasteWidth - 1,
         }
     };
     clearInputValue();
@@ -647,8 +651,13 @@ function handleInputPaste(
     scrollToFocus();
 }
 
-const CodeLine = props => <div
-    className={style.codeLine}
+interface CellLineProps {
+    index: number;
+    codeLine: CodeLine;
+}
+
+const CellLine: React.SFC<CellLineProps> = props => <div
+    className={style.cellLine}
     style={{
         top: props.index * 30,
     }}
@@ -661,7 +670,12 @@ const CodeLine = props => <div
     <GhostCell index={props.codeLine.length}/>
 </div>;
 
-const Cell = props => <div
+interface CellProps {
+    index: number;
+    code: Code;
+}
+
+const Cell: React.SFC<CellProps> = props => <div
     className={classNames(style.cell, { [style.comment]: props.code.isComment })}
     style={{
         left: props.index * 30,
@@ -670,7 +684,11 @@ const Cell = props => <div
     { props.code.char }
 </div>;
 
-const GhostCell = props => <div
+interface GhostCellProps {
+    index: number;
+}
+
+const GhostCell: React.SFC<GhostCellProps> = props => <div
     className={classNames(style.cell, style.ghost)}
     style={{
         left: props.index * 30,
