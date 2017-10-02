@@ -4,6 +4,7 @@ import {
     connect,
     CodeSpace,
 } from '../appState';
+import { StateId } from 'model/mutationManager';
 
 interface CodeSpaceStateViewerProps {
     codeSpace: CodeSpace;
@@ -14,7 +15,7 @@ export default connect<CodeSpaceStateViewerProps, { codeSpace: CodeSpace }>(
         codeSpace: appState.codeSpace,
     }),
 )(class CodeSpaceStateViewer extends React.Component<CodeSpaceStateViewerProps> {
-    private stateId: number;
+    private stateId: StateId;
     constructor(props: CodeSpaceStateViewerProps) {
         super(props);
         this.stateId = this.props.codeSpace.stateId;

@@ -8,6 +8,10 @@
     user-select: none;
 }
 
+.button:hover {
+    background-color: #2a2d2e;
+}
+
 .button .label {
     z-index: 2;
     width: 100%;

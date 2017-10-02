@@ -36,13 +36,13 @@ export class AppState implements MutationManager {
         this._uiState = new UIState();
         this._editOptions = new EditOptions();
         this._selection = new Selection();
-        this._codeSpace = CodeSpace.fromText(content || '');
+        // this._codeSpace // init에서 생성됨
         // this._machine; // init에서 생성됨
         this._spaceFillChar = defaultSpaceFillChar;
         this._path = new Path();
         this._fuel = 50; // 과거 추적 깊이
         this._runner = null; // rAF handler
-        this.init();
+        this.init(content);
     }
     get changeDispatcher() { return this._changeDispatcher; }
     get cursorOnBreakPoint() {
@@ -161,9 +161,12 @@ export class AppState implements MutationManager {
     divideAndCarryCode(rowIndex: number, colIndex: number, height: number) {
         this.mutate(() => { this._codeSpace.divideAndCarryLines(rowIndex, colIndex, height); });
     }
-    init() {
+    init(content?: string) {
         this.mutate(() => {
             this.stop();
+            if (content != null) {
+                this._codeSpace = CodeSpace.fromText(content);
+            }
             this._machine = new Aheui.Machine(this._codeSpace);
             this._path.clear();
             this._path.step(Moment.fromMachineState(
@@ -245,6 +248,7 @@ class UIState {
     private _open: { [key: string]: boolean };
     constructor() {
         this._open = {
+            'file.saveAndShare': true,
             'edit.inputMethod': true,
             'edit.rotateAndFlip': true,
         };

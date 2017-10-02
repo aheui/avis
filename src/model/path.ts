@@ -4,6 +4,7 @@ import { CodeSpace } from 'appState';
 import mutationManager, {
     MutationManager,
     Executor,
+    StateId,
 } from './mutationManager';
 
 export class Vec2 {
@@ -17,7 +18,7 @@ export class Vec2 {
 let momentId = 0;
 export class Moment implements MutationManager {
     // MutationManager
-    stateId: number;
+    stateId: StateId;
     mutate: (executor: Executor) => void;
     onMutate?: () => void;
     // Moment

@@ -8,6 +8,10 @@
     user-select: none;
 }
 
+.switch:hover {
+    background-color: #2a2d2e;
+}
+
 .switch .label {
     z-index: 2;
 }

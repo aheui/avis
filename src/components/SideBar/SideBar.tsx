@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames';
 
+import * as file from './menu/file';
 import * as edit from './menu/edit';
 import * as style from './style.css';
 
@@ -10,9 +11,13 @@ const menus: {
         Content: React.ComponentClass | React.SFC<any>,
     };
 } = {
+    file,
     edit,
 };
-const menuButtonOrder: (keyof typeof menus)[] = [ 'edit' ];
+const menuButtonOrder: (keyof typeof menus)[] = [
+    'file',
+    'edit',
+];
 
 interface SideBarProps {
     updateCodeSpacePosition: () => void;

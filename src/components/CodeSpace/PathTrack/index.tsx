@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { CodeSpace } from 'appState';
 import { Path, Moment } from 'model/path';
+import { StateId } from 'model/mutationManager';
 import * as style from './style.css';
 
 
@@ -11,7 +12,7 @@ interface PathTrackProps {
 }
 
 export default class PathTrack extends React.Component<PathTrackProps> {
-    pathStateId: number;
+    pathStateId: StateId;
     codeSpaceStateId: number;
     constructor(props: PathTrackProps) {
         super(props);
