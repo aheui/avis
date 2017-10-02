@@ -1,4 +1,5 @@
 import * as qs from 'qs';
+import * as GitHub from 'github-api';
 
 import { decode } from './compat/content';
 import App from './components/App';
@@ -16,9 +17,11 @@ new Promise(resolve => {
         window.addEventListener('DOMContentLoaded', resolve);
         break;
     }
-}).then(() => {
-    const query = qs.parse(window.location.search.slice(1));
-    const content = query.content ? decode(query.content) : '';
+}).then(async () => {
+    const query: {
+        content?: string,
+    } = qs.parse(window.location.search.slice(1));
+    const content = await resolveContent(query.content);
     const appState = new AppState({
         content,
     });
@@ -31,3 +34,29 @@ new Promise(resolve => {
         });
     }
 });
+
+async function resolveContent(query?: string): Promise<string> {
+    if (!query) return '';
+    if (query.startsWith('gist:')) {
+        try {
+            const github = new GitHub();
+            const gist = github.getGist(query.substr(5));
+            const result = await gist.read();
+            const { files } = result.data;
+            const fileNames = Object.keys(files);
+            const aheuiFile = fileNames.find(
+                fileName =>
+                    fileName.endsWith('.aheui') ||
+                    fileName.endsWith('.ah') ||
+                    fileName.endsWith('.아희') ||
+                    fileName.endsWith('.ㅇㅎ')
+            );
+            if (aheuiFile) return files[aheuiFile].content;
+            return files[fileNames[0]].content;
+        } catch (err) {
+            console.error(err);
+            return '';
+        }
+    }
+    return decode(query);
+}

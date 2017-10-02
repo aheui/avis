@@ -182,10 +182,8 @@ export class AppState implements MutationManager {
         this.mutate(() => {
             this._machine.terminated = false;
             this._runner = () => {
-                if (this._runner) {
-                    this.step();
-                    window.requestAnimationFrame(this._runner);
-                }
+                if (this._runner) this.step();
+                if (this._runner) window.requestAnimationFrame(this._runner);
             };
             this._runner();
         });
