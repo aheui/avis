@@ -51,7 +51,7 @@ export class AppState implements MutationManager {
         return !!code && code.breakPoint;
     }
     get editOptions() { return this._editOptions; }
-    set editOptions(value) { this.mutate(() => Object.assign(this._editOptions, value)); }
+    set editOptions(value: Partial<EditOptions>) { this.mutate(() => Object.assign(this._editOptions, value)); }
     get selection() {
         return this._selection;
     }
@@ -257,8 +257,10 @@ class UIState {
 
 class EditOptions {
     inputMethod: 'insert' | 'overwrite';
+    inputDirection: 'horizontal' | 'vertical';
     constructor() {
         this.inputMethod = 'insert';
+        this.inputDirection = 'horizontal';
     }
 }
 

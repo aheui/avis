@@ -8,6 +8,7 @@ interface SwitchProps {
     leftValue: string;
     rightLabel: string;
     rightValue: string;
+    disabled?: boolean;
     value: string;
     onChange: (value: string) => void;
     className?: string;
@@ -20,14 +21,16 @@ export default class extends React.Component<SwitchProps> {
             leftValue,
             rightLabel,
             rightValue,
+            disabled,
             value,
             onChange,
             className,
         } = this.props;
         const left = value === leftValue;
         return <div
-            onClick={() => onChange(left ? rightValue : leftValue)}
+            onClick={() => !disabled && onChange(left ? rightValue : leftValue)}
             className={classNames(style.switch, {
+                [style.disabled]: disabled,
                 [style.left]: left,
             }, className)}>
             <div className={classNames(style.label, style.left)}>

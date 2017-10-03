@@ -8,7 +8,8 @@
     user-select: none;
 }
 
-.button:hover {
+.button:not(.disabled):hover {
+    color: #ffffff;
     background-color: #2a2d2e;
 }
 
@@ -17,8 +18,8 @@
     width: 100%;
     text-align: left;
 }
-.button .disabled {
+.button.disabled {
     opacity: 0.5;
     text-decoration: line-through;
+    cursor: not-allowed;
 }
-

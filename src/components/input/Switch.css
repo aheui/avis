@@ -8,8 +8,16 @@
     user-select: none;
 }
 
+.switch.disabled {
+    cursor: not-allowed;
+}
+
 .switch:hover {
     background-color: #2a2d2e;
+}
+
+.switch.disabled:hover {
+    background-color: transparent;
 }
 
 .switch .label {
@@ -27,12 +35,18 @@
     transition: left 0.2s;
 }
 
-.switch.left .left {
+.switch.disabled .highlight {
+    background-color: #3f3f46;
+}
+
+.switch.left .left,
+.switch:not(.left) .right {
     font-weight: bold;
 }
 
-.switch:not(.left) .right {
-    font-weight: bold;
+.switch:hover:not(.disabled).left .right,
+.switch:hover:not(.disabled):not(.left) .left {
+    color: #ffffff;
 }
 
 .switch.left .highlight {

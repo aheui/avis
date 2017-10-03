@@ -51,12 +51,14 @@ export const SideBarContentFolder: React.SFC<SideBarContentFolderProps> = ({ tit
 interface LabelProps {
     title: string | React.ReactElement<any>;
     className?: string;
+    note?: string;
 }
 
-export const Label: React.SFC<LabelProps> = ({ title, children, className }) => (
+export const Label: React.SFC<LabelProps> = ({ title, className, note, children }) => (
     <label className={classNames(style.label, className)}>
         <div className={style.title}>{ title }</div>
         <div className={style.children}>{ children }</div>
+        { note && <div className={style.note}>{ note }</div> }
     </label>
 );
 

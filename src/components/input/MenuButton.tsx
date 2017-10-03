@@ -20,10 +20,10 @@ export default class extends React.Component<MenuButtonProps> {
         } = this.props;
         return <div
             onClick={() => disabled || onClick()}
-            className={classNames(style.button, className)}>
-            <div className={classNames(style.label, {
-                [style.disabled]: disabled
-            })}>
+            className={classNames(style.button, {
+                [style.disabled]: disabled,
+            }, className)}>
+            <div className={classNames(style.label)}>
                 { label }
             </div>
         </div>;

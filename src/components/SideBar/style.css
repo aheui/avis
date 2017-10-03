@@ -84,9 +84,22 @@
 }
 
 .content .folder .scroll-area .label .title {
+    margin-top: 5px;
     margin-bottom: 5px;
+}
+
+.content .folder .scroll-area .label:first-child .title {
+    margin-top: 0;
 }
 
 .content .folder .scroll-area .label .children {
     padding-left: 10px;
+}
+
+.content .folder .scroll-area .label .note {
+    margin-top: 5px;
+    padding-left: 10px;
+    font-size: 11px;
+    color: rgba(174, 175, 173, 1);
+    opacity: 0.7;
 }
