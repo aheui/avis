@@ -129,6 +129,9 @@ export class AppState implements MutationManager {
     insertCode(rowIndex: number, colIndex: number, text: string, overwrite: boolean) {
         this.mutate(() => { this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
     }
+    insertCodeVertical(rowIndex: number, colIndex: number, text: string) {
+        this.mutate(() => { this._codeSpace.insertVertical(rowIndex, colIndex, text, this._spaceFillChar); });
+    }
     insertChunkCode(rowIndex: number, colIndex: number, text: string, pushDown: boolean, overwrite: boolean) {
         this.mutate(() => { this._codeSpace.insertChunk(rowIndex, colIndex, text, this._spaceFillChar, pushDown, overwrite); });
     }
@@ -592,6 +595,26 @@ export class CodeSpace
                 const textLine = textLines[i];
                 const codeLine = this[rowIndex + i];
                 codeLine.insert(colIndex, textLine, spaceFillChar, overwrite);
+                if (codeLine.length > this._width) {
+                    this._width = codeLine.length;
+                }
+            }
+        });
+    }
+    insertVertical(
+        rowIndex: number,
+        colIndex: number,
+        text: string,
+        spaceFillChar: string,
+    ) {
+        if (text.length === 0) return;
+        this.mutate(() => {
+            const _text = text.replace(/\r?\n/g, spaceFillChar);
+            this.ensureHeight(rowIndex + _text.length);
+            for (let i = 0; i < _text.length; ++i) {
+                const char = _text[i];
+                const codeLine = this[rowIndex + i];
+                codeLine.insert(colIndex, char, spaceFillChar, true);
                 if (codeLine.length > this._width) {
                     this._width = codeLine.length;
                 }

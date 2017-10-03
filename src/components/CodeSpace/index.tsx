@@ -182,11 +182,14 @@ export default connect<CodeSpaceProps>(
             ghostCaretX, ghostCaretY,
             compositing, inputFocus,
         } = this.state;
+        const { inputMethod, inputDirection } = appState.editOptions;
+        const overwriteMode = inputMethod === 'overwrite';
+        const verticalMode = overwriteMode && (inputDirection === 'vertical');
         const inputText = this.inputElement ? this.inputElement.value : '';
-        const caretX = selection.x + inputText.length - (compositing ? 1 : 0);
+        const caretOffset = (pos: number): number => pos + inputText.length - (compositing ? 1 : 0);
         const selectionBox = {
-            top: selection.y * 30,
-            left: caretX * 30,
+            top: (verticalMode ? caretOffset(selection.y) : selection.y) * 30,
+            left: (verticalMode ? selection.x : caretOffset(selection.x)) * 30,
             width: selection.width * 30,
             height: selection.height * 30,
         };
@@ -403,8 +406,9 @@ function handleInputKeyDown(
     preventDefault: () => void,
 ) {
     const inputLength = inputValue.length;
-    const { inputMethod } = appState.editOptions;
+    const { inputMethod, inputDirection } = appState.editOptions;
     const overwriteMode = inputMethod === 'overwrite';
+    const verticalMode = overwriteMode && (inputDirection === 'vertical');
     const { control, shift } = keyboard.keys('Control', 'Shift');
     const del = (y: number, x: number, width: number, height: number) => {
         appState[
@@ -426,9 +430,16 @@ function handleInputKeyDown(
             const { x, y } = selection;
             if (selection.isCaret) {
                 if (overwriteMode) {
-                    if (x !== 0) {
-                        appState.peelCode(y, x - 1, 1, 1);
-                        appState.translateSelection(-1, 0);
+                    if (verticalMode) {
+                        if (y !== 0) {
+                            appState.peelCode(y - 1, x, 1, 1);
+                            appState.translateSelection(0, -1);
+                        }
+                    } else {
+                        if (x !== 0) {
+                            appState.peelCode(y, x - 1, 1, 1);
+                            appState.translateSelection(-1, 0);
+                        }
                     }
                 } else {
                     if (x !== 0) {
@@ -462,9 +473,14 @@ function handleInputKeyDown(
                 const lineWidth = codeSpace.getLineWidth(y);
                 if (codeSpace.codeLength > codeSpace.getIndex(x, y)) {
                     if (overwriteMode) {
-                        if (x < lineWidth) {
+                        if (verticalMode) {
                             appState.peelCode(y, x, 1, 1);
-                            appState.translateSelection(1, 0);
+                            appState.translateSelection(0, 1);
+                        } else {
+                            if (x < lineWidth) {
+                                appState.peelCode(y, x, 1, 1);
+                                appState.translateSelection(1, 0);
+                            }
                         }
                     } else {
                         if (x >= lineWidth) {
@@ -496,8 +512,12 @@ function handleInputKeyDown(
     case 'Enter':
         {
             const { x, y, height } = appState.selection as Selection;
-            appState.divideAndCarryCode(y, x + inputLength, height);
-            appState.translateSelection(-x, height);
+            if (overwriteMode) {
+                appState.translateSelection(0, height + inputLength);
+            } else {
+                appState.divideAndCarryCode(y, x + inputLength, height);
+                appState.translateSelection(-x, height);
+            }
             clearInputValue();
             resetCaretAnimation();
             scrollToFocus();
@@ -553,8 +573,9 @@ function handleInputChange(
 ) {
     const inputLength = inputValue.length;
     const lastInputLength = lastInputValue.length;
-    const { inputMethod } = appState.editOptions;
+    const { inputMethod, inputDirection } = appState.editOptions;
     const overwriteMode = inputMethod === 'overwrite';
+    const verticalMode = overwriteMode && (inputDirection === 'vertical');
     const del = (y: number, x: number, width: number, height: number) => {
         appState[
             overwriteMode ?
@@ -568,15 +589,28 @@ function handleInputChange(
     }
     appState.caret = {};
     if (inputLength < lastInputLength) {
-        del(y, x + inputLength, lastInputLength - inputLength, 1);
+        if (verticalMode) {
+            del(y + inputLength, x, 1, lastInputLength - inputLength);
+        } else {
+            del(y, x + inputLength, lastInputLength - inputLength, 1);
+        }
     } else {
-        del(y, x, lastInputLength, 1);
-        appState.insertCode(
-            y,
-            x,
-            inputValue.replace(/ /g, appState.spaceFillChar),
-            overwriteMode,
-        );
+        if (verticalMode) {
+            del(y, x, 1, lastInputLength);
+            appState.insertCodeVertical(
+                y,
+                x,
+                inputValue.replace(/ /g, appState.spaceFillChar),
+            );
+        } else {
+            del(y, x, lastInputLength, 1);
+            appState.insertCode(
+                y,
+                x,
+                inputValue.replace(/ /g, appState.spaceFillChar),
+                overwriteMode,
+            );
+        }
     }
     resetCaretAnimation();
 }

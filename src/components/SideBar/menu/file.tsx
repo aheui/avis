@@ -38,22 +38,6 @@ class ContentComponent extends React.Component<ContentProps> {
                 title="저장 및 공유"
                 open={appState.getUIOpen('file.saveAndShare')}
                 onBarClick={open => appState.setUIOpen('file.saveAndShare', !open)}>
-                <input
-                    className={style.fileInput}
-                    ref={ref => this.fileInput = ref!}
-                    type="file"
-                    onChange={e => {
-                        const { files } = e.target;
-                        if (!files || !files[0]) return;
-                        const file = files[0];
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                            appState.init(reader.result);
-                        };
-                        reader.readAsText(file);
-                        this.fileInput.value = '';
-                    }}
-                />
                 <Label title="내 컴퓨터">
                     <MenuButton
                         label="불러오기"
@@ -72,6 +56,22 @@ class ContentComponent extends React.Component<ContentProps> {
                     />
                 </Label>
             </SideBarContentFolder>
+            <input
+                className={style.fileInput}
+                ref={ref => this.fileInput = ref!}
+                type="file"
+                onChange={e => {
+                    const { files } = e.target;
+                    if (!files || !files[0]) return;
+                    const file = files[0];
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        appState.init(reader.result);
+                    };
+                    reader.readAsText(file);
+                    this.fileInput.value = '';
+                }}
+            />
         </SideBarContent>;
     }
 }
