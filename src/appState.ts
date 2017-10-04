@@ -126,6 +126,18 @@ export class AppState implements MutationManager {
             };
         });
     }
+    setCursorX(value: number) {
+        this.mutate(() => { this._machine.cursor.x = value; });
+    }
+    setCursorY(value: number) {
+        this.mutate(() => { this._machine.cursor.y = value; });
+    }
+    setCursorXSpeed(value: number) {
+        this.mutate(() => { this._machine.cursor.xSpeed = value; });
+    }
+    setCursorYSpeed(value: number) {
+        this.mutate(() => { this._machine.cursor.ySpeed = value; });
+    }
     insertCode(rowIndex: number, colIndex: number, text: string, overwrite: boolean) {
         this.mutate(() => { this._codeSpace.insert(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
     }
@@ -252,6 +264,8 @@ class UIState {
             'file.saveAndShare': true,
             'edit.inputMethod': true,
             'edit.rotateAndFlip': true,
+            'state.cursor': true,
+            'state.storage': true,
         };
     }
     getOpen(key: string) { return !!this._open[key]; }

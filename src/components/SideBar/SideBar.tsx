@@ -3,6 +3,7 @@ import * as classNames from 'classnames';
 
 import * as file from './menu/file';
 import * as edit from './menu/edit';
+import * as state from './menu/state';
 import * as style from './style.css';
 
 const menus: {
@@ -13,10 +14,12 @@ const menus: {
 } = {
     file,
     edit,
+    state,
 };
 const menuButtonOrder: (keyof typeof menus)[] = [
     'file',
     'edit',
+    'state',
 ];
 
 interface SideBarProps {

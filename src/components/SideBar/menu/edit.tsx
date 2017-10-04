@@ -54,11 +54,7 @@ export const Content = connect(
                     rightLabel="세로쓰기"
                     rightValue="vertical"
                     disabled={appState.editOptions.inputMethod === 'insert'}
-                    value={
-                        appState.editOptions.inputMethod === 'insert' ?
-                        'horizontal' :
-                        appState.editOptions.inputDirection!
-                    }
+                    value={appState.editOptions.inputDirection!}
                     onChange={(inputDirection: 'horizontal' | 'vertical') => {
                         appState.editOptions = { inputDirection };
                     }}
@@ -71,7 +67,7 @@ export const Content = connect(
             onBarClick={open => appState.setUIOpen('edit.rotateAndFlip', !open)}>
             <Label
                 title="회전"
-                note="선택영역이 정사각형일 경우 회전 가능합니다.">
+                note="선택영역이 정사각형일 경우 코드를 회전할 수 있습니다.">
                 <MenuButton
                     label="시계방향"
                     disabled={!(appState.selection as Selection).isSquare}
