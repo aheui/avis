@@ -11,8 +11,6 @@
     position: absolute;
     padding: 0;
     opacity: 0;
-    height: 0;
-    line-height: 0;
     transform: scale(0.0001);
     transform-origin: 2px 2px;
     border: none;

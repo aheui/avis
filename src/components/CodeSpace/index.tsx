@@ -40,7 +40,7 @@ export default connect<CodeSpaceProps>(
     scrollElement: HTMLElement;
     codeSpaceElement: HTMLElement;
     caretElement: HTMLElement;
-    inputElement: HTMLInputElement;
+    inputElement: HTMLTextAreaElement;
     lastInputValue: string;
     mouseDragUpHandler: (e: MouseEvent) => void;
     mouseDragMoveHandler: (e: MouseEvent) => void;
@@ -290,8 +290,7 @@ export default connect<CodeSpaceProps>(
                     />
                 </svg> }
             </div>
-            <input
-                type="text"
+            <textarea
                 className={style.input}
                 style={{
                     top: selectionBox.top,
@@ -331,7 +330,9 @@ export default connect<CodeSpaceProps>(
                         this.inputElement.value,
                         this.lastInputValue,
                         appState,
+                        () => this.clearInputValue(),
                         () => this.resetCaretAnimation(),
+                        () => this.scrollToFocus(),
                     );
                     this.lastInputValue = this.inputElement.value;
                 }}
@@ -509,20 +510,6 @@ function handleInputKeyDown(
             preventDefault();
         }
         return;
-    case 'Enter':
-        {
-            const { x, y, height } = appState.selection as Selection;
-            if (overwriteMode) {
-                appState.translateSelection(0, height + inputLength);
-            } else {
-                appState.divideAndCarryCode(y, x + inputLength, height);
-                appState.translateSelection(-x, height);
-            }
-            clearInputValue();
-            resetCaretAnimation();
-            scrollToFocus();
-            return;
-        }
     case 'ArrowUp': moveCaret(0, -1, shift); return;
     case 'ArrowDown': moveCaret(0, 1, shift); return;
     case 'ArrowLeft': moveCaret(-1, 0, shift); return;
@@ -569,7 +556,9 @@ function handleInputChange(
     inputValue: string,
     lastInputValue: string,
     appState: AppState,
+    clearInputValue: () => void,
     resetCaretAnimation: () => void,
+    scrollToFocus: () => void,
 ) {
     const inputLength = inputValue.length;
     const lastInputLength = lastInputValue.length;
@@ -584,6 +573,23 @@ function handleInputChange(
         ](y, x, width, height);
     };
     const { y, x, width, height, isCaret } = appState.selection as Selection;
+    if ((inputValue.indexOf('\n') !== -1) || (inputValue.indexOf('\r') !== -1)) {
+        const { x, y, height } = appState.selection as Selection;
+        if (overwriteMode) {
+            if (verticalMode) {
+                appState.translateSelection(0, height + inputLength - 1);
+            } else {
+                appState.translateSelection(0, height);
+            }
+        } else {
+            appState.divideAndCarryCode(y, x + inputLength, height);
+            appState.translateSelection(-x, height);
+        }
+        clearInputValue();
+        resetCaretAnimation();
+        scrollToFocus();
+        return;
+    }
     if (!isCaret) {
         del(y, x, width, height);
     }
