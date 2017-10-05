@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames';
 
-import * as style from './IntInput.css';
+import * as style from './input.css';
 
 
 interface IntInputProps {
@@ -19,7 +19,12 @@ const IntInput: React.SFC<IntInputProps> = ({
     max,
     className,
 }) => <input
-    className={classNames(style.intInput, className)}
+    type="number"
+    className={classNames(
+        style.input,
+        style.intInput,
+        className,
+    )}
     value={value}
     onChange={e => {
         const value = +e.target.value;

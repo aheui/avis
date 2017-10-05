@@ -1,8 +1,7 @@
-.int-input {
+.input {
     padding: 4px;
     font-size: 12px;
     font-family: 'Nanum Gothic';
-    text-align: right;
     color: rgb(204, 204, 204);
     background-color: rgb(60, 60, 60);
     border: none;
@@ -12,7 +11,11 @@
     appearance: none;
 }
 
-.int-input:focus {
+.input:focus {
     outline: 1px solid rgba(14, 99, 156, 0.6);
     outline-offset: 0;
+}
+
+.int-input {
+    text-align: right;
 }
