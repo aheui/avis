@@ -261,11 +261,13 @@ class UIState {
     private _open: { [key: string]: boolean };
     constructor() {
         this._open = {
-            'file.saveAndShare': true,
+            'file.save': true,
+            'file.load': true,
             'edit.inputMethod': true,
             'edit.rotateAndFlip': true,
             'state.cursor': true,
             'state.storage': true,
+            'modal.saveAsGist': false,
         };
     }
     getOpen(key: string) { return !!this._open[key]; }

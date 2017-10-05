@@ -9,9 +9,9 @@ import {
     SideBarButton,
     SideBarContent,
     SideBarContentFolder,
-    Label,
 } from '..';
 import MenuButton from '../../input/Button';
+import SaveAsGistModal from './file/SaveAsGistModal';
 import * as style from './file.css';
 
 interface ButtonProps {
@@ -35,26 +35,33 @@ class ContentComponent extends React.Component<ContentProps> {
         const { appState } = this.props;
         return <SideBarContent title="파일">
             <SideBarContentFolder
-                title="저장 및 공유"
-                open={appState.getUIOpen('file.saveAndShare')}
-                onBarClick={open => appState.setUIOpen('file.saveAndShare', !open)}>
-                <Label title="내 컴퓨터">
-                    <MenuButton
-                        label="불러오기"
-                        onClick={() => this.fileInput.click()}
-                    />
-                    <MenuButton
-                        label="저장하기"
-                        onClick={() => {
-                            const file = new File(
-                                [ appState.codeSpace.toString() ],
-                                'avis.aheui',
-                                { type: 'text/plain;charset=utf-8' }
-                            );
-                            saveAs(file);
-                        }}
-                    />
-                </Label>
+                title="저장하기"
+                open={appState.getUIOpen('file.save')}
+                onBarClick={open => appState.setUIOpen('file.save', !open)}>
+                <MenuButton
+                    label="내 컴퓨터로..."
+                    onClick={() => {
+                        const file = new File(
+                            [ appState.codeSpace.toString() ],
+                            'avis.aheui',
+                            { type: 'text/plain;charset=utf-8' }
+                        );
+                        saveAs(file);
+                    }}
+                />
+                <MenuButton
+                    label="gist로..."
+                    onClick={() => appState.setUIOpen('modal.saveAsGist', true)}
+                />
+            </SideBarContentFolder>
+            <SideBarContentFolder
+                title="불러오기"
+                open={appState.getUIOpen('file.load')}
+                onBarClick={open => appState.setUIOpen('file.load', !open)}>
+                <MenuButton
+                    label="내 컴퓨터에서..."
+                    onClick={() => this.fileInput.click()}
+                />
             </SideBarContentFolder>
             <input
                 className={style.fileInput}
@@ -72,6 +79,7 @@ class ContentComponent extends React.Component<ContentProps> {
                     this.fileInput.value = '';
                 }}
             />
+            { appState.getUIOpen('modal.saveAsGist') && <SaveAsGistModal/> }
         </SideBarContent>;
     }
 }
