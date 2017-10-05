@@ -44,7 +44,7 @@ export const SideBarContentFolder: React.SFC<SideBarContentFolderProps> = ({ tit
             <FontAwesome icon='caret-right' className={style.caret}/>
             { title }
         </div>
-        { open && <div className={style.scrollArea}>{ children }</div> }
+        { open && <div className={style.sideBarChildren}>{ children }</div> }
     </div>
 );
 
