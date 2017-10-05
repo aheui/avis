@@ -7,8 +7,8 @@ import {
     SideBarButton,
     SideBarContent,
     SideBarContentFolder,
-    Label,
 } from '..';
+import Label from '../../input/Label';
 import IntInput from '../../input/IntInput';
 
 interface ButtonProps {

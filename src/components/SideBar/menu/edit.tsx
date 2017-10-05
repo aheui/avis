@@ -8,8 +8,8 @@ import {
     SideBarButton,
     SideBarContent,
     SideBarContentFolder,
-    Label,
 } from '..';
+import Label from '../../input/Label';
 import Key from '../../misc/Key';
 import Switch from '../../input/Switch';
 import MenuButton from '../../input/Button';
