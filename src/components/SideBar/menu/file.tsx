@@ -11,7 +11,7 @@ import {
     SideBarContentFolder,
     Label,
 } from '..';
-import MenuButton from '../../input/MenuButton';
+import MenuButton from '../../input/Button';
 import * as style from './file.css';
 
 interface ButtonProps {

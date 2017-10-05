@@ -12,7 +12,7 @@ import {
 } from '..';
 import Key from '../../misc/Key';
 import Switch from '../../input/Switch';
-import MenuButton from '../../input/MenuButton';
+import MenuButton from '../../input/Button';
 
 interface ButtonProps {
     active?: boolean;

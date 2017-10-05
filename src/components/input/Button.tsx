@@ -1,16 +1,17 @@
 import * as React from 'react';
 import * as classNames from 'classnames';
 
-import * as style from './MenuButton.css';
+import * as style from './Button.css';
 
-interface MenuButtonProps {
+
+interface ButtonProps {
     label: string;
     disabled?: boolean;
     onClick: () => void;
     className?: string;
 }
 
-export default class extends React.Component<MenuButtonProps> {
+export default class extends React.Component<ButtonProps> {
     render() {
         const {
             label,
