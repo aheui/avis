@@ -150,6 +150,7 @@ export default connect<CodeSpaceProps>(
     clearInputValue() {
         this.inputElement.value = '';
         this.lastInputValue = '';
+        this.setState({ compositing: false });
     }
     resetCaretAnimation() {
         const { classList } = this.caretElement;
@@ -543,7 +544,8 @@ function handleInputKeyDown(
     }
     function moveCaret(dx: number, dy: number, extend: boolean) {
         const { x, y } = appState.selection.focus!;
-        setCaret(x + inputLength + dx, y + dy, extend);
+        if (verticalMode) setCaret(x + dx, y + inputLength + dy, extend);
+        else setCaret(x + inputLength + dx, y + dy, extend);
     }
     function delSelection() {
         const { y, x, width, height } = appState.selection as Selection;
