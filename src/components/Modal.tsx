@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames';
 
 import Button, { ButtonType } from './input/Button';
 import * as style from './Modal.css';
@@ -14,6 +15,7 @@ interface ModalProps {
     title: string;
     prompt: PromptItem[];
     closeModal: () => void;
+    bodyClassName?: string;
 }
 
 export default class Modal extends React.Component<ModalProps> {
@@ -24,6 +26,7 @@ export default class Modal extends React.Component<ModalProps> {
             children,
             prompt,
             closeModal,
+            bodyClassName,
         } = this.props;
         return <div
             className={style.modal}
@@ -36,7 +39,10 @@ export default class Modal extends React.Component<ModalProps> {
                     e.stopPropagation();
                 }}>
                 <div className={style.title}>{ title }</div>
-                <div className={style.children}>{ children }</div>
+                <div className={classNames(
+                    style.body,
+                    bodyClassName,
+                )}>{ children }</div>
                 <div className={style.buttons}>
                     { prompt.map((item, index) => <Button
                         className={style.button}

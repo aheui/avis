@@ -4,7 +4,11 @@ import {
     connect,
     AppState,
 } from '../../../../appState';
+import Label from '../../../input/Label';
+import TextInput from '../../../input/TextInput';
+import Switch from '../../../input/Switch';
 import Modal from '../../../Modal';
+import * as style from './SaveAsGistModal.css';
 
 
 interface SaveAsGistModalProps {
@@ -34,7 +38,24 @@ class SaveAsGistModal extends React.Component<SaveAsGistModalProps, SaveAsGistMo
                 }],
             ]}
             closeModal={() => this.closeModal()}
-        ></Modal>;
+            bodyClassName={style.modalBody}>
+            <Label title="파일 이름">
+                <TextInput value="" onChange={value => console.log(value)}/>
+            </Label>
+            <Label title="설명">
+                <TextInput value="" onChange={value => console.log(value)}/>
+            </Label>
+            <Label title="공개 여부">
+                <Switch
+                    leftLabel="공개"
+                    leftValue="public"
+                    rightLabel="비공개"
+                    rightValue="private"
+                    value="public"
+                    onChange={value => console.log(value)}
+                />
+            </Label>
+        </Modal>;
     }
     renderPhase2() {
         return <Modal
@@ -42,8 +63,8 @@ class SaveAsGistModal extends React.Component<SaveAsGistModalProps, SaveAsGistMo
             prompt={[
                 ['닫기', null, () => {}],
             ]}
-            closeModal={() => this.closeModal()}
-        ></Modal>;
+            closeModal={() => this.closeModal()}>
+        </Modal>;
     }
     render() {
         return this.renderPhase1();
