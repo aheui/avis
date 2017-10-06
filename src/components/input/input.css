@@ -19,3 +19,7 @@
 .int-input {
     text-align: right;
 }
+
+.text-area {
+    resize: vertical;
+}
