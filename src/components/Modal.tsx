@@ -30,11 +30,11 @@ export default class Modal extends React.Component<ModalProps> {
         } = this.props;
         return <div
             className={style.modal}
-            onClick={closeModal}>
+            onMouseDown={closeModal}>
             <div
                 ref={ref => this.pane = ref!}
                 className={style.pane}
-                onClick={e => {
+                onMouseDown={e => {
                     if (!this.pane.contains(e.target as Node)) return;
                     e.stopPropagation();
                 }}>

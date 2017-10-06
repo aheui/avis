@@ -41,6 +41,7 @@ export default class extends React.Component<ButtonProps, ButtonState> {
         return <div
             onClick={async () => {
                 if (disabled) return;
+                if (this.state.loading) return;
                 try {
                     this.setState({ loading: true });
                     await onClick();
