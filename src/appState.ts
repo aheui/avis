@@ -267,6 +267,8 @@ class UIState {
             'edit.rotateAndFlip': true,
             'state.cursor': true,
             'state.storage': true,
+            'io.input': true,
+            'io.output': true,
             'modal.saveAsGist': false,
         };
     }
