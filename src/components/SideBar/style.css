@@ -45,6 +45,8 @@
 }
 
 .content .folder {
+    flex: 0 0 0;
+    min-height: min-content;
     display: flex;
     flex-direction: column;
 }

@@ -24,6 +24,7 @@ export class AppState implements MutationManager {
     private _changeDispatcher: ChangeDispatcher;
     private _uiState: UIState;
     private _editOptions: EditOptions;
+    private _runningOptions: RunningOptions;
     private _selection: Selection;
     private _codeSpace: CodeSpace;
     private _machine: Aheui.Machine;
@@ -35,6 +36,7 @@ export class AppState implements MutationManager {
         this._changeDispatcher = new ChangeDispatcher();
         this._uiState = new UIState();
         this._editOptions = new EditOptions();
+        this._runningOptions = new RunningOptions();
         this._selection = new Selection();
         // this._codeSpace // init에서 생성됨
         // this._machine; // init에서 생성됨
@@ -52,6 +54,8 @@ export class AppState implements MutationManager {
     }
     get editOptions() { return this._editOptions; }
     set editOptions(value: Partial<EditOptions>) { this.mutate(() => Object.assign(this._editOptions, value)); }
+    get runningOptions() { return this._runningOptions; }
+    set runningOptions(value: Partial<RunningOptions>) { this.mutate(() => Object.assign(this._runningOptions, value)); }
     get selection() {
         return this._selection;
     }
@@ -183,6 +187,14 @@ export class AppState implements MutationManager {
                 this._codeSpace = CodeSpace.fromText(content);
             }
             this._machine = new Aheui.Machine(this._codeSpace);
+            this._machine.input = _type => {
+                // TODO
+                return -1;
+            };
+            this._machine.output = value => {
+                const { output } = this.runningOptions;
+                this.runningOptions = { output: output! + value };
+            };
             this._path.clear();
             this._path.step(Moment.fromMachineState(
                 this._machine,
@@ -282,6 +294,17 @@ class EditOptions {
     constructor() {
         this.inputMethod = 'insert';
         this.inputDirection = 'horizontal';
+    }
+}
+
+class RunningOptions {
+    inputMethod: 'modal' | 'given';
+    givenInput: string;
+    output: string;
+    constructor() {
+        this.inputMethod = 'modal';
+        this.givenInput = '';
+        this.output = '';
     }
 }
 
