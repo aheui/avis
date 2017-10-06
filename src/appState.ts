@@ -186,10 +186,55 @@ export class AppState implements MutationManager {
             if (content != null) {
                 this._codeSpace = CodeSpace.fromText(content);
             }
+            this.runningOptions = { output: '' };
             this._machine = new Aheui.Machine(this._codeSpace);
-            this._machine.input = _type => {
-                // TODO
-                return -1;
+            this._machine.input = type => {
+                if (this.runningOptions.inputMethod === 'modal') {
+                    // TODO: naheui Machine의 input 메서드에서
+                    // Promise를 반환해도 되도록 고치기.
+                    // 고치고나서 prompt 쓰는 대신 직접 모달 렌더링하기.
+                    const promptMessage =
+                        (type === 'number') ?
+                        '숫자를 입력하세요. 실행을 멈추려면 !!!를 입력하세요.' :
+                        '글자를 입력하세요. 실행을 멈추려면 !!!를 입력하세요.';
+                    const promptResult = prompt(promptMessage) + '';
+                    if (promptResult === '!!!') {
+                        this.stop();
+                        return -1;
+                    }
+                    const input =
+                        (type === 'number') ?
+                        parseInt(promptResult) :
+                        promptResult.charCodeAt(0);
+                    return isNaN(input) ? -1 : input;
+                } else {
+                    const givenInput = this.runningOptions.givenInput!;
+                    let input: number;
+                    let left = givenInput;
+                    switch (type) {
+                    case 'number':
+                        const match = /^[-+]?\d+/.exec(givenInput);
+                        if (match) {
+                            left = givenInput.substr(match[0].length);
+                            input = parseInt(match[0]);
+                        } else {
+                            input = -1;
+                        }
+                        break;
+                    case 'character':
+                        const codePoint = givenInput.codePointAt(0);
+                        if (codePoint != null) {
+                            input = codePoint;
+                            left = givenInput.substr(String.fromCodePoint(input).length);
+                        } else {
+                            input = -1;
+                        }
+                        break;
+                    default: throw new Error('never reach here');
+                    }
+                    this.runningOptions = { givenInput: left };
+                    return isNaN(input) ? -1 : input;
+                }
             };
             this._machine.output = value => {
                 const { output } = this.runningOptions;
