@@ -178,16 +178,16 @@ export class AppState implements MutationManager {
         this.mutate(() => { this._codeSpace.shrink(rowIndex, colIndex, width, height); });
     }
     invertHCode(rowIndex: number, colIndex: number, width: number, height: number) {
-        this.mutate(() => { this._codeSpace.invertH(rowIndex, colIndex, width, height); });
+        this.mutate(() => { this._codeSpace.invertH(rowIndex, colIndex, width, height, this._spaceFillChar); });
     }
     invertVCode(rowIndex: number, colIndex: number, width: number, height: number) {
-        this.mutate(() => { this._codeSpace.invertV(rowIndex, colIndex, width, height); });
+        this.mutate(() => { this._codeSpace.invertV(rowIndex, colIndex, width, height, this._spaceFillChar); });
     }
     rotateCWCode(rowIndex: number, colIndex: number, width: number, height: number) {
-        this.mutate(() => { this._codeSpace.rotateCW(rowIndex, colIndex, width, height); });
+        this.mutate(() => { this._codeSpace.rotateCW(rowIndex, colIndex, width, height, this._spaceFillChar); });
     }
     rotateCCWCode(rowIndex: number, colIndex: number, width: number, height: number) {
-        this.mutate(() => { this._codeSpace.rotateCCW(rowIndex, colIndex, width, height); });
+        this.mutate(() => { this._codeSpace.rotateCCW(rowIndex, colIndex, width, height, this._spaceFillChar); });
     }
     ensureCodeRowWidth(rowIndex: number, width: number) {
         this.mutate(() => { this._codeSpace.ensureLineWidth(rowIndex, width, this._spaceFillChar); });
@@ -646,6 +646,18 @@ export class CodeSpace
             codeLine.ensureLength(width, spaceFillChar);
         });
     }
+    ensureRect(
+        rowIndex: number,
+        colIndex: number,
+        width: number,
+        height: number,
+        spaceFillChar: string,
+    ) {
+        const bottom = rowIndex + height;
+        for (let i = rowIndex; i < bottom; ++i) {
+            this.ensureLineWidth(i, width + colIndex, spaceFillChar);
+        }
+    }
     _recalculateWidth() {
         this._width = 0;
         for (let codeLine of this) {
@@ -904,10 +916,12 @@ export class CodeSpace
         colIndex: number,
         width: number,
         height: number,
+        spaceFillChar: string,
     ) {
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
         this.mutate(() => {
+            this.ensureRect(rowIndex, colIndex, width, height, spaceFillChar);
             for (let r = 0; r < height; ++r) {
                 const codeLine = this[rowIndex + r];
                 if (!codeLine) break;
@@ -920,10 +934,12 @@ export class CodeSpace
         colIndex: number,
         width: number,
         height: number,
+        spaceFillChar: string,
     ) {
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
         this.mutate(() => {
+            this.ensureRect(rowIndex, colIndex, width, height, spaceFillChar);
             for (let i = 0; i < height; ++i) {
                 const codeLine = this[rowIndex + i];
                 if (!codeLine) break;
@@ -946,12 +962,14 @@ export class CodeSpace
         colIndex: number,
         width: number,
         height: number,
+        spaceFillChar: string,
     ) {
         // rotateCW : invertXY then invertH
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
         if (width != height) return;
         this.mutate(() => {
+            this.ensureRect(rowIndex, colIndex, width, height, spaceFillChar);
             for (let i = 0; i < height; ++i) {
                 const codeLine = this[rowIndex + i];
                 if (!codeLine) break;
@@ -979,12 +997,14 @@ export class CodeSpace
         colIndex: number,
         width: number,
         height: number,
+        spaceFillChar: string,
     ) {
         // rotateCW : invertH then invertXY
         if (width < 1 || height < 1) return;
         if (this._width <= colIndex || this.length <= rowIndex) return;
         if (width != height) return;
         this.mutate(() => {
+            this.ensureRect(rowIndex, colIndex, width, height, spaceFillChar);
             for (let i = 0; i < height; ++i) {
                 const codeLine = this[rowIndex + i];
                 if (!codeLine) break;
