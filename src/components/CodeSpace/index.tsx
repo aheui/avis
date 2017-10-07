@@ -579,7 +579,7 @@ function handleInputChange(
         const { x, y, height } = appState.selection as Selection;
         if (overwriteMode) {
             if (verticalMode) {
-                appState.translateSelection(0, height + inputLength - 1);
+                appState.translateSelection(1, 0);
             } else {
                 appState.translateSelection(0, height);
             }
