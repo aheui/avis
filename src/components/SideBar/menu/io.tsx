@@ -74,6 +74,7 @@ class ContentComponent extends React.Component<ContentProps> {
                 <Label title="출력란">
                     <TextArea
                         readOnly
+                        rows={20}
                         value={output!}
                     />
                 </Label>
