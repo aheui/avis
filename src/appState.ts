@@ -85,6 +85,23 @@ export class AppState implements MutationManager {
     get cursor() {
         return this._machine.cursor;
     }
+    get selectedStorage() {
+        const ah = '아'.charCodeAt(0);
+        return String.fromCharCode(
+            ah + this._machine._selectedStorage
+        );
+    }
+    get storages() {
+        const ah = '아'.charCodeAt(0);
+        return new Map(Array.from({
+            length: Aheui.jongTable.length,
+        }, (_, i) => String.fromCharCode(ah + i)).map(
+            code => [
+                code,
+                this._machine.getStorage(code)._getArray(),
+            ] as [string, number[]]
+        ));
+    }
     get codeSpace() {
         return this._codeSpace;
     }
@@ -323,7 +340,7 @@ class UIState {
             'edit.inputMethod': true,
             'edit.rotateAndFlip': true,
             'state.cursor': true,
-            'state.storage': true,
+            'state.storage.아': true, // 아~앟
             'io.input': true,
             'io.output': true,
             'modal.saveAsGist': false,

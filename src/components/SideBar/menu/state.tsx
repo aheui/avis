@@ -10,6 +10,7 @@ import {
 } from '..';
 import Label from '../../input/Label';
 import IntInput from '../../input/IntInput';
+import Storage from './state/Storage';
 
 interface ButtonProps {
     active?: boolean;
@@ -61,11 +62,21 @@ export const Content = connect(
                 />
             </Label>
         </SideBarContentFolder>
-        <SideBarContentFolder
-            title="저장공간"
-            open={appState.getUIOpen('state.storage')}
-            onBarClick={open => appState.setUIOpen('state.storage', !open)}>
-            TODO
-        </SideBarContentFolder>
+        { Array.from(appState.storages).map(
+            ([code, storage]) => <SideBarContentFolder
+                key={code}
+                title={
+                    (appState.selectedStorage === code) ?
+                    `👉 ${ code } (${ storage.length })` :
+                    `${ code } (${ storage.length })`
+                }
+                open={appState.getUIOpen(`state.storage.${ code }`)}
+                onBarClick={open => appState.setUIOpen(`state.storage.${ code }`, !open)}>
+                <Storage
+                    key={code}
+                    storage={storage}
+                />
+            </SideBarContentFolder>
+        ) }
     </SideBarContent>
 );

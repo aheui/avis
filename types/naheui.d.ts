@@ -50,6 +50,7 @@ declare module 'naheui' {
             terminated: boolean;
             cursor: Cursor;
             storage: Storage;
+            _selectedStorage: number;
             run(terminateFunction: (result: number) => void): void;
             step(): StepResult;
             input(type: 'number' | 'character'): number;
@@ -76,6 +77,7 @@ declare module 'naheui' {
         }
         export class Storage {
             constructor(type: 'stack' | 'queue' | 'pipe');
+            _getArray(): number[];
             push(value: number): void;
             pop(): number;
             duplicate(): number;

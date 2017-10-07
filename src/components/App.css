@@ -7,6 +7,8 @@
 
 .app > .body {
     flex: 1;
+    /* firefox flex 동작 우회용 */
+    max-height: calc(100% - 37px - 20px);
     display: flex;
     flex-direction: row;
 }
