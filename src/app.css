@@ -1,0 +1,36 @@
+/* 기본 폰트 */
+@import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
+/* 조판부호 표시용 폰트 */
+@import url('http://mozilla.github.io/Fira/fira.css');
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Nanum Gothic', 'Fira Sans';
+}
+
+:global(#app) {
+    width: 100%;
+    height: 100%;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+}
+
+:global(#app) ::-webkit-scrollbar {
+    width: 14px;
+    background-color: transparent;
+}
+
+:global(#app) ::-webkit-scrollbar-thumb {
+    background-color: rgba(121, 121, 121, 0.1);
+}
+
+:global(#app) :hover::-webkit-scrollbar-thumb {
+    background-color: rgba(121, 121, 121, 0.4);
+}
+
+::-webkit-scrollbar-corner {
+    background-color: rgb(30, 30, 30);
+}

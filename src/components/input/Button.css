@@ -1,0 +1,43 @@
+.button {
+    position: relative;
+    padding: 4px;
+    display: flex;
+    justify-content: space-around;
+    cursor: pointer;
+    user-select: none;
+}
+
+.button .label {
+    width: 100%;
+    text-align: left;
+    font-size: 13px;
+    z-index: 2;
+}
+
+.button .spinner {
+    animation: button-spinner-rotate 0.7s infinite linear;
+}
+
+.button:not(.disabled):hover {
+    color: #ffffff;
+    background-color: #2a2d2e;
+}
+
+.button.primary {
+    background-color: #094771;
+}
+
+.button.primary:not(.disabled):hover {
+    background-color: rgb(0, 122, 204);
+}
+
+.button.disabled {
+    opacity: 0.5;
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
+
+@keyframes button-spinner-rotate {
+    0% { transform: rotate(0); }
+    100% { transform: rotate(360deg); }
+}

@@ -1,0 +1,27 @@
+.key {
+    display: inline-block;
+    padding: 0 0.2em;
+    font-size: 10px;
+    font-family: 'Fira Sans';
+    color: rgb(37, 37, 38);
+    text-shadow: 0 0.1em 0.2em #888;
+    background-color: #bbb;
+    border-top: solid 0.1em #aaa;
+    border-right: solid 0.2em #888;
+    border-bottom: solid 0.3em #777;
+    border-left: solid 0.2em #999;
+    border-radius: 0.3em;
+}
+
+.key.down {
+    background-color: #aaa;
+    border-top: solid 0.1em #777;
+    border-right: solid 0.2em #999;
+    border-bottom: solid 0.3em #aaa;
+    border-left: solid 0.2em #888;
+}
+
+.key.down .text {
+    display: inline-block;
+    transform: translateY(0.1em);
+}

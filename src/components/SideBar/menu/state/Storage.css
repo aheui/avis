@@ -1,0 +1,12 @@
+.table {
+    width: 100%;
+    font-size: 13px;
+}
+
+.table td {
+    text-align: center;
+}
+
+.input {
+    width: 70px;
+}

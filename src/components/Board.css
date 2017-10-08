@@ -1,0 +1,90 @@
+.board {
+    position: relative;
+    flex: 1;
+    font-size: 16px;
+    color: rgb(212, 212, 212);
+    background-color: rgb(30, 30, 30);
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+.line-numbers-scroll {
+    position: absolute;
+    top: 0;
+    width: 70px;
+    height: 100%;
+}
+
+.line-numbers-scroll.shadow {
+    box-shadow: 5px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.column-numbers-scroll {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 30px;
+}
+
+.column-numbers-scroll.shadow {
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.scroll {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.numbers {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.line-number {
+    position: absolute;
+    box-sizing: border-box;
+    padding-right: 20px;
+    width: 100%;
+    height: 30px;
+    line-height: 30px;
+    font-size: 14px;
+    text-align: right;
+    color: rgba(90, 90, 90, 1);
+}
+
+.column-number {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 14px;
+    text-align: center;
+    color: rgba(90, 90, 90, 1);
+}
+
+.square {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 70px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 12px;
+    text-align: center;
+    color: rgba(90, 90, 90, 1);
+    background-color: rgb(30, 30, 30);
+}
+
+.line-number:hover,
+.line-number:active,
+.column-number:hover,
+.column-number:active,
+.square:hover,
+.square:active {
+    background-color: rgba(90, 90, 90, 0.1);
+}
