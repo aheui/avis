@@ -2,6 +2,7 @@ const path = require('path');
 
 const webpack = require('webpack');
 
+const production = process.argv.indexOf('-p') !== -1;
 
 module.exports = {
     entry: [
@@ -9,7 +10,7 @@ module.exports = {
         '.',
     ],
     context: path.resolve(__dirname, 'src'),
-    devtool: 'source-map',
+    devtool: production ? false : 'source-map',
     devServer: {
         host: '0.0.0.0',
         port: 4715,
@@ -23,7 +24,7 @@ module.exports = {
     resolve: {
         extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     },
-    plugins: [
+    plugins: production ? [] : [
         new webpack.HotModuleReplacementPlugin(),
     ],
     module: {
