@@ -36,11 +36,13 @@ new Promise(resolve => {
 });
 
 async function resolveContent(query?: string): Promise<string> {
+    const gistPrefix = 'gist:';
+    const githubPrefix = 'github:';
     if (!query) return '';
-    if (query.startsWith('gist:')) {
+    if (query.startsWith(gistPrefix)) {
         try {
             const github = new GitHub();
-            const gist = github.getGist(query.substr(5));
+            const gist = github.getGist(query.substr(gistPrefix.length));
             const result = await gist.read();
             const { files } = result.data;
             const fileNames = Object.keys(files);
@@ -53,6 +55,27 @@ async function resolveContent(query?: string): Promise<string> {
             );
             if (aheuiFile) return files[aheuiFile].content;
             return files[fileNames[0]].content;
+        } catch (err) {
+            console.error(err);
+            return '';
+        }
+    }
+    // github:aheui/snippets/master/99dan/99dan.aheui
+    if (query.startsWith(githubPrefix)) {
+        try {
+            const [, // remove first
+                userName,
+                repoName,
+                refName,
+                pathName,
+            ] = /^(.+?)\/(.+?)\/(.+?)\/(.+)$/.exec(
+                query.substr(githubPrefix.length),
+            );
+            const github = new GitHub();
+            const repo = github.getRepo(userName, repoName);
+            const { data } = await repo.getContents(refName, pathName);
+            if (data.type !== 'file') return '';
+            return await (await fetch(data.download_url)).text();
         } catch (err) {
             console.error(err);
             return '';

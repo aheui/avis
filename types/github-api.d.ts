@@ -750,11 +750,11 @@ declare module 'github-api' {
          * @see https://developer.github.com/v3/repos/contents/#get-contents
          * @param {string} ref - the ref to check
          * @param {string} path - the path containing the content to fetch
-         * @param {boolean} raw - `true` if the results should be returned raw instead of GitHub's normalized format
-         * @param {Requestable.callback} cb - will receive the fetched data
+         * @param {boolean} [raw] - `true` if the results should be returned raw instead of GitHub's normalized format
+         * @param {Requestable.callback} [cb] - will receive the fetched data
          * @return {Promise} - the promise for the http request
          */
-        getContents(ref: string, path: string, raw: boolean, cb: Requestable.callback): Promise<any>;
+        getContents(ref: string, path: string, raw?: boolean, cb?: Requestable.callback): Promise<any>;
         
         /**
          * Get the README of a repository
