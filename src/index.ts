@@ -1,3 +1,4 @@
+import axios from 'axios';
 import * as qs from 'qs';
 import * as GitHub from 'github-api';
 
@@ -75,7 +76,10 @@ async function resolveContent(query?: string): Promise<string> {
             const repo = github.getRepo(userName, repoName);
             const { data } = await repo.getContents(refName, pathName);
             if (data.type !== 'file') return '';
-            return await (await fetch(data.download_url)).text();
+            return await (await axios({
+                method: 'get',
+                url: data.download_url
+            })).data;
         } catch (err) {
             console.error(err);
             return '';
