@@ -1,7 +1,7 @@
 /* 기본 폰트 */
-@import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
+@import url('https://fonts.googleapis.com/earlyaccess/nanumgothic.css');
 /* 조판부호 표시용 폰트 */
-@import url('http://mozilla.github.io/Fira/fira.css');
+@import url('https://mozilla.github.io/Fira/fira.css');
 
 html, body {
     width: 100%;
