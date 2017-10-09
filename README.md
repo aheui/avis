@@ -30,3 +30,16 @@ PC 크롬, 파이어폭스의 최신 안정버전만 지원합니다.
 
 #### 작성한 코드를 gist로 저장해서 다른사람들과 공유할 수 있습니다!
 ![gist로 저장할 수 있어요](./readme/저장하기.png)
+
+## 개발에 참여하기
+nodejs가 설치돼있어야 합니다.
+
+### 개발서버 띄우기
+- `npm install && npm run dev`
+- 웹브라우저를 열어서 <http://0.0.0.0:4715> 로 들어갑니다.
+
+### 배포
+- `dist` 폴더를 삭제합니다.
+- `npm install && npm run build`
+- `dist` 폴더가 생긴 것을 확인합니다.
+- https://github.com/aheui/avis 저장소의 `gh-pages` 브랜치에 PR을 날립니다.
