@@ -40,8 +40,8 @@ export const Content = connect(
                     rightLabel="덮어쓰기"
                     rightValue="overwrite"
                     value={appState.editOptions.inputMethod!}
-                    onChange={(inputMethod: 'insert' | 'overwrite') => {
-                        appState.editOptions = { inputMethod };
+                    onChange={(inputMethod) => {
+                        appState.editOptions = { inputMethod: inputMethod as ('insert' | 'overwrite') };
                     }}
                 />
             </Label>
@@ -55,8 +55,8 @@ export const Content = connect(
                     rightValue="vertical"
                     disabled={appState.editOptions.inputMethod === 'insert'}
                     value={appState.editOptions.inputDirection!}
-                    onChange={(inputDirection: 'horizontal' | 'vertical') => {
-                        appState.editOptions = { inputDirection };
+                    onChange={(inputDirection) => {
+                        appState.editOptions = { inputDirection: inputDirection as ('horizontal' | 'vertical') };
                     }}
                 />
             </Label>

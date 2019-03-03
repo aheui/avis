@@ -1056,7 +1056,7 @@ export class CodeSpace
         this.mutate(() => {
             this.ensureHeight(rowIndex + height);
             const tails = this.slice(rowIndex, rowIndex + height).map(
-                codeLine => codeLine.divide(colIndex)
+                codeLine => codeLine.divide(colIndex) as CodeLine
             );
             this.splice(rowIndex + height, 0, ...tails);
             this._recalculateWidth();
@@ -1125,7 +1125,7 @@ class ChangeDispatcher {
 }
 
 type Diff<T extends string, U extends string> = ({ [P in T]: P } & { [P in U]: never } & { [x: string]: never })[T];
-type Omit<T, K extends keyof T> = Pick<T, Diff<keyof T, K>>;
+type Omit<T, K extends keyof T> = Pick<T, Diff<Extract<keyof T, string>, Extract<K, string>>>;
 
 type ReactComponent<T> = React.ComponentClass<T> | React.SFC<T>;
 

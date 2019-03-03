@@ -21,9 +21,9 @@ export default function cloneable<T>() {
                     } = { __proto__: this.__proto__ };
                     for (let key of Reflect.ownKeys(this)) {
                         if (this[key][clone]) {
-                            result[key] = this[key][clone]();
+                            result[key as string] = this[key][clone]();
                         } else {
-                            result[key] = this[key];
+                            result[key as string] = this[key];
                         }
                     }
                     return result;

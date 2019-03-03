@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames';
 
+import ButtonProps from './ButtonProps';
 import * as file from './menu/file';
 import * as edit from './menu/edit';
 import * as state from './menu/state';
@@ -9,7 +10,7 @@ import * as style from './style.css';
 
 const menus: {
     [key: string]: {
-        Button: React.ComponentClass | React.SFC<any>,
+        Button: React.ComponentClass | React.SFC<ButtonProps>,
         Content: React.ComponentClass | React.SFC<any>,
     };
 } = {
@@ -54,7 +55,7 @@ class SideBar extends React.Component<SideBarProps, SideBarState> {
                     return <Button
                         key={name}
                         active={current === name}
-                        onActivate={() => this.setState({ current: name })}
+                        onActivate={() => this.setState({ current: name as string })}
                         onDeactivate={() => this.setState({ current: null })}
                     />;
                 }) }
