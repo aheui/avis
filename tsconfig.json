@@ -17,6 +17,7 @@
     "baseUrl": "./src/",
     "allowSyntheticDefaultImports": false,
     "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
     "emitDecoratorMetadata": false,
     "types": [
       "node"

@@ -78,7 +78,7 @@ class ContentComponent extends React.Component<ContentProps> {
                     const file = files[0];
                     const reader = new FileReader();
                     reader.onload = () => {
-                        appState.init(reader.result);
+                        appState.init(reader.result as string);
                     };
                     reader.readAsText(file);
                     this.fileInput.value = '';

@@ -53,8 +53,8 @@ class ContentComponent extends React.Component<ContentProps> {
                         rightValue="given"
                         value={inputMethod!}
                         onChange={
-                            (inputMethod: 'modal' | 'given') =>
-                            appState.runningOptions = { inputMethod }
+                            (inputMethod) =>
+                            appState.runningOptions = { inputMethod: inputMethod as ('modal' | 'given') }
                         }
                     />
                 </Label>
