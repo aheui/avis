@@ -28,7 +28,7 @@ module.exports = {
         new webpack.HotModuleReplacementPlugin(),
     ],
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.tsx?$/,
                 exclude: /(node_modules)/,
@@ -36,21 +36,26 @@ module.exports = {
             },
             {
                 test: /\.css$/,
-                use: ['style-loader', {
-                    loader: 'css-loader',
-                    options: {
-                        modules: true,
-                        camelCase: true,
-                    },
-                }],
+                use: [
+                    { loader: 'style-loader'},
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            modules: true,
+                            camelCase: true,
+                        },
+                    }
+                ],
             },
             {
                 test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)(\?.*)?$/,
-                loader: 'file-loader',
-                query: {
-                    name: '[hash:7].[ext]',
-                    emitFile: true,
-                }
+                use: [{
+                    loader: 'file-loader',
+                    options: {
+                        name: '[hash:7].[ext]',
+                        emitFile: true,
+                    }
+                }]
             }
         ],
     },
