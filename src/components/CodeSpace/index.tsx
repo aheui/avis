@@ -19,6 +19,8 @@ interface CodeSpaceProps {
     appState: AppState;
     codeSpace: CodeSpace;
     onScroll: (scroll: { scrollTop: number, scrollLeft: number }) => void;
+    initialScrollTop: number;
+    initialScrollLeft: number;
 }
 
 interface CodeSpaceState {
@@ -104,6 +106,7 @@ export default connect<CodeSpaceProps>(
         };
         this.mouseDragMoveHandler = e => this.throttled.set(this.onMouseDragMove, [e]);
         this.mouseDragShift = () => this.props.appState.squareSelection();
+        this.scrollElement.scrollTo(this.props.initialScrollLeft, this.props.initialScrollTop);
         this.updateCodeSpacePosition();
     }
     componentWillUnmount() {
@@ -698,7 +701,7 @@ interface CellLineProps {
     codeLine: CodeLine;
 }
 
-const CellLine: React.SFC<CellLineProps> = props => <div
+export const CellLine: React.SFC<CellLineProps> = props => <div
     className={style.cellLine}
     style={{
         top: props.index * 30,

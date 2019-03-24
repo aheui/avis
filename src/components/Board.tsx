@@ -10,6 +10,7 @@ import { base26 } from '../misc/base';
 import CodeSpaceComponent from './CodeSpace';
 import CodeSpaceStateViewer from './CodeSpaceStateViewer';
 import * as style from './Board.css';
+import RedrawMode from './CodeSpace/RedrawMode';
 
 
 interface BoardProps {
@@ -39,13 +40,27 @@ export default connect(
         const { codeSpace } = appState;
         const { scrollTop, scrollLeft } = this.state;
         return <div className={style.board}>
-            <CodeSpaceComponent
-                ref="codeSpace"
-                codeSpace={codeSpace}
-                onScroll={
-                    ({ scrollTop, scrollLeft }) => this.setState({ scrollTop, scrollLeft })
-                }
-            />
+            {
+                appState.specialMode === 'redraw' ?
+                <RedrawMode
+                    ref="codeSpace"
+                    codeSpace={codeSpace}
+                    onScroll={
+                        ({ scrollTop, scrollLeft }) => this.setState({ scrollTop, scrollLeft })
+                    }
+                    initialScrollLeft={scrollLeft}
+                    initialScrollTop={scrollTop}
+                /> :
+                <CodeSpaceComponent
+                    ref="codeSpace"
+                    codeSpace={codeSpace}
+                    onScroll={
+                        ({ scrollTop, scrollLeft }) => this.setState({ scrollTop, scrollLeft })
+                    }
+                    initialScrollLeft={scrollLeft}
+                    initialScrollTop={scrollTop}
+                />
+            }
             <LineNumbersScroll
                 codeSpace={codeSpace}
                 scrollTop={scrollTop}
@@ -60,7 +75,8 @@ export default connect(
                 className={style.square}
                 onClick={() => {
                     appState.selectAll();
-                    (this.refs.codeSpace as any).ref.focusInputElement();
+                    const codeSpaceElement = (this.refs.codeSpace as any).ref;
+                    codeSpaceElement.focusInputElement && codeSpaceElement.focusInputElement();
                 }}
             >{
                 `${ codeSpace.width } \xd7 ${ codeSpace.height }`

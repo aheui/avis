@@ -23,6 +23,7 @@ export class AppState implements MutationManager {
     // AppState
     private _changeDispatcher: ChangeDispatcher;
     private _uiState: UIState;
+    private _specialMode: null | SpecialMode;
     private _editOptions: EditOptions;
     private _runningOptions: RunningOptions;
     private _selection: Selection;
@@ -35,6 +36,7 @@ export class AppState implements MutationManager {
     constructor({ content }: { content: string }) {
         this._changeDispatcher = new ChangeDispatcher();
         this._uiState = new UIState();
+        this._specialMode = null;
         this._editOptions = new EditOptions();
         this._runningOptions = new RunningOptions();
         this._selection = new Selection();
@@ -47,6 +49,7 @@ export class AppState implements MutationManager {
         this.init(content);
     }
     get changeDispatcher() { return this._changeDispatcher; }
+    get specialMode() { return this._specialMode; }
     get cursorOnBreakPoint() {
         const { cursor } = this._machine;
         const code = this._codeSpace.get(cursor.x, cursor.y);
@@ -328,6 +331,9 @@ export class AppState implements MutationManager {
             this._codeSpace.toggleBreakPoint(cursor.x, cursor.y);
         });
     }
+    startRedrawMode() {
+        this.mutate(() => this._specialMode = 'redraw');
+    }
 }
 
 // stores trivial states
@@ -339,6 +345,7 @@ class UIState {
             'file.load': true,
             'edit.inputMethod': true,
             'edit.rotateAndFlip': true,
+            'edit.redraw': true,
             'state.cursor': true,
             'state.storage.아': true, // 아~앟
             'io.input': true,
@@ -369,6 +376,10 @@ class RunningOptions {
         this.output = '';
     }
 }
+
+type SpecialMode =
+    | 'redraw'
+    ;
 
 export class Selection {
     private _anchor: Vec2;

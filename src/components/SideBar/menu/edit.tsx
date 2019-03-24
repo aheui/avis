@@ -102,5 +102,17 @@ export const Content = connect(
                 />
             </Label>
         </SideBarContentFolder>
+        <SideBarContentFolder
+            title="다시 그리기"
+            open={appState.getUIOpen('edit.redraw')}
+            onBarClick={open => appState.setUIOpen('edit.redraw', !open)}>
+            <MenuButton
+                label="시작"
+                disabled={appState.isRunning}
+                onClick={() => {
+                    appState.startRedrawMode();
+                }}
+            />
+        </SideBarContentFolder>
     </SideBarContent>
 );
