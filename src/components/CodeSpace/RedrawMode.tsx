@@ -8,8 +8,9 @@ import {
 } from '../../appState';
 import CodeSpaceStateViewer from '../CodeSpaceStateViewer';
 import PathTrack from './PathTrack';
-import { CellLine } from '.';
+import { CellLine, Cursor } from '.';
 import * as style from './style.css';
+import * as redrawModeStyle from './redraw-mode.css';
 
 interface CodeSpaceProps {
     appState: AppState;
@@ -41,8 +42,6 @@ export default connect<CodeSpaceProps>(
     // mousemove 이벤트 쓰로틀을 위한 속성
     raf: (() => void) | null;
     throttled: Map<(...args: any[]) => void, any[] | null>;
-    // ime hack을 위한 속성
-    startComposition: boolean;
     constructor(props: CodeSpaceProps) {
         super(props);
         this.state = {
@@ -189,17 +188,9 @@ export default connect<CodeSpaceProps>(
                 );
             }}
         >
-            <div className={classNames(style.cursor, {
-                [style.onBreakPoint]: false,
-            })} style={{
-                top: `${ 30 * appState.cursor.y }px`,
-                left: `${ 30 * appState.cursor.x }px`,
-            }}>
-                <svg viewBox="0 0 30 30" width="30" height="30">
-                    <rect className={style.cursorRect} x="3" y="3" width="24" height="24"/>
-                    <rect className={style.cursorDeco} x="3" y="3" width="24" height="24"/>
-                </svg>
-            </div>
+            <Cursor x={0} y={0} className={redrawModeStyle.cursor}/>
+            <Cursor x={1} y={1} className={redrawModeStyle.cursor}/>
+            <Cursor x={2} y={2} className={redrawModeStyle.cursor}/>
             <PathTrack path={appState.path} codeSpace={codeSpace}/>
             <CodeSpaceStateViewer>
                 <div

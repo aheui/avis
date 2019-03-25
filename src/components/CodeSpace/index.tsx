@@ -242,17 +242,7 @@ export default connect<CodeSpaceProps>(
                 );
             }}
         >
-            <div className={classNames(style.cursor, {
-                [style.onBreakPoint]: false,
-            })} style={{
-                top: `${ 30 * appState.cursor.y }px`,
-                left: `${ 30 * appState.cursor.x }px`,
-            }}>
-                <svg viewBox="0 0 30 30" width="30" height="30">
-                    <rect className={style.cursorRect} x="3" y="3" width="24" height="24"/>
-                    <rect className={style.cursorDeco} x="3" y="3" width="24" height="24"/>
-                </svg>
-            </div>
+            <Cursor x={appState.cursor.x} y={appState.cursor.y}/>
             <PathTrack path={appState.path} codeSpace={codeSpace}/>
             <CodeSpaceStateViewer>
                 <div
@@ -695,6 +685,28 @@ function handleInputPaste(
     resetCaretAnimation();
     scrollToFocus();
 }
+
+interface CursorProps {
+    x: number;
+    y: number;
+    className?: string;
+    style?: React.CSSProperties;
+}
+
+export const Cursor: React.FC<CursorProps> = props => <div
+    className={classNames(style.cursor, props.className, {
+        [style.onBreakPoint]: false,
+    })}
+    style={{
+        top: `${ 30 * props.y }px`,
+        left: `${ 30 * props.x }px`,
+        ...props.style,
+    }}>
+    <svg viewBox="0 0 30 30" width="30" height="30">
+        <rect className={style.cursorRect} x="3" y="3" width="24" height="24"/>
+        <rect className={style.cursorDeco} x="3" y="3" width="24" height="24"/>
+    </svg>
+</div>;
 
 interface CellLineProps {
     index: number;
