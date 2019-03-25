@@ -331,9 +331,8 @@ export class AppState implements MutationManager {
             this._codeSpace.toggleBreakPoint(cursor.x, cursor.y);
         });
     }
-    startRedrawMode() {
-        this.mutate(() => this._specialMode = 'redraw');
-    }
+    finishSpecialMode() { this.mutate(() => this._specialMode = null); }
+    startRedrawMode() { this.mutate(() => this._specialMode = new RedrawMode(() => this.onMutate())); }
 }
 
 // stores trivial states
@@ -377,9 +376,17 @@ class RunningOptions {
     }
 }
 
-type SpecialMode =
-    | 'redraw'
-    ;
+@mutationManager()
+class SpecialMode implements MutationManager {
+    // MutationManager
+    stateId: number;
+    mutate: (executor: Executor) => void;
+    // SpecialMode
+    onMutate() { this.parentMutateCallback(); }
+    constructor(private parentMutateCallback: () => void) {}
+}
+
+export class RedrawMode extends SpecialMode {}
 
 export class Selection {
     private _anchor: Vec2;

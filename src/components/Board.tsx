@@ -5,12 +5,13 @@ import {
     connect,
     AppState,
     CodeSpace,
+    RedrawMode,
 } from '../appState';
 import { base26 } from '../misc/base';
 import CodeSpaceComponent from './CodeSpace';
 import CodeSpaceStateViewer from './CodeSpaceStateViewer';
 import * as style from './Board.css';
-import RedrawMode from './CodeSpace/RedrawMode';
+import RedrawModeComponent from './CodeSpace/RedrawMode';
 
 
 interface BoardProps {
@@ -41,8 +42,8 @@ export default connect(
         const { scrollTop, scrollLeft } = this.state;
         return <div className={style.board}>
             {
-                appState.specialMode === 'redraw' ?
-                <RedrawMode
+                appState.specialMode instanceof RedrawMode ?
+                <RedrawModeComponent
                     ref="codeSpace"
                     codeSpace={codeSpace}
                     onScroll={

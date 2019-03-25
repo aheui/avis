@@ -3,6 +3,8 @@ import * as React from 'react';
 import {
     connect,
     Selection,
+    AppState,
+    RedrawMode,
 } from '../../../appState';
 import {
     SideBarButton,
@@ -102,17 +104,30 @@ export const Content = connect(
                 />
             </Label>
         </SideBarContentFolder>
-        <SideBarContentFolder
-            title="다시 그리기"
-            open={appState.getUIOpen('edit.redraw')}
-            onBarClick={open => appState.setUIOpen('edit.redraw', !open)}>
+        <RedrawModeFolder appState={appState}/>
+    </SideBarContent>
+);
+
+interface RedrawModeFolderProps {
+    appState: AppState;
+}
+const RedrawModeFolder: React.FC<RedrawModeFolderProps> = ({ appState }) => {
+    return <SideBarContentFolder
+        title="다시 그리기"
+        open={appState.getUIOpen('edit.redraw')}
+        onBarClick={open => appState.setUIOpen('edit.redraw', !open)}>
+        { appState.specialMode instanceof RedrawMode ? <>
+            <MenuButton
+                label="종료"
+                disabled={appState.isRunning}
+                onClick={() => { appState.finishSpecialMode(); }}
+            />
+        </> : <>
             <MenuButton
                 label="시작"
                 disabled={appState.isRunning}
-                onClick={() => {
-                    appState.startRedrawMode();
-                }}
+                onClick={() => { appState.startRedrawMode(); }}
             />
-        </SideBarContentFolder>
-    </SideBarContent>
-);
+        </> }
+    </SideBarContentFolder>;
+};
