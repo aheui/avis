@@ -408,6 +408,25 @@ export class RedrawMode extends SpecialMode {
             cursor: null,
         };
     }
+    private isSelectable(pos: { x: number, y: number }, codeSpace: CodeSpace): boolean {
+        if (this.phase.type !== 'select') return false;
+        const { cursor } = this.phase;
+        const code = codeSpace.get(pos.x, pos.y);
+        if (!cursor) return !!code && !code.isComment;
+        return false; // TODO
+    }
+    select(pos: { x: number, y: number }, codeSpace: CodeSpace) {
+        if (this.phase.type !== 'select') return;
+        const phase = this.phase;
+        this.mutate(() => {
+            if (!this.isSelectable(pos, codeSpace)) return;
+            if (phase.cursor === null) {
+                phase.cursor = new Vec2(pos.x, pos.y);
+                return;
+            }
+            console.log('wa!');
+        });
+    }
 }
 
 export class Selection {
@@ -531,10 +550,9 @@ export class Code implements Cloneable<Code> {
         return this.char;
     }
     static isComment(cho: number, jung: number) {
-        return (
-            significantChoIndices.indexOf(cho) === -1 &&
-            significantJungIndices.indexOf(jung) === -1
-        );
+        const choIsComment = significantChoIndices.indexOf(cho) === -1;
+        const jungIsComment = significantJungIndices.indexOf(jung) === -1;
+        return jungIsComment || (choIsComment && jungIsComment);
     }
 }
 

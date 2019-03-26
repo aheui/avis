@@ -5,6 +5,7 @@ import {
     connect,
     AppState,
     CodeSpace,
+    RedrawMode,
 } from '../../appState';
 import CodeSpaceStateViewer from '../CodeSpaceStateViewer';
 import PathTrack from './PathTrack';
@@ -14,6 +15,7 @@ import * as redrawModeStyle from './redraw-mode.css';
 
 interface CodeSpaceProps {
     appState: AppState;
+    redrawMode: RedrawMode;
     codeSpace: CodeSpace;
     onScroll: (scroll: { scrollTop: number, scrollLeft: number }) => void;
     initialScrollTop: number;
@@ -31,8 +33,8 @@ interface CodeSpaceState {
     codeSpaceY: number;
 }
 
-export default connect<CodeSpaceProps>(
-    appState => ({ appState }),
+export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawMode }>(
+    appState => ({ appState, redrawMode: appState.specialMode as RedrawMode }),
 )(class CodeSpace extends React.Component<CodeSpaceProps, CodeSpaceState> {
     scrollElement: HTMLElement;
     codeSpaceElement: HTMLElement;
@@ -143,8 +145,27 @@ export default connect<CodeSpaceProps>(
         Object.assign(this.scrollElement, { scrollTop, scrollLeft });
         this.props.onScroll({ scrollTop, scrollLeft });
     }
+    renderSelectState() {
+        const {
+            redrawMode,
+            codeSpace,
+        } = this.props;
+        const { phase } = redrawMode;
+        if (phase.type !== 'select') return;
+        return <>
+            { phase.cursor && <Cursor
+                x={phase.cursor.x}
+                y={phase.cursor.y}
+                className={redrawModeStyle.cursor}
+            /> }
+            <PathTrack path={phase.path} codeSpace={codeSpace}/>
+        </>;
+    }
     render() {
-        const { codeSpace, appState } = this.props;
+        const {
+            redrawMode,
+            codeSpace,
+        } = this.props;
         const {
             mouseOn, mouseDown,
             ghostCaretX, ghostCaretY,
@@ -172,7 +193,7 @@ export default connect<CodeSpaceProps>(
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
                 const { mouseDown } = this.state;
                 const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
-                console.log('mousedown:', cellPos);
+                redrawMode.select(cellPos, codeSpace);
                 if (!mouseDown) {
                     this.setState({ mouseDown: true });
                     window.addEventListener('mouseup', this.mouseDragUpHandler, true);
@@ -188,10 +209,7 @@ export default connect<CodeSpaceProps>(
                 );
             }}
         >
-            <Cursor x={0} y={0} className={redrawModeStyle.cursor}/>
-            <Cursor x={1} y={1} className={redrawModeStyle.cursor}/>
-            <Cursor x={2} y={2} className={redrawModeStyle.cursor}/>
-            <PathTrack path={appState.path} codeSpace={codeSpace}/>
+            { this.renderSelectState() }
             <CodeSpaceStateViewer>
                 <div
                     ref={codeSpaceElement => this.codeSpaceElement = codeSpaceElement!}
