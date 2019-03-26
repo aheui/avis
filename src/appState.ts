@@ -385,8 +385,30 @@ class SpecialMode implements MutationManager {
     onMutate() { this.parentMutateCallback(); }
     constructor(private parentMutateCallback: () => void) {}
 }
+type SpecialModeConstructorParameters = ConstructorParameters<{
+    new(parentMutateCallback: () => void): SpecialMode;
+}>;
 
-export class RedrawMode extends SpecialMode {}
+type RedrawModePhase = RedrawModeSelectPhase | RedrawModeDrawPhase;
+interface RedrawModeSelectPhase {
+    type: 'select';
+    path: Path;
+    cursor: null | Vec2;
+}
+interface RedrawModeDrawPhase {
+    type: 'draw';
+}
+export class RedrawMode extends SpecialMode {
+    phase: RedrawModePhase;
+    constructor(...args: SpecialModeConstructorParameters) {
+        super(...args);
+        this.phase = {
+            type: 'select',
+            path: new Path('rgb(204, 122, 0)'),
+            cursor: null,
+        };
+    }
+}
 
 export class Selection {
     private _anchor: Vec2;
