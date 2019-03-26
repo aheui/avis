@@ -62,8 +62,14 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
         this.removeMouseDragEventListeners();
     }
     onMouseDragMove(e: MouseEvent) {
+        const {
+            redrawMode,
+            codeSpace,
+        } = this.props;
         const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
-        console.log('drag:', this.getCellPosFromMousePos(mouseX, mouseY));
+        const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
+        // TODO: 마우스가 빠르게 드래그 되었을 경우 중간 셀들도 일괄 선택되도록 처리
+        redrawMode.select(cellPos, codeSpace);
         this.scrollToFocus();
     }
     removeMouseDragEventListeners() {
@@ -152,10 +158,11 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
         } = this.props;
         const { phase } = redrawMode;
         if (phase.type !== 'select') return;
+        const { lastMoment } = phase.path;
         return <>
-            { phase.cursor && <Cursor
-                x={phase.cursor.x}
-                y={phase.cursor.y}
+            { lastMoment && <Cursor
+                x={lastMoment.p.x}
+                y={lastMoment.p.y}
                 className={redrawModeStyle.cursor}
             /> }
             <PathTrack path={phase.path} codeSpace={codeSpace}/>

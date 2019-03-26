@@ -112,11 +112,17 @@ interface RedrawModeFolderProps {
     appState: AppState;
 }
 const RedrawModeFolder: React.FC<RedrawModeFolderProps> = ({ appState }) => {
+    const redrawMode = appState.specialMode as RedrawMode;
     return <SideBarContentFolder
         title="다시 그리기"
         open={appState.getUIOpen('edit.redraw')}
         onBarClick={open => appState.setUIOpen('edit.redraw', !open)}>
         { appState.specialMode instanceof RedrawMode ? <>
+            <MenuButton
+                label="선택 초기화"
+                disabled={appState.isRunning}
+                onClick={() => { redrawMode.clearSelection(); }}
+            />
             <MenuButton
                 label="종료"
                 disabled={appState.isRunning}

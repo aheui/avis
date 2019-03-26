@@ -96,12 +96,14 @@ export class Path {
         for (let i = 0; i < l; ++i) yield this.moments[i];
         yield this.moments[l].clone(false);
     }
-    get lastMoment() {
+    get lastMoment(): Moment | null {
         return this.moments[this.moments.length - 1] || null;
     }
     step(moment: Moment) {
         this.mutate(() => {
             this.burn();
+            const { lastMoment } = this;
+            if (lastMoment) lastMoment.cn = moment.cp;
             this.moments.push(moment);
         });
     }

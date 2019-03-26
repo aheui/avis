@@ -293,7 +293,7 @@ export class AppState implements MutationManager {
         this.mutate(() => {
             const machine = this._machine;
             const path = this._path;
-            const { cp, f } = path.lastMoment;
+            const { cp, f } = path.lastMoment!;
             Object.assign(path.lastMoment, Moment.fromMachineState(
                 this._machine,
                 this._codeSpace,
@@ -303,16 +303,13 @@ export class AppState implements MutationManager {
             const stepResult = machine.step();
             if (stepResult.cursorMoveResult) {
                 const path = this._path;
-                const r = stepResult.cursorMoveResult
+                const r = stepResult.cursorMoveResult;
                 const cp =
                     (Math.abs(r.xSpeed) < 2) &&
                     (Math.abs(r.ySpeed) < 2) &&
                     !r.xWrapped &&
                     !r.yWrapped;
-                Object.assign(path.lastMoment, {
-                    o: new Vec2(r.xSpeed, r.ySpeed),
-                    cn: cp,
-                });
+                path.lastMoment!.o = new Vec2(r.xSpeed, r.ySpeed);
                 path.step(Moment.fromMachineState(
                     this._machine,
                     this._codeSpace,
@@ -393,7 +390,7 @@ type RedrawModePhase = RedrawModeSelectPhase | RedrawModeDrawPhase;
 interface RedrawModeSelectPhase {
     type: 'select';
     path: Path;
-    cursor: null | Vec2;
+    _selectedMap: { [posHash: string]: boolean };
 }
 interface RedrawModeDrawPhase {
     type: 'draw';
@@ -405,26 +402,60 @@ export class RedrawMode extends SpecialMode {
         this.phase = {
             type: 'select',
             path: new Path('rgb(204, 122, 0)'),
-            cursor: null,
+            _selectedMap: {},
         };
     }
-    private isSelectable(pos: { x: number, y: number }, codeSpace: CodeSpace): boolean {
-        if (this.phase.type !== 'select') return false;
-        const { cursor } = this.phase;
-        const code = codeSpace.get(pos.x, pos.y);
-        if (!cursor) return !!code && !code.isComment;
-        return false; // TODO
+    clearSelection() {
+        if (this.phase.type !== 'select') return;
+        this.mutate(() => {
+            Object.assign(this.phase, {
+                path: new Path('rgb(204, 122, 0)'),
+                _selectedMap: {},
+            });
+        });
     }
     select(pos: { x: number, y: number }, codeSpace: CodeSpace) {
         if (this.phase.type !== 'select') return;
         const phase = this.phase;
         this.mutate(() => {
-            if (!this.isSelectable(pos, codeSpace)) return;
-            if (phase.cursor === null) {
-                phase.cursor = new Vec2(pos.x, pos.y);
+            const { path, _selectedMap } = phase;
+            const posHash = `${pos.x},${pos.y}`;
+            if (_selectedMap[posHash]) return;
+            const code = codeSpace.get(pos.x, pos.y);
+            const { lastMoment } = path;
+            if (!lastMoment && !!code && code.isComment) return;
+            if (lastMoment == null) {
+                _selectedMap[posHash] = true;
+                path.step(new Moment(
+                    false,
+                    false,
+                    new Vec2(0, 1),
+                    new Vec2(0, 1),
+                    new Vec2(pos.x, pos.y),
+                    Infinity,
+                ));
                 return;
             }
-            console.log('wa!');
+            const { jung } = codeSpace.get(lastMoment.p.x, lastMoment.p.y)!;
+            const dx = pos.x - lastMoment.p.x;
+            const dy = pos.y - lastMoment.p.y;
+            if (dx && dy) return; // 수평, 수직이동이 아닌 경우
+            const [adx, ady] = [Math.abs(dx), Math.abs(dy)];
+            if (Math.max(adx, ady) > 2) return;
+            const xSpeed = Aheui.xSpeedTable[jung];
+            const ySpeed = Aheui.ySpeedTable[jung];
+            if (typeof xSpeed === 'number' && Math.abs(xSpeed) !== adx) return;
+            if (typeof ySpeed === 'number' && Math.abs(ySpeed) !== ady) return;
+            _selectedMap[posHash] = true;
+            lastMoment.o = new Vec2(dx, dy);
+            path.step(new Moment(
+                (adx + ady) === 1,
+                false,
+                new Vec2(dx, dy),
+                new Vec2(dx, dy),
+                new Vec2(pos.x, pos.y),
+                Infinity,
+            ));
         });
     }
 }
