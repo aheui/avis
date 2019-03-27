@@ -414,6 +414,11 @@ export class RedrawMode extends SpecialMode {
             });
         });
     }
+    isSelected(pos: { x: number, y: number }) {
+        if (this.phase.type !== 'select') return false;
+        const posHash = `${pos.x},${pos.y}`;
+        return !!this.phase._selectedMap[posHash];
+    }
     select(pos: { x: number, y: number }, codeSpace: CodeSpace) {
         if (this.phase.type !== 'select') return;
         const phase = this.phase;
@@ -422,8 +427,9 @@ export class RedrawMode extends SpecialMode {
             const posHash = `${pos.x},${pos.y}`;
             if (_selectedMap[posHash]) return;
             const code = codeSpace.get(pos.x, pos.y);
+            if (!code) return;
             const { lastMoment } = path;
-            if (!lastMoment && !!code && code.isComment) return;
+            if (!lastMoment && code.isComment) return;
             if (lastMoment == null) {
                 _selectedMap[posHash] = true;
                 path.step(new Moment(
@@ -457,6 +463,28 @@ export class RedrawMode extends SpecialMode {
                 Infinity,
             ));
         });
+    }
+    deselect() {
+        if (this.phase.type !== 'select') return;
+        const phase = this.phase;
+        this.mutate(() => {
+            const { path, _selectedMap } = phase;
+            const { lastMoment } = path;
+            if (!lastMoment) return;
+            path.stepBack();
+            const posHash = `${lastMoment.p.x},${lastMoment.p.y}`;
+            _selectedMap[posHash] = false;
+        });
+    }
+    selectOrDeselect(pos: { x: number, y: number }, codeSpace: CodeSpace) {
+        if (this.phase.type !== 'select') return;
+        const { path } = this.phase;
+        const len = path.moments.length;
+        if (len < 2) return this.select(pos, codeSpace);
+        const deselectPos = path.moments[len - 2].p;
+        if (deselectPos.x !== pos.x) return this.select(pos, codeSpace);
+        if (deselectPos.y !== pos.y) return this.select(pos, codeSpace);
+        this.deselect();
     }
 }
 
@@ -506,10 +534,6 @@ export class Selection {
     }
 }
 
-// ㄴㄷㄸㄹㅁㅂㅃㅅㅆㅈㅊㅌㅍㅎ
-const significantChoIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18];
-// ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅢㅣ
-const significantJungIndices = [0, 2, 4, 6, 8, 12, 13, 17, 18, 19, 20];
 const jungHInvertMap = {
     0: 4, 4: 0, // ㅏㅓ
     2: 6, 6: 2, // ㅑㅕ
@@ -526,6 +550,21 @@ const jungCCWRotationMap = {
     0: 8, 8: 4, 4: 13, 13: 0, // ㅏㅗㅓㅜ
     2: 12, 12: 6, 6: 17, 17: 2, // ㅑㅛㅕㅠ
 }
+/*
+function speed2jung(xSpeed: number, ySpeed: number): number {
+    if (xSpeed && ySpeed) return -1;
+    if (!xSpeed && !ySpeed) return -1;
+    if (xSpeed === 1) return 0; // ㅏ
+    if (xSpeed === 2) return 2; // ㅑ
+    if (xSpeed === -1) return 4; // ㅓ
+    if (xSpeed === -2) return 6; // ㅕ
+    if (ySpeed === -1) return 8; // ㅗ
+    if (ySpeed === -2) return 12; // ㅛ
+    if (ySpeed === 1) return 13; // ㅜ
+    if (ySpeed === 2) return 17; // ㅠ
+    return -1;
+}
+*/
 
 @cloneable<typeof Code>()
 export class Code implements Cloneable<Code> {
@@ -554,7 +593,7 @@ export class Code implements Cloneable<Code> {
         this._cho = Aheui.cho(value);
         this._jung = Aheui.jung(value);
         this._jong = Aheui.jong(value);
-        this._isComment = Code.isComment(this._cho, this._jung);
+        this._isComment = this._jung === -1;
     }
     get cho() { return this._cho; }
     get jung() { return this._jung; }
@@ -576,15 +615,7 @@ export class Code implements Cloneable<Code> {
     invertV() { this._mapJung(jungVInvertMap); }
     rotateCW() { this._mapJung(jungCWRotationMap); }
     rotateCCW() { this._mapJung(jungCCWRotationMap); }
-
-    toString() {
-        return this.char;
-    }
-    static isComment(cho: number, jung: number) {
-        const choIsComment = significantChoIndices.indexOf(cho) === -1;
-        const jungIsComment = significantJungIndices.indexOf(jung) === -1;
-        return jungIsComment || (choIsComment && jungIsComment);
-    }
+    toString() { return this.char; }
 }
 
 @cloneable<typeof CodeLine>()

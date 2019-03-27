@@ -69,7 +69,7 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
         const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
         const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
         // TODO: 마우스가 빠르게 드래그 되었을 경우 중간 셀들도 일괄 선택되도록 처리
-        redrawMode.select(cellPos, codeSpace);
+        redrawMode.selectOrDeselect(cellPos, codeSpace);
         this.scrollToFocus();
     }
     removeMouseDragEventListeners() {
@@ -200,7 +200,16 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
                 const { mouseDown } = this.state;
                 const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
-                redrawMode.select(cellPos, codeSpace);
+                toggle: if (redrawMode.isSelected(cellPos)) {
+                    if (redrawMode.phase.type !== 'select') break toggle;
+                    if (redrawMode.phase.path.moments.length !== 1) break toggle;
+                    const lastMoment = redrawMode.phase.path.lastMoment!;
+                    if (lastMoment.p.x !== cellPos.x) break toggle;
+                    if (lastMoment.p.y !== cellPos.y) break toggle;
+                    redrawMode.clearSelection();
+                } else {
+                    redrawMode.select(cellPos, codeSpace);
+                }
                 if (!mouseDown) {
                     this.setState({ mouseDown: true });
                     window.addEventListener('mouseup', this.mouseDragUpHandler, true);

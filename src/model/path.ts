@@ -107,6 +107,7 @@ export class Path {
             this.moments.push(moment);
         });
     }
+    stepBack() { this.mutate(() => { this.moments.pop(); }); }
     burn() {
         this.mutate(() => {
             const { moments } = this;
