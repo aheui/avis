@@ -91,6 +91,23 @@ export class Path {
         for (let i = 0; i < l; ++i) yield this.moments[i];
         yield this.moments[l].clone(false);
     }
+    get boundingRect(): Rect {
+        if (!this.moments.length) return { x: 0, y: 0, width: 0, height: 0 };
+        let [top, left, right, bottom] = [Infinity, Infinity, -Infinity, -Infinity];
+        for (const moment of this.moments) {
+            const { x, y } = moment.p;
+            top = Math.min(y, top);
+            left = Math.min(x, left);
+            right = Math.max(x, right);
+            bottom = Math.max(y, bottom);
+        }
+        return {
+            x: top,
+            y: left,
+            width: right - left,
+            height: bottom - top,
+        };
+    }
     get lastMoment(): Moment | null {
         return this.moments[this.moments.length - 1] || null;
     }
@@ -117,4 +134,11 @@ export class Path {
             this.moments.length = 0;
         });
     }
+}
+
+interface Rect {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 }

@@ -766,6 +766,13 @@ export class CodeSpace
             codeLine.ensureLength(width, spaceFillChar);
         });
     }
+    ensurePoint(
+        rowIndex: number,
+        colIndex: number,
+        spaceFillChar: string,
+    ) {
+        this.ensureLineWidth(rowIndex, colIndex + 1, spaceFillChar);
+    }
     ensureRect(
         rowIndex: number,
         colIndex: number,
@@ -1004,6 +1011,17 @@ export class CodeSpace
                 const codeLine = this[rowIndex + i];
                 if (!codeLine) break;
                 codeLine.paint(colIndex, width, paintChar);
+            }
+        });
+    }
+    paintPath(path: Path, paintChar: string) {
+        if (!path.moments.length) return;
+        this.mutate(() => {
+            const { boundingRect } = path;
+            this.ensureHeight(boundingRect.y + boundingRect.height);
+            for (const moment of path.moments) {
+                const codeLine = this[moment.p.y];
+                codeLine.paint(moment.p.x, 1, paintChar);
             }
         });
     }

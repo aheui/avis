@@ -63,14 +63,15 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
     }
     onMouseDragMove(e: MouseEvent) {
         const {
+            appState,
             redrawMode,
             codeSpace,
         } = this.props;
         const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
         const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
         switch (redrawMode.phase.type) {
-            case 'select': selectPhaseLogic.move(cellPos, redrawMode, codeSpace); break;
-            case 'draw': drawPhaseLogic.move(cellPos, redrawMode, codeSpace); break;
+            case 'select': selectPhaseLogic.move(cellPos, redrawMode, codeSpace, appState); break;
+            case 'draw': drawPhaseLogic.move(cellPos, redrawMode, codeSpace, appState); break;
         }
         this.scrollToFocus(cellPos);
     }
@@ -174,6 +175,7 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
     }
     render() {
         const {
+            appState,
             redrawMode,
             codeSpace,
         } = this.props;
@@ -205,8 +207,8 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
                 const { mouseDown } = this.state;
                 const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
                 switch (redrawMode.phase.type) {
-                    case 'select': selectPhaseLogic.down(cellPos, redrawMode, codeSpace); break;
-                    case 'draw': drawPhaseLogic.down(cellPos, redrawMode, codeSpace); break;
+                    case 'select': selectPhaseLogic.down(cellPos, redrawMode, codeSpace, appState); break;
+                    case 'draw': drawPhaseLogic.down(cellPos, redrawMode, codeSpace, appState); break;
                 }
                 if (!mouseDown) {
                     this.setState({ mouseDown: true });
@@ -258,8 +260,18 @@ interface CellPos {
 }
 
 interface PhaseLogic {
-    down(cellPos: CellPos, redrawMode: RedrawMode, codeSpace: CodeSpace): void;
-    move(cellPos: CellPos, redrawMode: RedrawMode, codeSpace: CodeSpace): void;
+    down(
+        cellPos: CellPos,
+        redrawMode: RedrawMode,
+        codeSpace: CodeSpace,
+        appState: AppState,
+    ): void;
+    move(
+        cellPos: CellPos,
+        redrawMode: RedrawMode,
+        codeSpace: CodeSpace,
+        appState: AppState,
+    ): void;
 }
 
 const selectPhaseLogic: PhaseLogic = {
@@ -283,12 +295,12 @@ const selectPhaseLogic: PhaseLogic = {
 };
 
 const drawPhaseLogic: PhaseLogic = {
-    down(cellPos, redrawMode, codeSpace) {
+    down(cellPos, redrawMode, codeSpace, appState) {
         if (redrawMode.phase.type !== 'draw') return;
-        console.log(cellPos, redrawMode, codeSpace);
+        console.log(cellPos, redrawMode, codeSpace, appState);
     },
-    move(cellPos, redrawMode, codeSpace) {
+    move(cellPos, redrawMode, codeSpace, appState) {
         if (redrawMode.phase.type !== 'draw') return;
-        console.log(cellPos, redrawMode, codeSpace);
+        console.log(cellPos, redrawMode, codeSpace, appState);
     },
 };
