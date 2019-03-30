@@ -63,6 +63,7 @@ export const Content = connect(
                 />
             </Label>
         </SideBarContentFolder>
+        <RedrawModeFolder appState={appState}/>
         <SideBarContentFolder
             title="회전 / 반전"
             open={appState.getUIOpen('edit.rotateAndFlip')}
@@ -104,7 +105,6 @@ export const Content = connect(
                 />
             </Label>
         </SideBarContentFolder>
-        <RedrawModeFolder appState={appState}/>
     </SideBarContent>
 );
 
@@ -118,13 +118,11 @@ const RedrawModeFolder: React.FC<RedrawModeFolderProps> = ({ appState }) => {
         open={appState.getUIOpen('edit.redraw')}
         onBarClick={open => appState.setUIOpen('edit.redraw', !open)}>
         { appState.specialMode instanceof RedrawMode ? <>
+            { redrawMode.phase.type === 'select' ?
+                <RedrawModeFolderSelectPhase appState={appState} redrawMode={redrawMode}/> :
+                <RedrawModeFolderDrawPhase appState={appState} redrawMode={redrawMode}/> }
             <MenuButton
-                label="선택 초기화"
-                disabled={appState.isRunning}
-                onClick={() => { redrawMode.clearSelection(); }}
-            />
-            <MenuButton
-                label="종료"
+                label="취소"
                 disabled={appState.isRunning}
                 onClick={() => { appState.finishSpecialMode(); }}
             />
@@ -136,4 +134,48 @@ const RedrawModeFolder: React.FC<RedrawModeFolderProps> = ({ appState }) => {
             />
         </> }
     </SideBarContentFolder>;
+};
+
+interface RedrawModeFolderPhaseProps extends RedrawModeFolderProps {
+    redrawMode: RedrawMode;
+}
+
+const RedrawModeFolderSelectPhase: React.FC<RedrawModeFolderPhaseProps> = ({ appState, redrawMode }) => {
+    return <Label
+        title="(선택 단계)"
+        note="코드 공간에서 다시 그리고 싶은 코드를 드래그하여 선택해주세요">
+        <MenuButton
+            label="선택 초기화"
+            disabled={appState.isRunning}
+            onClick={() => { redrawMode.clearSelection(); }}
+        />
+        <MenuButton
+            label="선택 완료"
+            disabled={appState.isRunning}
+            onClick={() => {
+                // TODO
+            }}
+        />
+    </Label>;
+};
+
+const RedrawModeFolderDrawPhase: React.FC<RedrawModeFolderPhaseProps> = ({ appState, redrawMode }) => {
+    return <Label
+        title="(그리기 단계)"
+        note="코드 공간에서 새로 그릴 경로를 드래그하여 선택해주세요">
+        <MenuButton
+            label="그리기 초기화"
+            disabled={appState.isRunning}
+            onClick={() => {
+                // TODO
+            }}
+        />
+        <MenuButton
+            label="다시 그리기 완료"
+            disabled={appState.isRunning}
+            onClick={() => {
+                // TODO
+            }}
+        />
+    </Label>;
 };
