@@ -68,9 +68,11 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
         } = this.props;
         const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
         const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
-        // TODO: 마우스가 빠르게 드래그 되었을 경우 중간 셀들도 일괄 선택되도록 처리
-        redrawMode.selectOrDeselect(cellPos, codeSpace);
-        this.scrollToFocus();
+        switch (redrawMode.phase.type) {
+            case 'select': selectPhaseLogic.move(cellPos, redrawMode, codeSpace); break;
+            case 'draw': drawPhaseLogic.move(cellPos, redrawMode, codeSpace); break;
+        }
+        this.scrollToFocus(cellPos);
     }
     removeMouseDragEventListeners() {
         window.removeEventListener('mouseup', this.mouseDragUpHandler, true);
@@ -116,7 +118,7 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
         mouseY: number,
         codeSpaceX = this.state.codeSpaceX,
         codeSpaceY = this.state.codeSpaceY,
-    ) {
+    ): CellPos {
         return {
             x: ((mouseX - codeSpaceX) / 30) | 0,
             y: ((mouseY - codeSpaceY) / 30) | 0,
@@ -137,11 +139,9 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
             };
         });
     }
-    scrollToFocus() {
-        const { appState } = this.props;
+    scrollToFocus(focus: CellPos) {
         let { scrollTop, scrollLeft, clientWidth, clientHeight } = this.scrollElement;
         const [ scrollBottom, scrollRight ] = [scrollTop + clientHeight, scrollLeft + clientWidth];
-        const focus = appState.selection.focus!;
         const [ focusTop, focusLeft ] = [ focus.y * 30, focus.x * 30 ];
         const [ focusBottom, focusRight ] = [ focusTop + 30, focusLeft + 30 ];
         if (scrollTop > focusTop) scrollTop = focusTop;
@@ -204,15 +204,9 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
                 const { mouseDown } = this.state;
                 const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
-                toggle: if (redrawMode.isSelected(cellPos)) {
-                    if (redrawMode.phase.type !== 'select') break toggle;
-                    if (redrawMode.phase.path.moments.length !== 1) break toggle;
-                    const lastMoment = redrawMode.phase.path.lastMoment!;
-                    if (lastMoment.p.x !== cellPos.x) break toggle;
-                    if (lastMoment.p.y !== cellPos.y) break toggle;
-                    redrawMode.clearSelection();
-                } else {
-                    redrawMode.select(cellPos, codeSpace);
+                switch (redrawMode.phase.type) {
+                    case 'select': selectPhaseLogic.down(cellPos, redrawMode, codeSpace); break;
+                    case 'draw': drawPhaseLogic.down(cellPos, redrawMode, codeSpace); break;
                 }
                 if (!mouseDown) {
                     this.setState({ mouseDown: true });
@@ -257,3 +251,44 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
         </div>;
     }
 });
+
+interface CellPos {
+    x: number;
+    y: number;
+}
+
+interface PhaseLogic {
+    down(cellPos: CellPos, redrawMode: RedrawMode, codeSpace: CodeSpace): void;
+    move(cellPos: CellPos, redrawMode: RedrawMode, codeSpace: CodeSpace): void;
+}
+
+const selectPhaseLogic: PhaseLogic = {
+    down(cellPos, redrawMode, codeSpace) {
+        if (redrawMode.phase.type !== 'select') return;
+        toggle: if (redrawMode.isSelected(cellPos)) {
+            if (redrawMode.phase.path.moments.length !== 1) break toggle;
+            const lastMoment = redrawMode.phase.path.lastMoment!;
+            if (lastMoment.p.x !== cellPos.x) break toggle;
+            if (lastMoment.p.y !== cellPos.y) break toggle;
+            redrawMode.clearSelection();
+        } else {
+            redrawMode.select(cellPos, codeSpace);
+        }
+    },
+    move(cellPos, redrawMode, codeSpace) {
+        if (redrawMode.phase.type !== 'select') return;
+        // TODO: 마우스가 빠르게 드래그 되었을 경우 중간 셀들도 일괄 선택되도록 처리
+        redrawMode.selectOrDeselect(cellPos, codeSpace);
+    },
+};
+
+const drawPhaseLogic: PhaseLogic = {
+    down(cellPos, redrawMode, codeSpace) {
+        if (redrawMode.phase.type !== 'draw') return;
+        console.log(cellPos, redrawMode, codeSpace);
+    },
+    move(cellPos, redrawMode, codeSpace) {
+        if (redrawMode.phase.type !== 'draw') return;
+        console.log(cellPos, redrawMode, codeSpace);
+    },
+};
