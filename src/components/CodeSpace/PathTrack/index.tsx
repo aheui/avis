@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames';
 
 import { CodeSpace } from 'appState';
 import { Path, Moment } from 'model/path';
@@ -9,6 +10,7 @@ import * as styles from './style.css';
 interface PathTrackProps {
     path: Path;
     codeSpace: CodeSpace;
+    className?: string;
     style?: React.CSSProperties;
 }
 
@@ -27,13 +29,9 @@ export default class PathTrack extends React.Component<PathTrackProps> {
     render() {
         const { path, codeSpace } = this.props;
         const [ w, h ] = [codeSpace.width * 30, codeSpace.height * 30];
-        const style = {
-            color: path.color,
-            ...this.props.style,
-        };
         return <svg
-            className={styles.pathTrack}
-            style={style}
+            className={classNames(styles.pathTrack, this.props.className)}
+            style={this.props.style}
             viewBox={`0 0 ${ w } ${ h }`}
             width={w}
             height={h}

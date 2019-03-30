@@ -401,7 +401,7 @@ export class RedrawMode extends SpecialMode {
         super(...args);
         this.phase = {
             type: 'select',
-            path: new Path('rgb(204, 122, 0)'),
+            path: new Path(),
             _selectedMap: {},
         };
     }
@@ -409,7 +409,7 @@ export class RedrawMode extends SpecialMode {
         if (this.phase.type !== 'select') return;
         this.mutate(() => {
             Object.assign(this.phase, {
-                path: new Path('rgb(204, 122, 0)'),
+                path: new Path(),
                 _selectedMap: {},
             });
         });

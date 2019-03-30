@@ -10,7 +10,7 @@ import {
 import CodeSpaceStateViewer from '../CodeSpaceStateViewer';
 import PathTrack from './PathTrack';
 import { CellLine, Cursor } from '.';
-import * as style from './style.css';
+import * as styles from './style.css';
 import * as redrawModeStyle from './redraw-mode.css';
 
 interface CodeSpaceProps {
@@ -165,7 +165,11 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
                 y={lastMoment.p.y}
                 className={redrawModeStyle.cursor}
             /> }
-            <PathTrack path={phase.path} codeSpace={codeSpace}/>
+            <PathTrack
+                className={redrawModeStyle.pathTrack}
+                path={phase.path}
+                codeSpace={codeSpace}
+            />
         </>;
     }
     render() {
@@ -179,8 +183,8 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
         } = this.state;
         return <div
             ref={scrollElement => this.scrollElement = scrollElement!}
-            className={classNames(style.codeSpaceScroll, {
-                [style.focus]: mouseDown,
+            className={classNames(styles.codeSpaceScroll, {
+                [styles.focus]: mouseDown,
             })}
             onScroll={() => {
                 this.updateCodeSpacePosition();
@@ -229,7 +233,7 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
             <CodeSpaceStateViewer>
                 <div
                     ref={codeSpaceElement => this.codeSpaceElement = codeSpaceElement!}
-                    className={style.codeSpace}
+                    className={styles.codeSpace}
                     style={{
                         width: `calc(100% + ${ (codeSpace.width - 1) * 30 }px)`,
                         height: `calc(100% + ${ (codeSpace.height - 1) * 30 }px)`,
@@ -244,7 +248,7 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
                 </div>
             </CodeSpaceStateViewer>
             <div
-                className={classNames(style.ghostCaret, { [style.on]: mouseOn && !mouseDown })}
+                className={classNames(styles.ghostCaret, { [styles.on]: mouseOn && !mouseDown })}
                 style={{
                     top: ghostCaretY * 30,
                     left: ghostCaretX * 30,

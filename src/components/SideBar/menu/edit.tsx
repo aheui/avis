@@ -160,6 +160,7 @@ const RedrawModeFolderSelectPhase: React.FC<RedrawModeFolderPhaseProps> = ({ app
 };
 
 const RedrawModeFolderDrawPhase: React.FC<RedrawModeFolderPhaseProps> = ({ appState, redrawMode }) => {
+    console.log(redrawMode);
     return <Label
         title="(그리기 단계)"
         note="코드 공간에서 새로 그릴 경로를 드래그하여 선택해주세요">

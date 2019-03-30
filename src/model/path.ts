@@ -84,12 +84,7 @@ export class Path {
     mutate: (executor: Executor) => void;
     onMutate?: () => void;
     // Path
-    color: string;
-    moments: Moment[];
-    constructor(color='rgb(0, 122, 204)') {
-        this.color = color;
-        this.moments = [];
-    }
+    constructor(public moments: Moment[] = []) {}
     *[Symbol.iterator]() {
         const l = this.moments.length - 2;
         if (l < 0) return;
