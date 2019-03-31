@@ -153,23 +153,23 @@ const RedrawModeFolderSelectPhase: React.FC<RedrawModeFolderPhaseProps> = ({ app
             label="선택 완료"
             disabled={appState.isRunning}
             onClick={() => {
-                // TODO
+                redrawMode.startDrawPhase(
+                    appState.codeSpace,
+                    appState.spaceFillChar,
+                );
             }}
         />
     </Label>;
 };
 
 const RedrawModeFolderDrawPhase: React.FC<RedrawModeFolderPhaseProps> = ({ appState, redrawMode }) => {
-    console.log(redrawMode);
     return <Label
         title="(그리기 단계)"
         note="코드 공간에서 새로 그릴 경로를 드래그하여 선택해주세요">
         <MenuButton
             label="그리기 초기화"
             disabled={appState.isRunning}
-            onClick={() => {
-                // TODO
-            }}
+            onClick={() => { redrawMode.clearDrawingCodeSpace(appState.spaceFillChar); }}
         />
         <MenuButton
             label="다시 그리기 완료"

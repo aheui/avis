@@ -4,15 +4,24 @@ export interface Cloneable<T> {
     clone: () => Cloneable<T>;
 }
 
-export default function cloneable<T>() {
-    return function (target: T): T & Cloneable<T> {
+export default function cloneable<TConstructor, TInstance>(
+    afterCloneHook?: (src: TInstance, dst: TInstance) => (TInstance | void),
+) {
+    return function (target: TConstructor): TConstructor & Cloneable<TConstructor> {
+        const applyAfterCloneHook = (src: TInstance, dst: TInstance) => {
+            if (!afterCloneHook) return dst;
+            return afterCloneHook(src, dst) || dst;
+        };
         const { prototype } = target as any;
         if (!prototype.clone) {
             if (prototype instanceof Array) {
                 (prototype as any).clone = function () {
-                    return this.map((item: any) => {
-                        return item[clone] ? item[clone]() : item;
-                    });
+                    return applyAfterCloneHook(
+                        this,
+                        this.map((item: any) => {
+                            return item[clone] ? item[clone]() : item;
+                        }),
+                    );
                 };
             } else {
                 prototype.clone = function () {
@@ -26,7 +35,7 @@ export default function cloneable<T>() {
                             result[key as string] = this[key];
                         }
                     }
-                    return result;
+                    return applyAfterCloneHook(this, result as TInstance);
                 };
             }
         }

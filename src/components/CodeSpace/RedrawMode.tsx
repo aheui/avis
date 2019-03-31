@@ -35,7 +35,7 @@ interface CodeSpaceState {
 
 export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawMode }>(
     appState => ({ appState, redrawMode: appState.specialMode as RedrawMode }),
-)(class CodeSpace extends React.Component<CodeSpaceProps, CodeSpaceState> {
+)(class RedrawModeCodeSpaceComponent extends React.Component<CodeSpaceProps, CodeSpaceState> {
     scrollElement: HTMLElement;
     codeSpaceElement: HTMLElement;
     mouseDragUpHandler: (e: MouseEvent) => void;
@@ -152,23 +152,44 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
         Object.assign(this.scrollElement, { scrollTop, scrollLeft });
         this.props.onScroll({ scrollTop, scrollLeft });
     }
-    renderSelectState() {
-        const {
-            redrawMode,
-            codeSpace,
-        } = this.props;
+    renderSelectState(codeSpace: CodeSpace) {
+        const { redrawMode } = this.props;
         const { phase } = redrawMode;
-        if (phase.type !== 'select') return;
-        const { lastMoment } = phase.path;
+        const isSelectPhase = phase.type === 'select';
+        const { lastMoment } = phase.selectedPath;
         return <>
             { lastMoment && <Cursor
                 x={lastMoment.p.x}
                 y={lastMoment.p.y}
-                className={redrawModeStyle.cursor}
+                className={classNames(
+                    redrawModeStyle.selectPhaseCursor,
+                    { [redrawModeStyle.fade]: !isSelectPhase },
+                )}
             /> }
             <PathTrack
-                className={redrawModeStyle.pathTrack}
-                path={phase.path}
+                className={classNames(
+                    redrawModeStyle.selectPhasePathTrack,
+                    { [redrawModeStyle.fade]: !isSelectPhase },
+                )}
+                path={phase.selectedPath}
+                codeSpace={codeSpace}
+            />
+        </>;
+    }
+    renderDrawState(codeSpace: CodeSpace) {
+        const { redrawMode } = this.props;
+        const { phase } = redrawMode;
+        if (phase.type !== 'draw') return null;
+        const { lastMoment } = phase.drawingPath;
+        return <>
+            { lastMoment && <Cursor
+                x={lastMoment.p.x}
+                y={lastMoment.p.y}
+                className={redrawModeStyle.drawPhaseCursor}
+            /> }
+            <PathTrack
+                className={redrawModeStyle.drawPhasePathTrack}
+                path={phase.drawingPath}
                 codeSpace={codeSpace}
             />
         </>;
@@ -177,8 +198,12 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
         const {
             appState,
             redrawMode,
-            codeSpace,
         } = this.props;
+        const { phase } = redrawMode;
+        const codeSpace =
+            phase.type === 'select' ?
+            this.props.codeSpace :
+            phase.drawingCodeSpace;
         const {
             mouseOn, mouseDown,
             ghostCaretX, ghostCaretY,
@@ -206,7 +231,7 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
                 const [ mouseX, mouseY ] = [ e.clientX, e.clientY ];
                 const { mouseDown } = this.state;
                 const cellPos = this.getCellPosFromMousePos(mouseX, mouseY);
-                switch (redrawMode.phase.type) {
+                switch (phase.type) {
                     case 'select': selectPhaseLogic.down(cellPos, redrawMode, codeSpace, appState); break;
                     case 'draw': drawPhaseLogic.down(cellPos, redrawMode, codeSpace, appState); break;
                 }
@@ -225,8 +250,9 @@ export default connect<CodeSpaceProps, { appState: AppState, redrawMode: RedrawM
                 );
             }}
         >
-            { this.renderSelectState() }
-            <CodeSpaceStateViewer>
+            { this.renderSelectState(codeSpace) }
+            { this.renderDrawState(codeSpace) }
+            <CodeSpaceStateViewer codeSpace={codeSpace}>
                 <div
                     ref={codeSpaceElement => this.codeSpaceElement = codeSpaceElement!}
                     className={styles.codeSpace}
@@ -278,8 +304,8 @@ const selectPhaseLogic: PhaseLogic = {
     down(cellPos, redrawMode, codeSpace) {
         if (redrawMode.phase.type !== 'select') return;
         toggle: if (redrawMode.isSelected(cellPos)) {
-            if (redrawMode.phase.path.moments.length !== 1) break toggle;
-            const lastMoment = redrawMode.phase.path.lastMoment!;
+            if (redrawMode.phase.selectedPath.moments.length !== 1) break toggle;
+            const lastMoment = redrawMode.phase.selectedPath.lastMoment!;
             if (lastMoment.p.x !== cellPos.x) break toggle;
             if (lastMoment.p.y !== cellPos.y) break toggle;
             redrawMode.clearSelection();
@@ -295,12 +321,21 @@ const selectPhaseLogic: PhaseLogic = {
 };
 
 const drawPhaseLogic: PhaseLogic = {
-    down(cellPos, redrawMode, codeSpace, appState) {
+    down(cellPos, redrawMode, _codeSpace, appState) {
         if (redrawMode.phase.type !== 'draw') return;
-        console.log(cellPos, redrawMode, codeSpace, appState);
+        toggle: if (redrawMode.phase.drawingPath.moments.length === 1) {
+            const lastMoment = redrawMode.phase.selectedPath.lastMoment!;
+            if (lastMoment.p.x !== cellPos.x) break toggle;
+            if (lastMoment.p.y !== cellPos.y) break toggle;
+            redrawMode.clearSelection();
+            return;
+        }
+        redrawMode.draw(cellPos, appState.spaceChars, appState.spaceFillChar);
     },
-    move(cellPos, redrawMode, codeSpace, appState) {
+    move(cellPos, redrawMode, _codeSpace, appState) {
         if (redrawMode.phase.type !== 'draw') return;
-        console.log(cellPos, redrawMode, codeSpace, appState);
+        // TODO: 마우스가 빠르게 드래그 되었을 경우 중간 셀들도 일괄 선택되도록 처리
+        // a star 사용할 것
+        redrawMode.drawOrErase(cellPos, appState.spaceChars, appState.spaceFillChar);
     },
 };

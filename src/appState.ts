@@ -77,6 +77,7 @@ export class AppState implements MutationManager {
             this.selection = { anchor: caret, focus: caret };
         });
     }
+    get spaceChars() { return new Set([this._spaceFillChar, ' ']); }
     get spaceFillChar() {
         return this._spaceFillChar;
     }
@@ -169,10 +170,10 @@ export class AppState implements MutationManager {
         this.mutate(() => { this._codeSpace.insertVertical(rowIndex, colIndex, text, this._spaceFillChar); });
     }
     insertChunkCode(rowIndex: number, colIndex: number, text: string, pushDown: boolean, overwrite: boolean) {
-        this.mutate(() => { this._codeSpace.insertChunk(rowIndex, colIndex, text, this._spaceFillChar, pushDown, overwrite); });
+        this.mutate(() => { this._codeSpace.insertChunk(rowIndex, colIndex, text, this.spaceChars, this._spaceFillChar, pushDown, overwrite); });
     }
     insertChunkSmartCode(rowIndex: number, colIndex: number, text: string, overwrite: boolean) {
-        this.mutate(() => { this._codeSpace.insertChunkSmart(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
+        this.mutate(() => { this._codeSpace.insertChunkSmart(rowIndex, colIndex, text, this.spaceChars, this._spaceFillChar, overwrite); });
     }
     peelCode(rowIndex: number, colIndex: number, width: number, height: number) {
         this.mutate(() => { this._codeSpace.paint(rowIndex, colIndex, width, height, this._spaceFillChar); });
@@ -389,11 +390,16 @@ type SpecialModeConstructorParameters = ConstructorParameters<{
 type RedrawModePhase = RedrawModeSelectPhase | RedrawModeDrawPhase;
 interface RedrawModeSelectPhase {
     type: 'select';
-    path: Path;
+    selectedPath: Path;
     _selectedMap: { [posHash: string]: boolean };
 }
 interface RedrawModeDrawPhase {
     type: 'draw';
+    selectedPath: Path;
+    selectedCode: string;
+    drawingPath: Path;
+    originalCodeSpace: CodeSpace;
+    drawingCodeSpace: CodeSpace;
 }
 export class RedrawMode extends SpecialMode {
     phase: RedrawModePhase;
@@ -401,7 +407,7 @@ export class RedrawMode extends SpecialMode {
         super(...args);
         this.phase = {
             type: 'select',
-            path: new Path(),
+            selectedPath: new Path(),
             _selectedMap: {},
         };
     }
@@ -409,7 +415,7 @@ export class RedrawMode extends SpecialMode {
         if (this.phase.type !== 'select') return;
         this.mutate(() => {
             Object.assign(this.phase, {
-                path: new Path(),
+                selectedPath: new Path(),
                 _selectedMap: {},
             });
         });
@@ -423,16 +429,16 @@ export class RedrawMode extends SpecialMode {
         if (this.phase.type !== 'select') return;
         const phase = this.phase;
         this.mutate(() => {
-            const { path, _selectedMap } = phase;
+            const { selectedPath, _selectedMap } = phase;
             const posHash = `${pos.x},${pos.y}`;
             if (_selectedMap[posHash]) return;
             const code = codeSpace.get(pos.x, pos.y);
             if (!code) return;
-            const { lastMoment } = path;
+            const { lastMoment } = selectedPath;
             if (!lastMoment && code.isComment) return;
             if (lastMoment == null) {
                 _selectedMap[posHash] = true;
-                path.step(new Moment(
+                selectedPath.step(new Moment(
                     false,
                     false,
                     new Vec2(0, 1),
@@ -454,7 +460,7 @@ export class RedrawMode extends SpecialMode {
             if (typeof ySpeed === 'number' && Math.abs(ySpeed) !== ady) return;
             _selectedMap[posHash] = true;
             lastMoment.o = new Vec2(dx, dy);
-            path.step(new Moment(
+            selectedPath.step(new Moment(
                 (adx + ady) === 1,
                 false,
                 new Vec2(dx, dy),
@@ -468,23 +474,106 @@ export class RedrawMode extends SpecialMode {
         if (this.phase.type !== 'select') return;
         const phase = this.phase;
         this.mutate(() => {
-            const { path, _selectedMap } = phase;
-            const { lastMoment } = path;
+            const { selectedPath, _selectedMap } = phase;
+            const { lastMoment } = selectedPath;
             if (!lastMoment) return;
-            path.stepBack();
+            selectedPath.stepBack();
             const posHash = `${lastMoment.p.x},${lastMoment.p.y}`;
             _selectedMap[posHash] = false;
         });
     }
     selectOrDeselect(pos: { x: number, y: number }, codeSpace: CodeSpace) {
         if (this.phase.type !== 'select') return;
-        const { path } = this.phase;
-        const len = path.moments.length;
+        const { selectedPath } = this.phase;
+        const len = selectedPath.moments.length;
         if (len < 2) return this.select(pos, codeSpace);
-        const deselectPos = path.moments[len - 2].p;
+        const deselectPos = selectedPath.moments[len - 2].p;
         if (deselectPos.x !== pos.x) return this.select(pos, codeSpace);
         if (deselectPos.y !== pos.y) return this.select(pos, codeSpace);
         this.deselect();
+    }
+    startDrawPhase(codeSpace: CodeSpace, spaceFillChar: string) {
+        if (this.phase.type !== 'select') return;
+        const selectPhase = this.phase;
+        this.mutate(() => {
+            const { selectedPath } = selectPhase;
+            const drawingCodeSpace = codeSpace.clone();
+            drawingCodeSpace.paintPath(selectPhase.selectedPath, spaceFillChar);
+            const selectedCode = selectedPath.moments.map(
+                moment => codeSpace.get(moment.p.x, moment.p.y)!.char,
+            ).join('');
+            this.phase = {
+                type: 'draw',
+                selectedPath,
+                selectedCode,
+                drawingPath: new Path(),
+                originalCodeSpace: codeSpace,
+                drawingCodeSpace,
+            };
+        });
+    }
+    clearDrawingCodeSpace(spaceFillChar: string) {
+        if (this.phase.type !== 'draw') return;
+        const drawPhase = this.phase;
+        this.mutate(() => {
+            const drawingCodeSpace = drawPhase.originalCodeSpace.clone();
+            drawingCodeSpace.paintPath(drawPhase.selectedPath, spaceFillChar);
+            drawPhase.drawingCodeSpace = drawingCodeSpace;
+            drawPhase.drawingPath = new Path();
+        });
+    }
+    draw(pos: { x: number, y: number }, spaceChars: Set<string>, spaceFillChar: string) {
+        if (this.phase.type !== 'draw') return;
+        const drawPhase = this.phase;
+        this.mutate(() => {
+            const {
+                drawingPath,
+                drawingCodeSpace,
+                selectedCode,
+            } = drawPhase;
+            const { lastMoment } = drawingPath;
+            if (lastMoment == null) {
+                drawingPath.step(new Moment(
+                    false,
+                    false,
+                    new Vec2(0, 1),
+                    new Vec2(0, 1),
+                    new Vec2(pos.x, pos.y),
+                    Infinity,
+                ));
+            } else {
+                if (!drawingCodeSpace.isEmpty(pos.x, pos.y, spaceChars)) return;
+                // TODO
+            }
+            drawingCodeSpace.insertPath(drawingPath, selectedCode, spaceFillChar);
+        });
+    }
+    erase(spaceFillChar: string) {
+        if (this.phase.type !== 'draw') return;
+        const drawPhase = this.phase;
+        this.mutate(() => {
+            const { drawingPath, drawingCodeSpace } = drawPhase;
+            const { lastMoment } = drawingPath;
+            if (!lastMoment) return;
+            drawingPath.stepBack();
+            drawingCodeSpace.paint(
+                lastMoment.p.y,
+                lastMoment.p.x,
+                1,
+                1,
+                spaceFillChar,
+            );
+        });
+    }
+    drawOrErase(pos: { x: number, y: number }, spaceChars: Set<string>, spaceFillChar: string) {
+        if (this.phase.type !== 'draw') return;
+        const { drawingPath } = this.phase;
+        const len = drawingPath.moments.length;
+        if (len < 2) return this.draw(pos, spaceChars, spaceFillChar);
+        const erasePos = drawingPath.moments[len - 2].p;
+        if (erasePos.x !== pos.x) return this.draw(pos, spaceChars, spaceFillChar);
+        if (erasePos.y !== pos.y) return this.draw(pos, spaceChars, spaceFillChar);
+        this.erase(spaceFillChar);
     }
 }
 
@@ -566,7 +655,7 @@ function speed2jung(xSpeed: number, ySpeed: number): number {
 }
 */
 
-@cloneable<typeof Code>()
+@cloneable<typeof Code, Code>()
 export class Code implements Cloneable<Code> {
     // Cloneable
     clone: () => Code;
@@ -618,7 +707,7 @@ export class Code implements Cloneable<Code> {
     toString() { return this.char; }
 }
 
-@cloneable<typeof CodeLine>()
+@cloneable<typeof CodeLine, CodeLine>()
 export class CodeLine extends Array<Code> implements Cloneable<CodeLine> {
     // Cloneable
     clone: () => CodeLine;
@@ -732,7 +821,9 @@ export class CodeLine extends Array<Code> implements Cloneable<CodeLine> {
 }
 
 @mutationManager()
-@cloneable<typeof CodeSpace>()
+@cloneable<typeof CodeSpace, CodeSpace>(
+    (_, dst) => { dst._recalculateWidth(); },
+)
 export class CodeSpace
     extends Array<CodeLine>
     implements
@@ -822,6 +913,10 @@ export class CodeSpace
         const line = this[rowIndex];
         return line ? line.length : 0;
     }
+    isEmpty(x: number, y: number, spaceChars: Set<string>) {
+        const code = this.get(x, y);
+        return !code || spaceChars.has(code.char);
+    }
     insert(
         rowIndex: number,
         colIndex: number,
@@ -840,6 +935,24 @@ export class CodeSpace
                 if (codeLine.length > this._width) {
                     this._width = codeLine.length;
                 }
+            }
+        });
+    }
+    insertPath(
+        path: Path,
+        text: string,
+        spaceFillChar: string,
+    ) {
+        if (!path.moments.length) return;
+        this.paintPath(path, spaceFillChar);
+        this.mutate(() => {
+            const len = Math.min(path.moments.length, text.length);
+            for (let i = 0; i < len; ++i) {
+                const char = text[i];
+                // TODO: fix vector
+                const moment = path.moments[i];
+                const codeLine = this[moment.p.y];
+                codeLine.paint(moment.p.x, 1, char);
             }
         });
     }
@@ -867,15 +980,14 @@ export class CodeSpace
         rowIndex: number,
         colIndex: number,
         text: string,
+        spaceChars: Set<string>,
         spaceFillChar: string,
         pushDown: boolean,
         overwrite: boolean,
     ) {
         // TODO 테스트 작성?
-        // TODO spaceChars 딴 곳으로 옮기기
-        const spaceChars = new Set([spaceFillChar, ' ']);
-        // 덮어쓰기 모드라면 insert를 그대로 적용해도 무방함
         if (overwrite) {
+            // 덮어쓰기 모드라면 insert를 그대로 적용해도 무방함
             return this.insert(
                 rowIndex,
                 colIndex,
@@ -968,11 +1080,10 @@ export class CodeSpace
         rowIndex: number,
         colIndex: number,
         text: string,
+        spaceChars: Set<string>,
         spaceFillChar: string,
         overwrite: boolean,
     ) {
-        // TODO spaceChars 딴 곳으로 옮기기
-        const spaceChars = new Set([spaceFillChar, ' ']);
         const textLines = text.split(/\r?\n/);
         // 첫째 행이 해당 열부터 비어있다면:
         // 적용될 행들이 해당 열부터 비어있는지 여부를 검사하고 비어있다면
@@ -992,6 +1103,7 @@ export class CodeSpace
             rowIndex,
             colIndex,
             text,
+            spaceChars,
             spaceFillChar,
             pushDown,
             overwrite
@@ -1268,9 +1380,8 @@ type Omit<T, K extends keyof T> = Pick<T, Diff<Extract<keyof T, string>, Extract
 type ReactComponent<T> = React.ComponentClass<T> | React.SFC<T>;
 
 interface Connect<TOwnProps extends TInjectedProps, TInjectedProps> {
-    (Container: ReactComponent<TOwnProps>): React.ComponentClass<Omit<TOwnProps, keyof TInjectedProps>>;
+    (Container: ReactComponent<TOwnProps>): React.ComponentClass<Omit<TOwnProps, keyof TInjectedProps> & Partial<TInjectedProps>>;
 }
-
 export function connect<
     TOwnProps extends TInjectedProps,
     TInjectedProps={ appState: AppState }
@@ -1317,9 +1428,9 @@ export function connect<
         }
         render() {
             return React.createElement(Container as any, {
+                ...(mapStateToProps as any)(this.context.appState),
                 ...this.props as any,
                 ref: (ref: typeof Container | null) => this.ref = ref,
-                ...(mapStateToProps as any)(this.context.appState),
             });
         }
         static contextTypes = {
