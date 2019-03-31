@@ -337,6 +337,10 @@ export class AppState implements MutationManager {
             if (!(redrawMode instanceof RedrawMode)) return;
             const { phase } = redrawMode;
             if (phase.type !== 'draw') return;
+            this.codeSpace.paintPath(
+                phase.selectedPath,
+                this.spaceFillChar,
+            );
             this.codeSpace.insertPath(
                 phase.drawingPath,
                 phase.selectedCode,
@@ -557,6 +561,7 @@ export class RedrawMode extends SpecialMode {
                 ));
             } else {
                 if (!drawingCodeSpace.isEmpty(pos.x, pos.y, spaceChars)) return;
+                drawingCodeSpace.ensurePoint(pos.y, pos.x, spaceFillChar);
                 const dx = pos.x - lastMoment.p.x;
                 const dy = pos.y - lastMoment.p.y;
                 if (dx && dy) return; // 수평, 수직이동이 아닌 경우
@@ -880,6 +885,9 @@ export class CodeSpace
         if (codeLine.length >= width) return;
         this.mutate(() => {
             codeLine.ensureLength(width, spaceFillChar);
+            if (codeLine.length > this._width) {
+                this._width = codeLine.length;
+            }
         });
     }
     ensurePoint(
@@ -977,11 +985,19 @@ export class CodeSpace
         this.paintPath(path, spaceFillChar);
         this.mutate(() => {
             const len = Math.min(path.moments.length, text.length);
-            const { lastMoment } = path;
+            const {
+                boundingRect,
+                lastMoment,
+            } = path;
+            this.ensureHeight(boundingRect.y + boundingRect.height);
             for (let i = 0; i < len; ++i) {
                 const char = text[i];
                 const moment = path.moments[i];
                 const codeLine = this[moment.p.y];
+                codeLine.ensureLength(moment.p.x + 1, spaceFillChar);
+                if (codeLine.length > this._width) {
+                    this._width = codeLine.length;
+                }
                 codeLine.paint(moment.p.x, 1, char);
                 const code = this.get(moment.p.x, moment.p.y)!;
                 const jung =
@@ -1165,10 +1181,9 @@ export class CodeSpace
     paintPath(path: Path, paintChar: string) {
         if (!path.moments.length) return;
         this.mutate(() => {
-            const { boundingRect } = path;
-            this.ensureHeight(boundingRect.y + boundingRect.height);
             for (const moment of path.moments) {
                 const codeLine = this[moment.p.y];
+                if (!codeLine) break;
                 codeLine.paint(moment.p.x, 1, paintChar);
             }
         });

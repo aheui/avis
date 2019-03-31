@@ -98,8 +98,8 @@ export class Path {
             const { x, y } = moment.p;
             top = Math.min(y, top);
             left = Math.min(x, left);
-            right = Math.max(x, right);
-            bottom = Math.max(y, bottom);
+            right = Math.max(x + 1, right);
+            bottom = Math.max(y + 1, bottom);
         }
         return {
             x: top,
