@@ -418,6 +418,7 @@ interface RedrawModeDrawPhase {
     drawingPath: Path;
     originalCodeSpace: CodeSpace;
     drawingCodeSpace: CodeSpace;
+    _drawnMap: { [posHash: string]: boolean };
 }
 export class RedrawMode extends SpecialMode {
     phase: RedrawModePhase;
@@ -446,14 +447,14 @@ export class RedrawMode extends SpecialMode {
     select(pos: { x: number, y: number }, codeSpace: CodeSpace) {
         if (this.phase.type !== 'select') return;
         const phase = this.phase;
+        const { selectedPath, _selectedMap } = phase;
+        const posHash = `${pos.x},${pos.y}`;
+        if (_selectedMap[posHash]) return;
+        const code = codeSpace.get(pos.x, pos.y);
+        if (!code) return;
+        const { lastMoment } = selectedPath;
+        if (!lastMoment && code.isComment) return;
         this.mutate(() => {
-            const { selectedPath, _selectedMap } = phase;
-            const posHash = `${pos.x},${pos.y}`;
-            if (_selectedMap[posHash]) return;
-            const code = codeSpace.get(pos.x, pos.y);
-            if (!code) return;
-            const { lastMoment } = selectedPath;
-            if (!lastMoment && code.isComment) return;
             if (lastMoment == null) {
                 _selectedMap[posHash] = true;
                 selectedPath.step(new Moment(
@@ -527,6 +528,7 @@ export class RedrawMode extends SpecialMode {
                 drawingPath: new Path(),
                 originalCodeSpace: codeSpace,
                 drawingCodeSpace,
+                _drawnMap: {},
             };
         });
     }
@@ -538,19 +540,24 @@ export class RedrawMode extends SpecialMode {
             drawingCodeSpace.paintPath(drawPhase.selectedPath, spaceFillChar);
             drawPhase.drawingCodeSpace = drawingCodeSpace;
             drawPhase.drawingPath = new Path();
+            drawPhase._drawnMap = {};
         });
     }
     draw(pos: { x: number, y: number }, spaceChars: Set<string>, spaceFillChar: string) {
         if (this.phase.type !== 'draw') return;
         const drawPhase = this.phase;
+        const {
+            drawingPath,
+            drawingCodeSpace,
+            selectedCode,
+            _drawnMap,
+        } = drawPhase;
+        const posHash = `${pos.x},${pos.y}`;
+        if (_drawnMap[posHash]) return;
         this.mutate(() => {
-            const {
-                drawingPath,
-                drawingCodeSpace,
-                selectedCode,
-            } = drawPhase;
             const { lastMoment } = drawingPath;
             if (lastMoment == null) {
+                _drawnMap[posHash] = true;
                 drawingPath.step(new Moment(
                     false,
                     false,
@@ -567,6 +574,7 @@ export class RedrawMode extends SpecialMode {
                 if (dx && dy) return; // 수평, 수직이동이 아닌 경우
                 const [adx, ady] = [Math.abs(dx), Math.abs(dy)];
                 if (Math.max(adx, ady) > 2) return;
+                _drawnMap[posHash] = true;
                 lastMoment.o = new Vec2(dx, dy);
                 drawingPath.step(new Moment(
                     (adx + ady) === 1,
@@ -584,9 +592,15 @@ export class RedrawMode extends SpecialMode {
         if (this.phase.type !== 'draw') return;
         const drawPhase = this.phase;
         this.mutate(() => {
-            const { drawingPath, drawingCodeSpace } = drawPhase;
+            const {
+                drawingPath,
+                drawingCodeSpace,
+                _drawnMap,
+            } = drawPhase;
             const { lastMoment } = drawingPath;
             if (!lastMoment) return;
+            const posHash = `${lastMoment.p.x},${lastMoment.p.y}`;
+            _drawnMap[posHash] = false;
             drawingPath.stepBack();
             drawingCodeSpace.paint(
                 lastMoment.p.y,
