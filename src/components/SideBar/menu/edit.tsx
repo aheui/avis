@@ -174,9 +174,7 @@ const RedrawModeFolderDrawPhase: React.FC<RedrawModeFolderPhaseProps> = ({ appSt
         <MenuButton
             label="다시 그리기 완료"
             disabled={appState.isRunning}
-            onClick={() => {
-                // TODO
-            }}
+            onClick={() => { appState.completeRedrawMode(); }}
         />
     </Label>;
 };

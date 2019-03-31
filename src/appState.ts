@@ -331,6 +331,20 @@ export class AppState implements MutationManager {
     }
     finishSpecialMode() { this.mutate(() => this._specialMode = null); }
     startRedrawMode() { this.mutate(() => this._specialMode = new RedrawMode(() => this.onMutate())); }
+    completeRedrawMode() {
+        this.mutate(() => {
+            const redrawMode = this._specialMode;
+            if (!(redrawMode instanceof RedrawMode)) return;
+            const { phase } = redrawMode;
+            if (phase.type !== 'draw') return;
+            this.codeSpace.insertPath(
+                phase.drawingPath,
+                phase.selectedCode,
+                this.spaceFillChar,
+            );
+            this.finishSpecialMode();
+        });
+    }
 }
 
 // stores trivial states
@@ -543,7 +557,20 @@ export class RedrawMode extends SpecialMode {
                 ));
             } else {
                 if (!drawingCodeSpace.isEmpty(pos.x, pos.y, spaceChars)) return;
-                // TODO
+                const dx = pos.x - lastMoment.p.x;
+                const dy = pos.y - lastMoment.p.y;
+                if (dx && dy) return; // 수평, 수직이동이 아닌 경우
+                const [adx, ady] = [Math.abs(dx), Math.abs(dy)];
+                if (Math.max(adx, ady) > 2) return;
+                lastMoment.o = new Vec2(dx, dy);
+                drawingPath.step(new Moment(
+                    (adx + ady) === 1,
+                    false,
+                    new Vec2(dx, dy),
+                    new Vec2(dx, dy),
+                    new Vec2(pos.x, pos.y),
+                    Infinity,
+                ));
             }
             drawingCodeSpace.insertPath(drawingPath, selectedCode, spaceFillChar);
         });
@@ -639,7 +666,6 @@ const jungCCWRotationMap = {
     0: 8, 8: 4, 4: 13, 13: 0, // ㅏㅗㅓㅜ
     2: 12, 12: 6, 6: 17, 17: 2, // ㅑㅛㅕㅠ
 }
-/*
 function speed2jung(xSpeed: number, ySpeed: number): number {
     if (xSpeed && ySpeed) return -1;
     if (!xSpeed && !ySpeed) return -1;
@@ -653,7 +679,6 @@ function speed2jung(xSpeed: number, ySpeed: number): number {
     if (ySpeed === 2) return 17; // ㅠ
     return -1;
 }
-*/
 
 @cloneable<typeof Code, Code>()
 export class Code implements Cloneable<Code> {
@@ -894,6 +919,11 @@ export class CodeSpace
         // 개행은 길이 1
         return this.reduce((sum, codeLine) => sum + codeLine.length + 1, -1);
     }
+    manipulate(x: number, y: number, fn: (code: Code) => void) {
+        const code = this.get(x, y);
+        if (!code) return;
+        this.mutate(() => { fn(code); });
+    }
     get(x: number, y: number) {
         const line = this[y];
         if (line) {
@@ -947,12 +977,18 @@ export class CodeSpace
         this.paintPath(path, spaceFillChar);
         this.mutate(() => {
             const len = Math.min(path.moments.length, text.length);
+            const { lastMoment } = path;
             for (let i = 0; i < len; ++i) {
                 const char = text[i];
-                // TODO: fix vector
                 const moment = path.moments[i];
                 const codeLine = this[moment.p.y];
                 codeLine.paint(moment.p.x, 1, char);
+                const code = this.get(moment.p.x, moment.p.y)!;
+                const jung =
+                    (moment === lastMoment) ?
+                    19 : // 'ㅢ'
+                    speed2jung(moment.o.x, moment.o.y);
+                code.jung = jung;
             }
         });
     }
