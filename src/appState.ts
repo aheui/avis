@@ -23,6 +23,7 @@ export class AppState implements MutationManager {
     // AppState
     private _changeDispatcher: ChangeDispatcher;
     private _uiState: UIState;
+    private _specialMode: null | SpecialMode;
     private _editOptions: EditOptions;
     private _runningOptions: RunningOptions;
     private _selection: Selection;
@@ -35,6 +36,7 @@ export class AppState implements MutationManager {
     constructor({ content }: { content: string }) {
         this._changeDispatcher = new ChangeDispatcher();
         this._uiState = new UIState();
+        this._specialMode = null;
         this._editOptions = new EditOptions();
         this._runningOptions = new RunningOptions();
         this._selection = new Selection();
@@ -47,6 +49,7 @@ export class AppState implements MutationManager {
         this.init(content);
     }
     get changeDispatcher() { return this._changeDispatcher; }
+    get specialMode() { return this._specialMode; }
     get cursorOnBreakPoint() {
         const { cursor } = this._machine;
         const code = this._codeSpace.get(cursor.x, cursor.y);
@@ -74,6 +77,7 @@ export class AppState implements MutationManager {
             this.selection = { anchor: caret, focus: caret };
         });
     }
+    get spaceChars() { return new Set([this._spaceFillChar, ' ']); }
     get spaceFillChar() {
         return this._spaceFillChar;
     }
@@ -166,10 +170,10 @@ export class AppState implements MutationManager {
         this.mutate(() => { this._codeSpace.insertVertical(rowIndex, colIndex, text, this._spaceFillChar); });
     }
     insertChunkCode(rowIndex: number, colIndex: number, text: string, pushDown: boolean, overwrite: boolean) {
-        this.mutate(() => { this._codeSpace.insertChunk(rowIndex, colIndex, text, this._spaceFillChar, pushDown, overwrite); });
+        this.mutate(() => { this._codeSpace.insertChunk(rowIndex, colIndex, text, this.spaceChars, this._spaceFillChar, pushDown, overwrite); });
     }
     insertChunkSmartCode(rowIndex: number, colIndex: number, text: string, overwrite: boolean) {
-        this.mutate(() => { this._codeSpace.insertChunkSmart(rowIndex, colIndex, text, this._spaceFillChar, overwrite); });
+        this.mutate(() => { this._codeSpace.insertChunkSmart(rowIndex, colIndex, text, this.spaceChars, this._spaceFillChar, overwrite); });
     }
     peelCode(rowIndex: number, colIndex: number, width: number, height: number) {
         this.mutate(() => { this._codeSpace.paint(rowIndex, colIndex, width, height, this._spaceFillChar); });
@@ -290,7 +294,7 @@ export class AppState implements MutationManager {
         this.mutate(() => {
             const machine = this._machine;
             const path = this._path;
-            const { cp, f } = path.lastMoment;
+            const { cp, f } = path.lastMoment!;
             Object.assign(path.lastMoment, Moment.fromMachineState(
                 this._machine,
                 this._codeSpace,
@@ -300,16 +304,13 @@ export class AppState implements MutationManager {
             const stepResult = machine.step();
             if (stepResult.cursorMoveResult) {
                 const path = this._path;
-                const r = stepResult.cursorMoveResult
+                const r = stepResult.cursorMoveResult;
                 const cp =
                     (Math.abs(r.xSpeed) < 2) &&
                     (Math.abs(r.ySpeed) < 2) &&
                     !r.xWrapped &&
                     !r.yWrapped;
-                Object.assign(path.lastMoment, {
-                    o: new Vec2(r.xSpeed, r.ySpeed),
-                    cn: cp,
-                });
+                path.lastMoment!.o = new Vec2(r.xSpeed, r.ySpeed);
                 path.step(Moment.fromMachineState(
                     this._machine,
                     this._codeSpace,
@@ -328,6 +329,22 @@ export class AppState implements MutationManager {
             this._codeSpace.toggleBreakPoint(cursor.x, cursor.y);
         });
     }
+    finishSpecialMode() { this.mutate(() => this._specialMode = null); }
+    startRedrawMode() { this.mutate(() => this._specialMode = new RedrawMode(() => this.onMutate())); }
+    completeRedrawMode() {
+        this.mutate(() => {
+            const redrawMode = this._specialMode;
+            if (!(redrawMode instanceof RedrawMode)) return;
+            const { phase } = redrawMode;
+            if (phase.type !== 'draw') return;
+            this.codeSpace.insertPath(
+                phase.drawingPath,
+                phase.selectedCode,
+                this.spaceFillChar,
+            );
+            this.finishSpecialMode();
+        });
+    }
 }
 
 // stores trivial states
@@ -339,6 +356,7 @@ class UIState {
             'file.load': true,
             'edit.inputMethod': true,
             'edit.rotateAndFlip': true,
+            'edit.redraw': true,
             'state.cursor': true,
             'state.storage.아': true, // 아~앟
             'io.input': true,
@@ -367,6 +385,222 @@ class RunningOptions {
         this.inputMethod = 'modal';
         this.givenInput = '';
         this.output = '';
+    }
+}
+
+@mutationManager()
+class SpecialMode implements MutationManager {
+    // MutationManager
+    stateId: number;
+    mutate: (executor: Executor) => void;
+    // SpecialMode
+    onMutate() { this.parentMutateCallback(); }
+    constructor(private parentMutateCallback: () => void) {}
+}
+type SpecialModeConstructorParameters = ConstructorParameters<{
+    new(parentMutateCallback: () => void): SpecialMode;
+}>;
+
+type RedrawModePhase = RedrawModeSelectPhase | RedrawModeDrawPhase;
+interface RedrawModeSelectPhase {
+    type: 'select';
+    selectedPath: Path;
+    _selectedMap: { [posHash: string]: boolean };
+}
+interface RedrawModeDrawPhase {
+    type: 'draw';
+    selectedPath: Path;
+    selectedCode: string;
+    drawingPath: Path;
+    originalCodeSpace: CodeSpace;
+    drawingCodeSpace: CodeSpace;
+}
+export class RedrawMode extends SpecialMode {
+    phase: RedrawModePhase;
+    constructor(...args: SpecialModeConstructorParameters) {
+        super(...args);
+        this.phase = {
+            type: 'select',
+            selectedPath: new Path(),
+            _selectedMap: {},
+        };
+    }
+    clearSelection() {
+        if (this.phase.type !== 'select') return;
+        this.mutate(() => {
+            Object.assign(this.phase, {
+                selectedPath: new Path(),
+                _selectedMap: {},
+            });
+        });
+    }
+    isSelected(pos: { x: number, y: number }) {
+        if (this.phase.type !== 'select') return false;
+        const posHash = `${pos.x},${pos.y}`;
+        return !!this.phase._selectedMap[posHash];
+    }
+    select(pos: { x: number, y: number }, codeSpace: CodeSpace) {
+        if (this.phase.type !== 'select') return;
+        const phase = this.phase;
+        this.mutate(() => {
+            const { selectedPath, _selectedMap } = phase;
+            const posHash = `${pos.x},${pos.y}`;
+            if (_selectedMap[posHash]) return;
+            const code = codeSpace.get(pos.x, pos.y);
+            if (!code) return;
+            const { lastMoment } = selectedPath;
+            if (!lastMoment && code.isComment) return;
+            if (lastMoment == null) {
+                _selectedMap[posHash] = true;
+                selectedPath.step(new Moment(
+                    false,
+                    false,
+                    new Vec2(0, 1),
+                    new Vec2(0, 1),
+                    new Vec2(pos.x, pos.y),
+                    Infinity,
+                ));
+                return;
+            }
+            const { jung } = codeSpace.get(lastMoment.p.x, lastMoment.p.y)!;
+            const dx = pos.x - lastMoment.p.x;
+            const dy = pos.y - lastMoment.p.y;
+            if (dx && dy) return; // 수평, 수직이동이 아닌 경우
+            const [adx, ady] = [Math.abs(dx), Math.abs(dy)];
+            if (Math.max(adx, ady) > 2) return;
+            const xSpeed = Aheui.xSpeedTable[jung];
+            const ySpeed = Aheui.ySpeedTable[jung];
+            if (typeof xSpeed === 'number' && Math.abs(xSpeed) !== adx) return;
+            if (typeof ySpeed === 'number' && Math.abs(ySpeed) !== ady) return;
+            _selectedMap[posHash] = true;
+            lastMoment.o = new Vec2(dx, dy);
+            selectedPath.step(new Moment(
+                (adx + ady) === 1,
+                false,
+                new Vec2(dx, dy),
+                new Vec2(dx, dy),
+                new Vec2(pos.x, pos.y),
+                Infinity,
+            ));
+        });
+    }
+    deselect() {
+        if (this.phase.type !== 'select') return;
+        const phase = this.phase;
+        this.mutate(() => {
+            const { selectedPath, _selectedMap } = phase;
+            const { lastMoment } = selectedPath;
+            if (!lastMoment) return;
+            selectedPath.stepBack();
+            const posHash = `${lastMoment.p.x},${lastMoment.p.y}`;
+            _selectedMap[posHash] = false;
+        });
+    }
+    selectOrDeselect(pos: { x: number, y: number }, codeSpace: CodeSpace) {
+        if (this.phase.type !== 'select') return;
+        const { selectedPath } = this.phase;
+        const len = selectedPath.moments.length;
+        if (len < 2) return this.select(pos, codeSpace);
+        const deselectPos = selectedPath.moments[len - 2].p;
+        if (deselectPos.x !== pos.x) return this.select(pos, codeSpace);
+        if (deselectPos.y !== pos.y) return this.select(pos, codeSpace);
+        this.deselect();
+    }
+    startDrawPhase(codeSpace: CodeSpace, spaceFillChar: string) {
+        if (this.phase.type !== 'select') return;
+        const selectPhase = this.phase;
+        this.mutate(() => {
+            const { selectedPath } = selectPhase;
+            const drawingCodeSpace = codeSpace.clone();
+            drawingCodeSpace.paintPath(selectPhase.selectedPath, spaceFillChar);
+            const selectedCode = selectedPath.moments.map(
+                moment => codeSpace.get(moment.p.x, moment.p.y)!.char,
+            ).join('');
+            this.phase = {
+                type: 'draw',
+                selectedPath,
+                selectedCode,
+                drawingPath: new Path(),
+                originalCodeSpace: codeSpace,
+                drawingCodeSpace,
+            };
+        });
+    }
+    clearDrawingCodeSpace(spaceFillChar: string) {
+        if (this.phase.type !== 'draw') return;
+        const drawPhase = this.phase;
+        this.mutate(() => {
+            const drawingCodeSpace = drawPhase.originalCodeSpace.clone();
+            drawingCodeSpace.paintPath(drawPhase.selectedPath, spaceFillChar);
+            drawPhase.drawingCodeSpace = drawingCodeSpace;
+            drawPhase.drawingPath = new Path();
+        });
+    }
+    draw(pos: { x: number, y: number }, spaceChars: Set<string>, spaceFillChar: string) {
+        if (this.phase.type !== 'draw') return;
+        const drawPhase = this.phase;
+        this.mutate(() => {
+            const {
+                drawingPath,
+                drawingCodeSpace,
+                selectedCode,
+            } = drawPhase;
+            const { lastMoment } = drawingPath;
+            if (lastMoment == null) {
+                drawingPath.step(new Moment(
+                    false,
+                    false,
+                    new Vec2(0, 1),
+                    new Vec2(0, 1),
+                    new Vec2(pos.x, pos.y),
+                    Infinity,
+                ));
+            } else {
+                if (!drawingCodeSpace.isEmpty(pos.x, pos.y, spaceChars)) return;
+                const dx = pos.x - lastMoment.p.x;
+                const dy = pos.y - lastMoment.p.y;
+                if (dx && dy) return; // 수평, 수직이동이 아닌 경우
+                const [adx, ady] = [Math.abs(dx), Math.abs(dy)];
+                if (Math.max(adx, ady) > 2) return;
+                lastMoment.o = new Vec2(dx, dy);
+                drawingPath.step(new Moment(
+                    (adx + ady) === 1,
+                    false,
+                    new Vec2(dx, dy),
+                    new Vec2(dx, dy),
+                    new Vec2(pos.x, pos.y),
+                    Infinity,
+                ));
+            }
+            drawingCodeSpace.insertPath(drawingPath, selectedCode, spaceFillChar);
+        });
+    }
+    erase(spaceFillChar: string) {
+        if (this.phase.type !== 'draw') return;
+        const drawPhase = this.phase;
+        this.mutate(() => {
+            const { drawingPath, drawingCodeSpace } = drawPhase;
+            const { lastMoment } = drawingPath;
+            if (!lastMoment) return;
+            drawingPath.stepBack();
+            drawingCodeSpace.paint(
+                lastMoment.p.y,
+                lastMoment.p.x,
+                1,
+                1,
+                spaceFillChar,
+            );
+        });
+    }
+    drawOrErase(pos: { x: number, y: number }, spaceChars: Set<string>, spaceFillChar: string) {
+        if (this.phase.type !== 'draw') return;
+        const { drawingPath } = this.phase;
+        const len = drawingPath.moments.length;
+        if (len < 2) return this.draw(pos, spaceChars, spaceFillChar);
+        const erasePos = drawingPath.moments[len - 2].p;
+        if (erasePos.x !== pos.x) return this.draw(pos, spaceChars, spaceFillChar);
+        if (erasePos.y !== pos.y) return this.draw(pos, spaceChars, spaceFillChar);
+        this.erase(spaceFillChar);
     }
 }
 
@@ -416,10 +650,6 @@ export class Selection {
     }
 }
 
-// ㄴㄷㄸㄹㅁㅂㅃㅅㅆㅈㅊㅌㅍㅎ
-const significantChoIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18];
-// ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅢㅣ
-const significantJungIndices = [0, 2, 4, 6, 8, 12, 13, 17, 18, 19, 20];
 const jungHInvertMap = {
     0: 4, 4: 0, // ㅏㅓ
     2: 6, 6: 2, // ㅑㅕ
@@ -436,8 +666,21 @@ const jungCCWRotationMap = {
     0: 8, 8: 4, 4: 13, 13: 0, // ㅏㅗㅓㅜ
     2: 12, 12: 6, 6: 17, 17: 2, // ㅑㅛㅕㅠ
 }
+function speed2jung(xSpeed: number, ySpeed: number): number {
+    if (xSpeed && ySpeed) return -1;
+    if (!xSpeed && !ySpeed) return -1;
+    if (xSpeed === 1) return 0; // ㅏ
+    if (xSpeed === 2) return 2; // ㅑ
+    if (xSpeed === -1) return 4; // ㅓ
+    if (xSpeed === -2) return 6; // ㅕ
+    if (ySpeed === -1) return 8; // ㅗ
+    if (ySpeed === -2) return 12; // ㅛ
+    if (ySpeed === 1) return 13; // ㅜ
+    if (ySpeed === 2) return 17; // ㅠ
+    return -1;
+}
 
-@cloneable<typeof Code>()
+@cloneable<typeof Code, Code>()
 export class Code implements Cloneable<Code> {
     // Cloneable
     clone: () => Code;
@@ -464,7 +707,7 @@ export class Code implements Cloneable<Code> {
         this._cho = Aheui.cho(value);
         this._jung = Aheui.jung(value);
         this._jong = Aheui.jong(value);
-        this._isComment = Code.isComment(this._cho, this._jung);
+        this._isComment = this._jung === -1;
     }
     get cho() { return this._cho; }
     get jung() { return this._jung; }
@@ -486,19 +729,10 @@ export class Code implements Cloneable<Code> {
     invertV() { this._mapJung(jungVInvertMap); }
     rotateCW() { this._mapJung(jungCWRotationMap); }
     rotateCCW() { this._mapJung(jungCCWRotationMap); }
-
-    toString() {
-        return this.char;
-    }
-    static isComment(cho: number, jung: number) {
-        return (
-            significantChoIndices.indexOf(cho) === -1 &&
-            significantJungIndices.indexOf(jung) === -1
-        );
-    }
+    toString() { return this.char; }
 }
 
-@cloneable<typeof CodeLine>()
+@cloneable<typeof CodeLine, CodeLine>()
 export class CodeLine extends Array<Code> implements Cloneable<CodeLine> {
     // Cloneable
     clone: () => CodeLine;
@@ -612,7 +846,9 @@ export class CodeLine extends Array<Code> implements Cloneable<CodeLine> {
 }
 
 @mutationManager()
-@cloneable<typeof CodeSpace>()
+@cloneable<typeof CodeSpace, CodeSpace>(
+    (_, dst) => { dst._recalculateWidth(); },
+)
 export class CodeSpace
     extends Array<CodeLine>
     implements
@@ -646,6 +882,13 @@ export class CodeSpace
             codeLine.ensureLength(width, spaceFillChar);
         });
     }
+    ensurePoint(
+        rowIndex: number,
+        colIndex: number,
+        spaceFillChar: string,
+    ) {
+        this.ensureLineWidth(rowIndex, colIndex + 1, spaceFillChar);
+    }
     ensureRect(
         rowIndex: number,
         colIndex: number,
@@ -676,6 +919,11 @@ export class CodeSpace
         // 개행은 길이 1
         return this.reduce((sum, codeLine) => sum + codeLine.length + 1, -1);
     }
+    manipulate(x: number, y: number, fn: (code: Code) => void) {
+        const code = this.get(x, y);
+        if (!code) return;
+        this.mutate(() => { fn(code); });
+    }
     get(x: number, y: number) {
         const line = this[y];
         if (line) {
@@ -695,6 +943,10 @@ export class CodeSpace
         const line = this[rowIndex];
         return line ? line.length : 0;
     }
+    isEmpty(x: number, y: number, spaceChars: Set<string>) {
+        const code = this.get(x, y);
+        return !code || spaceChars.has(code.char);
+    }
     insert(
         rowIndex: number,
         colIndex: number,
@@ -713,6 +965,30 @@ export class CodeSpace
                 if (codeLine.length > this._width) {
                     this._width = codeLine.length;
                 }
+            }
+        });
+    }
+    insertPath(
+        path: Path,
+        text: string,
+        spaceFillChar: string,
+    ) {
+        if (!path.moments.length) return;
+        this.paintPath(path, spaceFillChar);
+        this.mutate(() => {
+            const len = Math.min(path.moments.length, text.length);
+            const { lastMoment } = path;
+            for (let i = 0; i < len; ++i) {
+                const char = text[i];
+                const moment = path.moments[i];
+                const codeLine = this[moment.p.y];
+                codeLine.paint(moment.p.x, 1, char);
+                const code = this.get(moment.p.x, moment.p.y)!;
+                const jung =
+                    (moment === lastMoment) ?
+                    19 : // 'ㅢ'
+                    speed2jung(moment.o.x, moment.o.y);
+                code.jung = jung;
             }
         });
     }
@@ -740,15 +1016,14 @@ export class CodeSpace
         rowIndex: number,
         colIndex: number,
         text: string,
+        spaceChars: Set<string>,
         spaceFillChar: string,
         pushDown: boolean,
         overwrite: boolean,
     ) {
         // TODO 테스트 작성?
-        // TODO spaceChars 딴 곳으로 옮기기
-        const spaceChars = new Set([spaceFillChar, ' ']);
-        // 덮어쓰기 모드라면 insert를 그대로 적용해도 무방함
         if (overwrite) {
+            // 덮어쓰기 모드라면 insert를 그대로 적용해도 무방함
             return this.insert(
                 rowIndex,
                 colIndex,
@@ -841,11 +1116,10 @@ export class CodeSpace
         rowIndex: number,
         colIndex: number,
         text: string,
+        spaceChars: Set<string>,
         spaceFillChar: string,
         overwrite: boolean,
     ) {
-        // TODO spaceChars 딴 곳으로 옮기기
-        const spaceChars = new Set([spaceFillChar, ' ']);
         const textLines = text.split(/\r?\n/);
         // 첫째 행이 해당 열부터 비어있다면:
         // 적용될 행들이 해당 열부터 비어있는지 여부를 검사하고 비어있다면
@@ -865,6 +1139,7 @@ export class CodeSpace
             rowIndex,
             colIndex,
             text,
+            spaceChars,
             spaceFillChar,
             pushDown,
             overwrite
@@ -884,6 +1159,17 @@ export class CodeSpace
                 const codeLine = this[rowIndex + i];
                 if (!codeLine) break;
                 codeLine.paint(colIndex, width, paintChar);
+            }
+        });
+    }
+    paintPath(path: Path, paintChar: string) {
+        if (!path.moments.length) return;
+        this.mutate(() => {
+            const { boundingRect } = path;
+            this.ensureHeight(boundingRect.y + boundingRect.height);
+            for (const moment of path.moments) {
+                const codeLine = this[moment.p.y];
+                codeLine.paint(moment.p.x, 1, paintChar);
             }
         });
     }
@@ -1130,9 +1416,8 @@ type Omit<T, K extends keyof T> = Pick<T, Diff<Extract<keyof T, string>, Extract
 type ReactComponent<T> = React.ComponentClass<T> | React.SFC<T>;
 
 interface Connect<TOwnProps extends TInjectedProps, TInjectedProps> {
-    (Container: ReactComponent<TOwnProps>): React.ComponentClass<Omit<TOwnProps, keyof TInjectedProps>>;
+    (Container: ReactComponent<TOwnProps>): React.ComponentClass<Omit<TOwnProps, keyof TInjectedProps> & Partial<TInjectedProps>>;
 }
-
 export function connect<
     TOwnProps extends TInjectedProps,
     TInjectedProps={ appState: AppState }
@@ -1179,9 +1464,9 @@ export function connect<
         }
         render() {
             return React.createElement(Container as any, {
+                ...(mapStateToProps as any)(this.context.appState),
                 ...this.props as any,
                 ref: (ref: typeof Container | null) => this.ref = ref,
-                ...(mapStateToProps as any)(this.context.appState),
             });
         }
         static contextTypes = {

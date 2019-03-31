@@ -29,6 +29,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    color: white;
     background: linear-gradient(
         to right,
         rgba(66, 66, 66, 0),
@@ -38,13 +39,18 @@
     );
 }
 
+.control-box.disabled {
+    opacity: 0.5;
+    background: transparent;
+    pointer-events: none;
+}
+
 .control-box .control-button {
     width: 20px;
     height: 20px;
     line-height: 20px;
     font-size: 14px;
     text-align: center;
-    color: white;
     opacity: 0.6;
     cursor: pointer;
     transition: text-shadow 0.3s;

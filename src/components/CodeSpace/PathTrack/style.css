@@ -1,3 +1,7 @@
 .path-track {
     position: absolute;
 }
+
+.path-track path {
+    fill: currentColor;
+}

@@ -13,12 +13,14 @@ import CodeSpaceStateViewer from '../CodeSpaceStateViewer';
 import PathTrack from './PathTrack';
 import { Vec2 } from '../../model/path';
 import * as keyboard from '../../misc/keyboard';
-import * as style from './style.css';
+import * as styles from './style.css';
 
 interface CodeSpaceProps {
     appState: AppState;
     codeSpace: CodeSpace;
     onScroll: (scroll: { scrollTop: number, scrollLeft: number }) => void;
+    initialScrollTop: number;
+    initialScrollLeft: number;
 }
 
 interface CodeSpaceState {
@@ -104,6 +106,7 @@ export default connect<CodeSpaceProps>(
         };
         this.mouseDragMoveHandler = e => this.throttled.set(this.onMouseDragMove, [e]);
         this.mouseDragShift = () => this.props.appState.squareSelection();
+        this.scrollElement.scrollTo(this.props.initialScrollLeft, this.props.initialScrollTop);
         this.updateCodeSpacePosition();
     }
     componentWillUnmount() {
@@ -154,10 +157,10 @@ export default connect<CodeSpaceProps>(
     }
     resetCaretAnimation() {
         const { classList } = this.caretElement;
-        if (classList.contains(style.caret)) {
-            classList.remove(style.caret);
+        if (classList.contains(styles.caret)) {
+            classList.remove(styles.caret);
             this.caretElement.offsetHeight; // 강제 리플로우 트리거
-            classList.add(style.caret);
+            classList.add(styles.caret);
         }
     }
     scrollToFocus() {
@@ -196,8 +199,8 @@ export default connect<CodeSpaceProps>(
         };
         return <div
             ref={scrollElement => this.scrollElement = scrollElement!}
-            className={classNames(style.codeSpaceScroll, {
-                [style.focus]: inputFocus || mouseDown,
+            className={classNames(styles.codeSpaceScroll, {
+                [styles.focus]: inputFocus || mouseDown,
             })}
             onScroll={() => {
                 this.updateCodeSpacePosition();
@@ -239,22 +242,12 @@ export default connect<CodeSpaceProps>(
                 );
             }}
         >
-            <div className={classNames(style.cursor, {
-                [style.onBreakPoint]: false,
-            })} style={{
-                top: `${ 30 * appState.cursor.y }px`,
-                left: `${ 30 * appState.cursor.x }px`,
-            }}>
-                <svg viewBox="0 0 30 30" width="30" height="30">
-                    <rect className={style.cursorRect} x="3" y="3" width="24" height="24"/>
-                    <rect className={style.cursorDeco} x="3" y="3" width="24" height="24"/>
-                </svg>
-            </div>
-            <PathTrack path={appState.path} codeSpace={codeSpace}/>
+            <Cursor x={appState.cursor.x} y={appState.cursor.y}/>
+            <PathTrack className={styles.pathTrack} path={appState.path} codeSpace={codeSpace}/>
             <CodeSpaceStateViewer>
                 <div
                     ref={codeSpaceElement => this.codeSpaceElement = codeSpaceElement!}
-                    className={style.codeSpace}
+                    className={styles.codeSpace}
                     style={{
                         width: `calc(100% + ${ (codeSpace.width - 1) * 30 }px)`,
                         height: `calc(100% + ${ (codeSpace.height - 1) * 30 }px)`,
@@ -269,14 +262,14 @@ export default connect<CodeSpaceProps>(
                 </div>
             </CodeSpaceStateViewer>
             <div
-                className={classNames(style.ghostCaret, { [style.on]: mouseOn && !mouseDown })}
+                className={classNames(styles.ghostCaret, { [styles.on]: mouseOn && !mouseDown })}
                 style={{
                     top: ghostCaretY * 30,
                     left: ghostCaretX * 30,
                 }}
             />
             <div
-                className={classNames(style.selection, { [style.caret]: isCaret })}
+                className={classNames(styles.selection, { [styles.caret]: isCaret })}
                 style={selectionBox}
                 ref={caretElement => this.caretElement = caretElement!}
             >
@@ -284,7 +277,7 @@ export default connect<CodeSpaceProps>(
                     viewBox={`0 0 ${ selectionBox.width } ${ selectionBox.height }`}
                 >
                     <rect
-                        className={style.dash}
+                        className={styles.dash}
                         x="1.5" y="1.5"
                         width={ selectionBox.width - 3 }
                         height={ selectionBox.height - 3 }
@@ -292,7 +285,7 @@ export default connect<CodeSpaceProps>(
                 </svg> }
             </div>
             <textarea
-                className={style.input}
+                className={styles.input}
                 style={{
                     top: selectionBox.top,
                     left: selectionBox.left,
@@ -693,13 +686,35 @@ function handleInputPaste(
     scrollToFocus();
 }
 
+interface CursorProps {
+    x: number;
+    y: number;
+    className?: string;
+    style?: React.CSSProperties;
+}
+
+export const Cursor: React.FC<CursorProps> = props => <div
+    className={classNames(styles.cursor, props.className, {
+        [styles.onBreakPoint]: false,
+    })}
+    style={{
+        top: `${ 30 * props.y }px`,
+        left: `${ 30 * props.x }px`,
+        ...props.style,
+    }}>
+    <svg viewBox="0 0 30 30" width="30" height="30">
+        <rect className={styles.cursorRect} x="3" y="3" width="24" height="24"/>
+        <rect className={styles.cursorDeco} x="3" y="3" width="24" height="24"/>
+    </svg>
+</div>;
+
 interface CellLineProps {
     index: number;
     codeLine: CodeLine;
 }
 
-const CellLine: React.SFC<CellLineProps> = props => <div
-    className={style.cellLine}
+export const CellLine: React.SFC<CellLineProps> = props => <div
+    className={styles.cellLine}
     style={{
         top: props.index * 30,
     }}
@@ -718,7 +733,7 @@ interface CellProps {
 }
 
 const Cell: React.SFC<CellProps> = props => <div
-    className={classNames(style.cell, { [style.comment]: props.code.isComment })}
+    className={classNames(styles.cell, { [styles.comment]: props.code.isComment })}
     style={{
         left: props.index * 30,
     }}
@@ -731,7 +746,7 @@ interface GhostCellProps {
 }
 
 const GhostCell: React.SFC<GhostCellProps> = props => <div
-    className={classNames(style.cell, style.ghost)}
+    className={classNames(styles.cell, styles.ghost)}
     style={{
         left: props.index * 30,
     }}

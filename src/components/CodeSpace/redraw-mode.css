@@ -1,0 +1,15 @@
+.select-phase-cursor,
+.select-phase-path-track {
+    color: rgb(204, 122, 0);
+    transition: opacity 0.15s;
+}
+
+.select-phase-cursor.fade,
+.select-phase-path-track.fade {
+    opacity: 0.3;
+}
+
+.draw-phase-cursor,
+.draw-phase-path-track {
+    color: rgb(122, 0, 204);
+}

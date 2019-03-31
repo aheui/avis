@@ -1,14 +1,17 @@
 import * as React from 'react';
+import * as classNames from 'classnames';
 
 import { CodeSpace } from 'appState';
 import { Path, Moment } from 'model/path';
 import { StateId } from 'model/mutationManager';
-import * as style from './style.css';
+import * as styles from './style.css';
 
 
 interface PathTrackProps {
     path: Path;
     codeSpace: CodeSpace;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 export default class PathTrack extends React.Component<PathTrackProps> {
@@ -27,22 +30,22 @@ export default class PathTrack extends React.Component<PathTrackProps> {
         const { path, codeSpace } = this.props;
         const [ w, h ] = [codeSpace.width * 30, codeSpace.height * 30];
         return <svg
-            className={style.pathTrack}
+            className={classNames(styles.pathTrack, this.props.className)}
+            style={this.props.style}
             viewBox={`0 0 ${ w } ${ h }`}
             width={w}
             height={h}
         >
             { [...path].map(moment => <path
                 key={moment.id}
-                className={style.moment}
+                className={styles.moment}
                 d={momentD(moment)}
                 transform={`translate(${
                     moment.p.x * 30
                 },${
                     moment.p.y * 30
                 })`}
-                fill={path.color}
-                fillOpacity={moment.f / 20}
+                fillOpacity={Math.min(1, moment.f / 20)}
             />) }
         </svg>;
     }

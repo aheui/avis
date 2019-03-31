@@ -21,7 +21,9 @@ export default connect<CodeSpaceStateViewerProps, { codeSpace: CodeSpace }>(
         this.stateId = this.props.codeSpace.stateId;
     }
     shouldComponentUpdate({ codeSpace }: CodeSpaceStateViewerProps) {
-        return this.stateId !== codeSpace.stateId;
+        if (this.props.codeSpace !== codeSpace) return true;
+        if (this.stateId !== codeSpace.stateId) return true;
+        return false;
     }
     render() {
         const { codeSpace, children } = this.props;

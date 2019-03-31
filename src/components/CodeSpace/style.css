@@ -100,12 +100,17 @@
     animation: none;
 }
 
+.path-track {
+    color: rgb(0, 122, 204);
+}
+
 .cursor {
     position: absolute;
+    color: rgb(0, 122, 204);
 }
 
 .cursor-rect {
-    stroke: rgb(0, 122, 204);
+    stroke: currentColor;
     stroke-width: 3;
     fill: transparent;
 }
