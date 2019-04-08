@@ -15,6 +15,7 @@ module.exports = {
         host: '0.0.0.0',
         port: 4715,
         hot: true,
+        disableHostCheck: true,
     },
     output: {
         filename: 'avis.js',
