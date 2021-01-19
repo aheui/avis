@@ -234,10 +234,10 @@ export class AppState implements MutationManager {
                     let left = givenInput;
                     switch (type) {
                     case 'number':
-                        const match = /^[-+]?\d+/.exec(givenInput);
+                        const match = /^\s*([-+]?\d+)\s*/.exec(givenInput);
                         if (match) {
                             left = givenInput.substr(match[0].length);
-                            input = parseInt(match[0]);
+                            input = parseInt(match[1]);
                         } else {
                             input = -1;
                         }

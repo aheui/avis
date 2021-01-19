@@ -9,6 +9,7 @@ interface TextAreaProps {
     onChange?: (value: string) => void;
     rows?: number;
     readOnly?: boolean;
+    placeholder?: string;
     className?: string;
 }
 
@@ -17,6 +18,7 @@ const TextArea: React.SFC<TextAreaProps> = ({
     onChange,
     rows,
     readOnly,
+    placeholder,
     className,
 }) => <textarea
     className={classNames(
@@ -24,6 +26,7 @@ const TextArea: React.SFC<TextAreaProps> = ({
         style.textArea,
         className,
     )}
+    placeholder={placeholder}
     value={value}
     onChange={e => onChange && onChange(e.target.value)}
     readOnly={readOnly}

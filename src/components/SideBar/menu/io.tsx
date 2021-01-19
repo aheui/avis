@@ -59,9 +59,12 @@ class ContentComponent extends React.Component<ContentProps> {
                     />
                 </Label>
                 { (inputMethod === 'given') && <Label title="입력란">
-                    <TextArea value={givenInput!} onChange={
-                        givenInput => appState.runningOptions = { givenInput }
-                    }/>
+                    <TextArea value={givenInput!} 
+                        placeholder="숫자는 공백 문자로 구분합니다."
+                        onChange={
+                            givenInput => appState.runningOptions = { givenInput }
+                        }
+                    />
                 </Label> }
             </SideBarContentFolder>
             <SideBarContentFolder
