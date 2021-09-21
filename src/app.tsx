@@ -1,6 +1,5 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { AppContainer } from 'react-hot-loader';
 
 import { AppState } from './appState';
 import * as propTypes from './propTypes'
@@ -33,11 +32,9 @@ class Provider extends React.Component<ProviderProps> {
 
 export function render(App: React.ComponentClass, appState: AppState, target: HTMLElement) {
     ReactDOM.render(
-        <AppContainer>
-            <Provider appState={appState}>
-                <App/>
-            </Provider>
-        </AppContainer>,
+        <Provider appState={appState}>
+            <App/>
+        </Provider>,
         target,
     );
 }

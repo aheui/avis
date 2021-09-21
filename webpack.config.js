@@ -6,7 +6,6 @@ const production = process.argv.indexOf('-p') !== -1;
 
 module.exports = {
     entry: [
-        'react-hot-loader/patch',
         '.',
     ],
     context: path.resolve(__dirname, 'src'),

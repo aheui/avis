@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as classNames from 'classnames';
+import classNames from 'classnames';
 
 import * as keyboard from '../../misc/keyboard';
 import * as style from './Key.css';

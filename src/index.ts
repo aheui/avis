@@ -8,14 +8,14 @@ import { AppState } from './appState';
 import { render } from './app';
 
 
-new Promise(resolve => {
+new Promise<void>(resolve => {
     switch (document.readyState) {
     case 'interactive':
     case 'complete':
         resolve();
         break;
     default:
-        window.addEventListener('DOMContentLoaded', resolve);
+        window.addEventListener('DOMContentLoaded', () => resolve());
         break;
     }
 }).then(async () => {
@@ -28,12 +28,6 @@ new Promise(resolve => {
     });
     const appElement = window.document.getElementById('app');
     render(App, appState, appElement!);
-    if ((module as any).hot) {
-        (module as any).hot.accept('./components/App', () => {
-            const App = require('./components/App').default;
-            render(App, appState, appElement!);
-        });
-    }
 });
 
 async function resolveContent(query?: string): Promise<string> {
@@ -71,7 +65,7 @@ async function resolveContent(query?: string): Promise<string> {
                 pathName,
             ] = /^(.+?)\/(.+?)\/(.+?)\/(.+)$/.exec(
                 query.substr(githubPrefix.length),
-            );
+            ) as string[];
             const github = new GitHub();
             const repo = github.getRepo(userName, repoName);
             const { data } = await repo.getContents(refName, pathName);
